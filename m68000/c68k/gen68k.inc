@@ -846,7 +846,7 @@ static void set_addx_flag(void)
         case SIZE_LONG:
             wf_op("\tCPU->flag_notZ |= res;\n");
 //	        wf_op("\tCPU->flag_X = CPU->flag_C = (((u32)src & dst & 1) + ((u32)src >> 1) + ((u32)dst >> 1)) >> 23;\n"); //ORIGIN
-	        wf_op("\tCPU->flag_X = CPU->flag_C = ((((src & 1) + (dst & 1) + (((CPU->flag_X >> 8) & 1) & 1)) >> 1) + (src >> 1) + (dst >> 1)) >> 23;\n");
+	        wf_op("\tCPU->flag_X = CPU->flag_C = (((((u32)src & 1) + ((u32)dst & 1) + (((CPU->flag_X >> 8) & 1) & 1)) >> 1) + ((u32)src >> 1) + ((u32)dst >> 1)) >> 23;\n");
 //            wf_op("\tCPU->flag_X = CPU->flag_C = ((src & dst) | (~res & (src | dst))) >> 23;\n");
         	wf_op("\tCPU->flag_V = (((u32)src ^ res) & ((u32)dst ^ res)) >> 24;\n");
             wf_op("\tCPU->flag_N = res >> 24;\n");
@@ -872,8 +872,7 @@ static void set_sub_flag(void)
 
         case SIZE_LONG:
             wf_op("\tCPU->flag_notZ = res;\n");
-//	        wf_op("\tCPU->flag_X = CPU->flag_C = (((u32)src & res & 1) + ((u32)src >> 1) + (res >> 1)) >> 23;\n"); // ORIGIN
-	        wf_op("\tCPU->flag_X = CPU->flag_C = ((((src & 1) + (res & 1) + (((CPU->flag_X >> 8) & 1) & 1)) >> 1) + (src >> 1) + (res >> 1)) >> 23;\n");
+	        wf_op("\tCPU->flag_X = CPU->flag_C = (((u32)src & res & 1) + ((u32)src >> 1) + (res >> 1)) >> 23;\n");
 //            wf_op("\tCPU->flag_X = CPU->flag_C = ((src & res) | (~dst & (src | res))) >> 23;\n");
         	wf_op("\tCPU->flag_V = (((u32)src ^ (u32)dst) & (res ^ (u32)dst)) >> 24;\n");
             wf_op("\tCPU->flag_N = res >> 24;\n");
@@ -899,7 +898,8 @@ static void set_subx_flag(void)
 
         case SIZE_LONG:
             wf_op("\tCPU->flag_notZ |= res;\n");
-	        wf_op("\tCPU->flag_X = CPU->flag_C = (((u32)src & res & 1) + ((u32)src >> 1) + (res >> 1)) >> 23;\n");
+//	        wf_op("\tCPU->flag_X = CPU->flag_C = (((u32)src & res & 1) + ((u32)src >> 1) + (res >> 1)) >> 23;\n"); // ORIGIN
+	        wf_op("\tCPU->flag_X = CPU->flag_C = (((((u32)src & 1) + (res & 1) + (((CPU->flag_X >> 8) & 1) & 1)) >> 1) + ((u32)src >> 1) + (res >> 1)) >> 23;\n");
 //            wf_op("\tCPU->flag_X = CPU->flag_C = ((src & res) | (~dst & (src | res))) >> 23;\n");
         	wf_op("\tCPU->flag_V = (((u32)src ^ (u32)dst) & (res ^ (u32)dst)) >> 24;\n");
             wf_op("\tCPU->flag_N = res >> 24;\n");
