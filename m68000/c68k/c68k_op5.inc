@@ -7657,7 +7657,7 @@ case 0x5180:
 	dst = (u32)CPU->D[(Opcode >> 0) & 7];
 	res = (u32)(dst - src);
 	CPU->flag_notZ = res;
-	CPU->flag_X = CPU->flag_C = ((((src & 1) + (res & 1) + (((CPU->flag_X >> 8) & 1) & 1)) >> 1) + (src >> 1) + (res >> 1)) >> 23;
+	CPU->flag_X = CPU->flag_C = (((u32)src & res & 1) + ((u32)src >> 1) + (res >> 1)) >> 23;
 	CPU->flag_V = (((u32)src ^ (u32)dst) & (res ^ (u32)dst)) >> 24;
 	CPU->flag_N = res >> 24;
 	*((u32*)(&CPU->D[(Opcode >> 0) & 7])) = res;
@@ -7816,7 +7816,7 @@ case 0x5190:
 	READ_LONG_F(adr, dst)
 	res = (u32)(dst - src);
 	CPU->flag_notZ = res;
-	CPU->flag_X = CPU->flag_C = ((((src & 1) + (res & 1) + (((CPU->flag_X >> 8) & 1) & 1)) >> 1) + (src >> 1) + (res >> 1)) >> 23;
+	CPU->flag_X = CPU->flag_C = (((u32)src & res & 1) + ((u32)src >> 1) + (res >> 1)) >> 23;
 	CPU->flag_V = (((u32)src ^ (u32)dst) & (res ^ (u32)dst)) >> 24;
 	CPU->flag_N = res >> 24;
 	WRITE_LONG_F(adr, res)
@@ -7893,7 +7893,7 @@ case 0x5198:
 	READ_LONG_F(adr, dst)
 	res = (u32)(dst - src);
 	CPU->flag_notZ = res;
-	CPU->flag_X = CPU->flag_C = ((((src & 1) + (res & 1) + (((CPU->flag_X >> 8) & 1) & 1)) >> 1) + (src >> 1) + (res >> 1)) >> 23;
+	CPU->flag_X = CPU->flag_C = (((u32)src & res & 1) + ((u32)src >> 1) + (res >> 1)) >> 23;
 	CPU->flag_V = (((u32)src ^ (u32)dst) & (res ^ (u32)dst)) >> 24;
 	CPU->flag_N = res >> 24;
 	WRITE_LONG_F(adr, res)
@@ -7970,7 +7970,7 @@ case 0x51A0:
 	READ_LONG_F(adr, dst)
 	res = (u32)(dst - src);
 	CPU->flag_notZ = res;
-	CPU->flag_X = CPU->flag_C = ((((src & 1) + (res & 1) + (((CPU->flag_X >> 8) & 1) & 1)) >> 1) + (src >> 1) + (res >> 1)) >> 23;
+	CPU->flag_X = CPU->flag_C = (((u32)src & res & 1) + ((u32)src >> 1) + (res >> 1)) >> 23;
 	CPU->flag_V = (((u32)src ^ (u32)dst) & (res ^ (u32)dst)) >> 24;
 	CPU->flag_N = res >> 24;
 	WRITE_LONG_F(adr, res)
@@ -8055,7 +8055,7 @@ case 0x51A8:
 	READ_LONG_F(adr, dst)
 	res = (u32)(dst - src);
 	CPU->flag_notZ = res;
-	CPU->flag_X = CPU->flag_C = ((((src & 1) + (res & 1) + (((CPU->flag_X >> 8) & 1) & 1)) >> 1) + (src >> 1) + (res >> 1)) >> 23;
+	CPU->flag_X = CPU->flag_C = (((u32)src & res & 1) + ((u32)src >> 1) + (res >> 1)) >> 23;
 	CPU->flag_V = (((u32)src ^ (u32)dst) & (res ^ (u32)dst)) >> 24;
 	CPU->flag_N = res >> 24;
 	WRITE_LONG_F(adr, res)
@@ -8140,7 +8140,7 @@ case 0x51B0:
 	READ_LONG_F(adr, dst)
 	res = (u32)(dst - src);
 	CPU->flag_notZ = res;
-	CPU->flag_X = CPU->flag_C = ((((src & 1) + (res & 1) + (((CPU->flag_X >> 8) & 1) & 1)) >> 1) + (src >> 1) + (res >> 1)) >> 23;
+	CPU->flag_X = CPU->flag_C = (((u32)src & res & 1) + ((u32)src >> 1) + (res >> 1)) >> 23;
 	CPU->flag_V = (((u32)src ^ (u32)dst) & (res ^ (u32)dst)) >> 24;
 	CPU->flag_N = res >> 24;
 	WRITE_LONG_F(adr, res)
@@ -8169,7 +8169,7 @@ case 0x51B8:
 	READ_LONG_F(adr, dst)
 	res = (u32)(dst - src);
 	CPU->flag_notZ = res;
-	CPU->flag_X = CPU->flag_C = ((((src & 1) + (res & 1) + (((CPU->flag_X >> 8) & 1) & 1)) >> 1) + (src >> 1) + (res >> 1)) >> 23;
+	CPU->flag_X = CPU->flag_C = (((u32)src & res & 1) + ((u32)src >> 1) + (res >> 1)) >> 23;
 	CPU->flag_V = (((u32)src ^ (u32)dst) & (res ^ (u32)dst)) >> 24;
 	CPU->flag_N = res >> 24;
 	WRITE_LONG_F(adr, res)
@@ -8198,7 +8198,7 @@ case 0x51B9:
 	READ_LONG_F(adr, dst)
 	res = (u32)(dst - src);
 	CPU->flag_notZ = res;
-	CPU->flag_X = CPU->flag_C = ((((src & 1) + (res & 1) + (((CPU->flag_X >> 8) & 1) & 1)) >> 1) + (src >> 1) + (res >> 1)) >> 23;
+	CPU->flag_X = CPU->flag_C = (((u32)src & res & 1) + ((u32)src >> 1) + (res >> 1)) >> 23;
 	CPU->flag_V = (((u32)src ^ (u32)dst) & (res ^ (u32)dst)) >> 24;
 	CPU->flag_N = res >> 24;
 	WRITE_LONG_F(adr, res)
@@ -8227,7 +8227,7 @@ case 0x519F:
 	READ_LONG_F(adr, dst)
 	res = (u32)(dst - src);
 	CPU->flag_notZ = res;
-	CPU->flag_X = CPU->flag_C = ((((src & 1) + (res & 1) + (((CPU->flag_X >> 8) & 1) & 1)) >> 1) + (src >> 1) + (res >> 1)) >> 23;
+	CPU->flag_X = CPU->flag_C = (((u32)src & res & 1) + ((u32)src >> 1) + (res >> 1)) >> 23;
 	CPU->flag_V = (((u32)src ^ (u32)dst) & (res ^ (u32)dst)) >> 24;
 	CPU->flag_N = res >> 24;
 	WRITE_LONG_F(adr, res)
@@ -8256,7 +8256,7 @@ case 0x51A7:
 	READ_LONG_F(adr, dst)
 	res = (u32)(dst - src);
 	CPU->flag_notZ = res;
-	CPU->flag_X = CPU->flag_C = ((((src & 1) + (res & 1) + (((CPU->flag_X >> 8) & 1) & 1)) >> 1) + (src >> 1) + (res >> 1)) >> 23;
+	CPU->flag_X = CPU->flag_C = (((u32)src & res & 1) + ((u32)src >> 1) + (res >> 1)) >> 23;
 	CPU->flag_V = (((u32)src ^ (u32)dst) & (res ^ (u32)dst)) >> 24;
 	CPU->flag_N = res >> 24;
 	WRITE_LONG_F(adr, res)
