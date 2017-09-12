@@ -17,8 +17,8 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
-// internals core macros
-/////////////////////////
+/* internals core macros */
+/*************************/
 
 #define LSL(A, C)       ((A) << (C))
 #define LSR(A, C)       ((A) >> (C))
@@ -206,7 +206,7 @@ extern void TRACE(int,c68k_struc*,int,int);
     #undef FETCH_LONG
     #define FETCH_LONG          \
     ((((u32)(*(u16*)PC)) << 16) | ((u32)(*(u16*)(PC + 2))))
-//    ((((u32)(*(u8*)(PC + 2))) | (((u32)(*(u8*)(PC + 3))) << 8) | (((u32)(*(u8*)PC)) << 16) | (((u32)(*(u8*)(PC + 1))) << 24)))
+    /* ((((u32)(*(u8*)(PC + 2))) | (((u32)(*(u8*)(PC + 3))) << 8) | (((u32)(*(u8*)PC)) << 16) | (((u32)(*(u8*)(PC + 1))) << 24))) */
 #else
     #undef FETCH_BYTE
     #define FETCH_BYTE          \
@@ -215,12 +215,12 @@ extern void TRACE(int,c68k_struc*,int,int);
     #undef FETCH_WORD
     #define FETCH_WORD          \
     ((((u16)(*(u8*)PC)) << 8) | ((u16)(*(u8*)(PC + 1))))
-//    ((((u16)(*(u8*)(PC + 1))) | (((u16)(*(u8*)PC)) << 8)))
+    /* ((((u16)(*(u8*)(PC + 1))) | (((u16)(*(u8*)PC)) << 8))) */
 
     #undef FETCH_LONG
     #define FETCH_LONG          \
     ((((u32)(*(u8*)PC)) << 24) | (((u32)(*(u8*)(PC + 1))) << 16) | (((u32)(*(u8*)(PC + 2))) << 8) | ((u32)(*(u8*)(PC + 3))))
-//    ((((u32)(*(u8*)(PC + 3))) | (((u32)(*(u8*)(PC + 2))) << 8) | (((u32)(*(u8*)(PC + 1))) << 16) | (((u32)(*(u8*)PC)) << 24)))
+    /* ((((u32)(*(u8*)(PC + 3))) | (((u32)(*(u8*)(PC + 2))) << 8) | (((u32)(*(u8*)(PC + 1))) << 16) | (((u32)(*(u8*)PC)) << 24))) */
 
     #undef DECODE_EXT_WORD
     #define DECODE_EXT_WORD     \

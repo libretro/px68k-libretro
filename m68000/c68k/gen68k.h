@@ -32,11 +32,11 @@
 extern "C" {
 #endif
 
-// setting
-///////////
+/* setting */
+/************************/
 
-// structure definition
-////////////////////////
+/* structure definition */
+/************************/
 
 typedef struct {
 	u32 name;
@@ -64,5 +64,5 @@ typedef struct __c68k_op_info_struc {
 }
 #endif
 
-#endif  // _GEN68K_H_
+#endif  /* _GEN68K_H_ */
 
