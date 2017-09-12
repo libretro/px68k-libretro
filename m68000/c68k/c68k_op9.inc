@@ -147,6 +147,7 @@ case 0x9008:
 	u32 res;
 	pointer dst;
 	pointer src;
+	RET(4)			/* <== Workaround for Code Zero hang on startup */
 	/* can't read byte from Ax registers ! */
 	CPU->Status |= C68K_FAULTED;
 	CCnt = 0;
