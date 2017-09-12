@@ -253,7 +253,7 @@ case 0x62FD:
 case 0x62FE:
 case 0x62FF:
 
-// BCC
+/* BCC */
 case 0x6201:
 {
 	if (CPU->flag_notZ && (!(CPU->flag_C & 0x100)))
@@ -518,7 +518,7 @@ case 0x63FD:
 case 0x63FE:
 case 0x63FF:
 
-// BCC
+/* BCC */
 case 0x6301:
 {
 	if ((!CPU->flag_notZ) || (CPU->flag_C & 0x100))
@@ -783,7 +783,7 @@ case 0x64FD:
 case 0x64FE:
 case 0x64FF:
 
-// BCC
+/* BCC */
 case 0x6401:
 {
 	if (!(CPU->flag_C & 0x100))
@@ -1048,7 +1048,7 @@ case 0x65FD:
 case 0x65FE:
 case 0x65FF:
 
-// BCC
+/* BCC */
 case 0x6501:
 {
 	if (CPU->flag_C & 0x100)
@@ -1313,7 +1313,7 @@ case 0x66FD:
 case 0x66FE:
 case 0x66FF:
 
-// BCC
+/* BCC */
 case 0x6601:
 {
 	if (CPU->flag_notZ)
@@ -1578,7 +1578,7 @@ case 0x67FD:
 case 0x67FE:
 case 0x67FF:
 
-// BCC
+/* BCC */
 case 0x6701:
 {
 	if (!CPU->flag_notZ)
@@ -1843,7 +1843,7 @@ case 0x68FD:
 case 0x68FE:
 case 0x68FF:
 
-// BCC
+/* BCC */
 case 0x6801:
 {
 	if (!(CPU->flag_V & 0x80))
@@ -2108,7 +2108,7 @@ case 0x69FD:
 case 0x69FE:
 case 0x69FF:
 
-// BCC
+/* BCC */
 case 0x6901:
 {
 	if (CPU->flag_V & 0x80)
@@ -2373,7 +2373,7 @@ case 0x6AFD:
 case 0x6AFE:
 case 0x6AFF:
 
-// BCC
+/* BCC */
 case 0x6A01:
 {
 	if (!(CPU->flag_N & 0x80))
@@ -2638,7 +2638,7 @@ case 0x6BFD:
 case 0x6BFE:
 case 0x6BFF:
 
-// BCC
+/* BCC */
 case 0x6B01:
 {
 	if (CPU->flag_N & 0x80)
@@ -2903,7 +2903,7 @@ case 0x6CFD:
 case 0x6CFE:
 case 0x6CFF:
 
-// BCC
+/* BCC */
 case 0x6C01:
 {
 	if (!((CPU->flag_N ^ CPU->flag_V) & 0x80))
@@ -3168,7 +3168,7 @@ case 0x6DFD:
 case 0x6DFE:
 case 0x6DFF:
 
-// BCC
+/* BCC */
 case 0x6D01:
 {
 	if ((CPU->flag_N ^ CPU->flag_V) & 0x80)
@@ -3433,7 +3433,7 @@ case 0x6EFD:
 case 0x6EFE:
 case 0x6EFF:
 
-// BCC
+/* BCC */
 case 0x6E01:
 {
 	if (CPU->flag_notZ && (!((CPU->flag_N ^ CPU->flag_V) & 0x80)))
@@ -3698,7 +3698,7 @@ case 0x6FFD:
 case 0x6FFE:
 case 0x6FFF:
 
-// BCC
+/* BCC */
 case 0x6F01:
 {
 	if ((!CPU->flag_notZ) || ((CPU->flag_N ^ CPU->flag_V) & 0x80))
@@ -3709,7 +3709,7 @@ case 0x6F01:
 }
 RET(8)
 
-// BCC16
+/* BCC16 */
 case 0x6200:
 {
 	if (CPU->flag_notZ && (!(CPU->flag_C & 0x100)))
@@ -3723,7 +3723,7 @@ case 0x6200:
 }
 RET(12)
 
-// BCC16
+/* BCC16 */
 case 0x6300:
 {
 	if ((!CPU->flag_notZ) || (CPU->flag_C & 0x100))
@@ -3737,7 +3737,7 @@ case 0x6300:
 }
 RET(12)
 
-// BCC16
+/* BCC16 */
 case 0x6400:
 {
 	if (!(CPU->flag_C & 0x100))
@@ -3751,7 +3751,7 @@ case 0x6400:
 }
 RET(12)
 
-// BCC16
+/* BCC16 */
 case 0x6500:
 {
 	if (CPU->flag_C & 0x100)
@@ -3765,7 +3765,7 @@ case 0x6500:
 }
 RET(12)
 
-// BCC16
+/* BCC16 */
 case 0x6600:
 {
 	if (CPU->flag_notZ)
@@ -3779,7 +3779,7 @@ case 0x6600:
 }
 RET(12)
 
-// BCC16
+/* BCC16 */
 case 0x6700:
 {
 	if (!CPU->flag_notZ)
@@ -3793,7 +3793,7 @@ case 0x6700:
 }
 RET(12)
 
-// BCC16
+/* BCC16 */
 case 0x6800:
 {
 	if (!(CPU->flag_V & 0x80))
@@ -3807,7 +3807,7 @@ case 0x6800:
 }
 RET(12)
 
-// BCC16
+/* BCC16 */
 case 0x6900:
 {
 	if (CPU->flag_V & 0x80)
@@ -3821,7 +3821,7 @@ case 0x6900:
 }
 RET(12)
 
-// BCC16
+/* BCC16 */
 case 0x6A00:
 {
 	if (!(CPU->flag_N & 0x80))
@@ -3835,7 +3835,7 @@ case 0x6A00:
 }
 RET(12)
 
-// BCC16
+/* BCC16 */
 case 0x6B00:
 {
 	if (CPU->flag_N & 0x80)
@@ -3849,7 +3849,7 @@ case 0x6B00:
 }
 RET(12)
 
-// BCC16
+/* BCC16 */
 case 0x6C00:
 {
 	if (!((CPU->flag_N ^ CPU->flag_V) & 0x80))
@@ -3863,7 +3863,7 @@ case 0x6C00:
 }
 RET(12)
 
-// BCC16
+/* BCC16 */
 case 0x6D00:
 {
 	if ((CPU->flag_N ^ CPU->flag_V) & 0x80)
@@ -3877,7 +3877,7 @@ case 0x6D00:
 }
 RET(12)
 
-// BCC16
+/* BCC16 */
 case 0x6E00:
 {
 	if (CPU->flag_notZ && (!((CPU->flag_N ^ CPU->flag_V) & 0x80)))
@@ -3891,7 +3891,7 @@ case 0x6E00:
 }
 RET(12)
 
-// BCC16
+/* BCC16 */
 case 0x6F00:
 {
 	if ((!CPU->flag_notZ) || ((CPU->flag_N ^ CPU->flag_V) & 0x80))
@@ -4159,14 +4159,14 @@ case 0x60FD:
 case 0x60FE:
 case 0x60FF:
 
-// BRA
+/* BRA */
 case 0x6001:
 {
 	PC += (s32)(s8)Opcode;
 }
 RET(10)
 
-// BRA16
+/* BRA16 */
 case 0x6000:
 {
 	PC += (s32)(s16)FETCH_WORD;
@@ -4429,7 +4429,7 @@ case 0x61FD:
 case 0x61FE:
 case 0x61FF:
 
-// BSR
+/* BSR */
 case 0x6101:
 {
 	PRE_IO
@@ -4439,7 +4439,7 @@ case 0x6101:
 }
 RET(18)
 
-// BSR16
+/* BSR16 */
 case 0x6100:
 {
 	u32 res;

@@ -24,8 +24,9 @@
 #include "core.h"
 #include "c68k.h"
 
-// #define TRACE_WITH_Q68  // Define to use Q68 tracing code to trace insns
-                           // (requires Q68 built in, of course)
+/* #define TRACE_WITH_Q68 */  /* Define to use Q68 tracing code to trace insns
+                               * (requires Q68 built in, of course)
+                               */
 
 #ifdef NEOCD_HLE
 void    cdrom_load_files(void);
@@ -34,74 +35,74 @@ void    neogeo_prio_switch(void);
 void    neogeo_upload(void);
 #endif
 
-// exception cycle table (taken from musashi core)
+/* exception cycle table (taken from musashi core) */
 static const s32 c68k_exception_cycle_table[256] =
 {
-	  4, //  0: Reset - Initial Stack Pointer
-	  4, //  1: Reset - Initial Program Counter
-	 50, //  2: Bus Error
-	 50, //  3: Address Error
-	 34, //  4: Illegal Instruction
-	 38, //  5: Divide by Zero
-	 40, //  6: CHK
-	 34, //  7: TRAPV
-	 34, //  8: Privilege Violation
-	 34, //  9: Trace
-	  4, // 10:
-	  4, // 11:
-	  4, // 12: RESERVED
-	  4, // 13: Coprocessor Protocol Violation
-	  4, // 14: Format Error
-	 44, // 15: Uninitialized Interrupt
-	  4, // 16: RESERVED
-	  4, // 17: RESERVED
-	  4, // 18: RESERVED
-	  4, // 19: RESERVED
-	  4, // 20: RESERVED
-	  4, // 21: RESERVED
-	  4, // 22: RESERVED
-	  4, // 23: RESERVED
-	 44, // 24: Spurious Interrupt
-	 44, // 25: Level 1 Interrupt Autovector
-	 44, // 26: Level 2 Interrupt Autovector
-	 44, // 27: Level 3 Interrupt Autovector
-	 44, // 28: Level 4 Interrupt Autovector
-	 44, // 29: Level 5 Interrupt Autovector
-	 44, // 30: Level 6 Interrupt Autovector
-	 44, // 31: Level 7 Interrupt Autovector
-	 34, // 32: TRAP #0
-	 34, // 33: TRAP #1
-	 34, // 34: TRAP #2
-	 34, // 35: TRAP #3
-	 34, // 36: TRAP #4
-	 34, // 37: TRAP #5
-	 34, // 38: TRAP #6
-	 34, // 39: TRAP #7
-	 34, // 40: TRAP #8
-	 34, // 41: TRAP #9
-	 34, // 42: TRAP #10
-	 34, // 43: TRAP #11
-	 34, // 44: TRAP #12
-	 34, // 45: TRAP #13
-	 34, // 46: TRAP #14
-	 34, // 47: TRAP #15
-	  4, // 48: FP Branch or Set on Unknown Condition
-	  4, // 49: FP Inexact Result
-	  4, // 50: FP Divide by Zero
-	  4, // 51: FP Underflow
-	  4, // 52: FP Operand Error
-	  4, // 53: FP Overflow
-	  4, // 54: FP Signaling NAN
-	  4, // 55: FP Unimplemented Data Type
-	  4, // 56: MMU Configuration Error
-	  4, // 57: MMU Illegal Operation Error
-	  4, // 58: MMU Access Level Violation Error
-	  4, // 59: RESERVED
-	  4, // 60: RESERVED
-	  4, // 61: RESERVED
-	  4, // 62: RESERVED
-	  4, // 63: RESERVED
-	     // 64-255: User Defined
+	  4, /*  0: Reset - Initial Stack Pointer */
+	  4, /*  1: Reset - Initial Program Counter */
+	 50, /*  2: Bus Error */
+	 50, /*  3: Address Error */
+	 34, /*  4: Illegal Instruction */
+	 38, /*  5: Divide by Zero */
+	 40, /*  6: CHK */
+	 34, /*  7: TRAPV */
+	 34, /*  8: Privilege Violation */
+	 34, /*  9: Trace */
+	  4, /* 10: */
+	  4, /* 11: */
+	  4, /* 12: RESERVED */
+	  4, /* 13: Coprocessor Protocol Violation */
+	  4, /* 14: Format Error */
+	 44, /* 15: Uninitialized Interrupt */
+	  4, /* 16: RESERVED */
+	  4, /* 17: RESERVED */
+	  4, /* 18: RESERVED */
+	  4, /* 19: RESERVED */
+	  4, /* 20: RESERVED */
+	  4, /* 21: RESERVED */
+	  4, /* 22: RESERVED */
+	  4, /* 23: RESERVED */
+	 44, /* 24: Spurious Interrupt */
+	 44, /* 25: Level 1 Interrupt Autovector */
+	 44, /* 26: Level 2 Interrupt Autovector */
+	 44, /* 27: Level 3 Interrupt Autovector */
+	 44, /* 28: Level 4 Interrupt Autovector */
+	 44, /* 29: Level 5 Interrupt Autovector */
+	 44, /* 30: Level 6 Interrupt Autovector */
+	 44, /* 31: Level 7 Interrupt Autovector */
+	 34, /* 32: TRAP #0 */
+	 34, /* 33: TRAP #1 */
+	 34, /* 34: TRAP #2 */
+	 34, /* 35: TRAP #3 */
+	 34, /* 36: TRAP #4 */
+	 34, /* 37: TRAP #5 */
+	 34, /* 38: TRAP #6 */
+	 34, /* 39: TRAP #7 */
+	 34, /* 40: TRAP #8 */
+	 34, /* 41: TRAP #9 */
+	 34, /* 42: TRAP #10 */
+	 34, /* 43: TRAP #11 */
+	 34, /* 44: TRAP #12 */
+	 34, /* 45: TRAP #13 */
+	 34, /* 46: TRAP #14 */
+	 34, /* 47: TRAP #15 */
+	  4, /* 48: FP Branch or Set on Unknown Condition */
+	  4, /* 49: FP Inexact Result */
+	  4, /* 50: FP Divide by Zero */
+	  4, /* 51: FP Underflow */
+	  4, /* 52: FP Operand Error */
+	  4, /* 53: FP Overflow */
+	  4, /* 54: FP Signaling NAN */
+	  4, /* 55: FP Unimplemented Data Type */
+	  4, /* 56: MMU Configuration Error */
+	  4, /* 57: MMU Illegal Operation Error */
+	  4, /* 58: MMU Access Level Violation Error */
+	  4, /* 59: RESERVED */
+	  4, /* 60: RESERVED */
+	  4, /* 61: RESERVED */
+	  4, /* 62: RESERVED */
+	  4, /* 63: RESERVED */
+	     /* 64-255: User Defined */
 	  4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,
 	  4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,
 	  4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,
@@ -110,8 +111,8 @@ static const s32 c68k_exception_cycle_table[256] =
 	  4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4
 };
 
-// global variable
-///////////////////
+/* global variable */
+/*******************/
 
 #ifndef C68K_GEN
 
@@ -123,14 +124,14 @@ static void *JumpTable[0x10000];
 
 static u32 C68k_Initialised = 0;
 
-#endif  // C68K_GEN
+#endif  /* C68K_GEN */
 
 #ifdef NEOCD_HLE
 extern int img_display;
 #endif
 
-// include macro file
-//////////////////////
+/* include macro file */
+/**********************/
 
 #include "c68kmac.inc"
 
@@ -157,11 +158,11 @@ void TRACE(int PC,c68k_struc *CPU,int Opcode,int CCnt) {
     if (f) q68_trace((Q68State *)&state, f,
                      CPU->CycleToDo - CCnt, CPU->CycleToDo);
 }
-# endif  // TRACE_WITH_Q68
-#endif  // !C68K_GEN
+# endif  /* TRACE_WITH_Q68 */
+#endif  /* !C68K_GEN */
 
-// main exec function
-//////////////////////
+/* main exec function */
+/**********************/
 
 s32 FASTCALL C68k_Exec(c68k_struc *cpu, s32 cycle)
 {
@@ -170,16 +171,16 @@ s32 FASTCALL C68k_Exec(c68k_struc *cpu, s32 cycle)
     register c68k_struc *CPU asm ("ebx");
     register pointer PC asm ("esi");
     register s32 CCnt asm ("edi");
-//    register u32 Opcode asm ("edi");
-//    c68k_struc *CPU;
-//    u32 PC;
-//    s32 CCnt;
+/*    register u32 Opcode asm ("edi"); */
+/*    c68k_struc *CPU; */
+/*    u32 PC; */
+/*    s32 CCnt; */
     u32 Opcode;
 #else
-//    register c68k_struc *CPU asm ("r10");
-//    register u32 PC asm ("r11");
-//    register s32 CCnt asm ("r12");
-//    register u32 Opcode asm ("r13");
+/*    register c68k_struc *CPU asm ("r10"); */
+/*    register u32 PC asm ("r11"); */
+/*    register s32 CCnt asm ("r12"); */
+/*    register u32 Opcode asm ("r13"); */
     c68k_struc *CPU;
     pointer PC;
     s32 CCnt;

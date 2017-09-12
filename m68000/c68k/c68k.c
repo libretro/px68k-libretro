@@ -34,18 +34,18 @@
 
 #include "c68k.h"
 
-// shared global variable
-//////////////////////////
+/* shared global variable */
+/**************************/
 
 c68k_struc C68K;
 
-// include macro file
-//////////////////////
+/* include macro file */
+/**************************/
 
 #include "c68kmac.inc"
 
-// prototype
-/////////////
+/* prototype */
+/**************************/
 
 u32 FASTCALL C68k_Read_Dummy(const u32 adr);
 void FASTCALL C68k_Write_Dummy(const u32 adr, u32 data);
@@ -60,8 +60,8 @@ void C68k_Write_Long(c68k_struc *cpu, u32 adr, u32 data);
 s32  FASTCALL C68k_Interrupt_Ack_Dummy(s32 level);
 void FASTCALL C68k_Reset_Dummy(void);
 
-// core main functions
-///////////////////////
+/* core main functions */
+/**************************/
 
 void C68k_Init(c68k_struc *cpu, C68K_INT_CALLBACK *int_cb)
 {
@@ -77,7 +77,7 @@ void C68k_Init(c68k_struc *cpu, C68K_INT_CALLBACK *int_cb)
     else cpu->Interrupt_CallBack = C68k_Interrupt_Ack_Dummy;
     cpu->Reset_CallBack = C68k_Reset_Dummy;
 
-    // used to init JumpTable
+    /* used to init JumpTable */
     cpu->Status |= C68K_DISABLE;
     C68k_Exec(cpu, 0);
     
@@ -98,7 +98,7 @@ s32 FASTCALL C68k_Reset(c68k_struc *cpu)
     return cpu->Status;
 }
 
-/////////////////////////////////
+/**************************/
 
 void FASTCALL C68k_Set_IRQ(c68k_struc *cpu, s32 level)
 {
@@ -111,7 +111,7 @@ void FASTCALL C68k_Set_IRQ(c68k_struc *cpu, s32 level)
     cpu->Status &= ~(C68K_HALTED | C68K_WAITING);
 }
 
-/////////////////////////////////
+/**************************/
 
 s32 FASTCALL C68k_Get_CycleToDo(c68k_struc *cpu)
 {
@@ -144,8 +144,8 @@ void FASTCALL C68k_Add_Cycle(c68k_struc *cpu, s32 cycle)
     if (cpu->Status & C68K_RUNNING) cpu->CycleIO -= cycle;
 }
 
-// Read / Write dummy functions
-////////////////////////////////
+/* Read / Write dummy functions */
+/********************************/
 
 u32 FASTCALL C68k_Read_Dummy(UNUSED const u32 adr)
 {
@@ -159,7 +159,7 @@ void FASTCALL C68k_Write_Dummy(UNUSED const u32 adr, UNUSED u32 data)
 
 s32 FASTCALL C68k_Interrupt_Ack_Dummy(s32 level)
 {
-    // return vector
+    /* return vector */
     return (C68K_INTERRUPT_AUTOVECTOR_EX + level);
 }
 
@@ -168,8 +168,8 @@ void FASTCALL C68k_Reset_Dummy(void)
 
 }
 
-// Read / Write core functions
-///////////////////////////////
+/* Read / Write core functions */
+/*******************************/
 
 u32 C68k_Read_Byte(c68k_struc *cpu, u32 adr)
 {
@@ -211,8 +211,8 @@ void C68k_Write_Long(c68k_struc *cpu, u32 adr, u32 data)
 #endif
 }
 
-// setting core functions
-//////////////////////////
+/* setting core functions */
+/**************************/
 
 void C68k_Set_Fetch(c68k_struc *cpu, u32 low_adr, u32 high_adr, pointer fetch_adr)
 {
@@ -244,8 +244,8 @@ void C68k_Set_WriteW(c68k_struc *cpu, C68K_WRITE *Func)
     cpu->Write_Word = Func;
 }
 
-// externals main functions
-////////////////////////////
+/* externals main functions */
+/****************************/
 
 u32 C68k_Get_DReg(c68k_struc *cpu, u32 num)
 {

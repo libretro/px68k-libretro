@@ -2046,7 +2046,7 @@ case 0x7EFD:
 case 0x7EFE:
 case 0x7EFF:
 
-// MOVEQ
+/* MOVEQ */
 case 0x7000:
 {
 	u32 res;

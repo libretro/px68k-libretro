@@ -62,7 +62,7 @@ case 0xEA07:
 case 0xEC07:
 case 0xEE07:
 
-// ASRk
+/* ASRk */
 case 0xE000:
 {
 	u32 res;
@@ -144,7 +144,7 @@ case 0xEA47:
 case 0xEC47:
 case 0xEE47:
 
-// ASRk
+/* ASRk */
 case 0xE040:
 {
 	u32 res;
@@ -226,7 +226,7 @@ case 0xEA87:
 case 0xEC87:
 case 0xEE87:
 
-// ASRk
+/* ASRk */
 case 0xE080:
 {
 	u32 res;
@@ -308,7 +308,7 @@ case 0xEA0F:
 case 0xEC0F:
 case 0xEE0F:
 
-// LSRk
+/* LSRk */
 case 0xE008:
 {
 	u32 res;
@@ -389,7 +389,7 @@ case 0xEA4F:
 case 0xEC4F:
 case 0xEE4F:
 
-// LSRk
+/* LSRk */
 case 0xE048:
 {
 	u32 res;
@@ -470,7 +470,7 @@ case 0xEA8F:
 case 0xEC8F:
 case 0xEE8F:
 
-// LSRk
+/* LSRk */
 case 0xE088:
 {
 	u32 res;
@@ -551,7 +551,7 @@ case 0xEA17:
 case 0xEC17:
 case 0xEE17:
 
-// ROXRk
+/* ROXRk */
 case 0xE010:
 {
 	u32 res;
@@ -634,7 +634,7 @@ case 0xEA57:
 case 0xEC57:
 case 0xEE57:
 
-// ROXRk
+/* ROXRk */
 case 0xE050:
 {
 	u32 res;
@@ -717,7 +717,7 @@ case 0xEA97:
 case 0xEC97:
 case 0xEE97:
 
-// ROXRk
+/* ROXRk */
 case 0xE090:
 {
 	u32 res;
@@ -801,7 +801,7 @@ case 0xEA1F:
 case 0xEC1F:
 case 0xEE1F:
 
-// RORk
+/* RORk */
 case 0xE018:
 {
 	u32 res;
@@ -883,7 +883,7 @@ case 0xEA5F:
 case 0xEC5F:
 case 0xEE5F:
 
-// RORk
+/* RORk */
 case 0xE058:
 {
 	u32 res;
@@ -965,7 +965,7 @@ case 0xEA9F:
 case 0xEC9F:
 case 0xEE9F:
 
-// RORk
+/* RORk */
 case 0xE098:
 {
 	u32 res;
@@ -1047,7 +1047,7 @@ case 0xEB07:
 case 0xED07:
 case 0xEF07:
 
-// ASLk
+/* ASLk */
 case 0xE100:
 {
 	u32 res;
@@ -1148,7 +1148,7 @@ case 0xEB47:
 case 0xED47:
 case 0xEF47:
 
-// ASLk
+/* ASLk */
 case 0xE140:
 {
 	u32 res;
@@ -1235,7 +1235,7 @@ case 0xEB87:
 case 0xED87:
 case 0xEF87:
 
-// ASLk
+/* ASLk */
 case 0xE180:
 {
 	u32 res;
@@ -1322,7 +1322,7 @@ case 0xEB0F:
 case 0xED0F:
 case 0xEF0F:
 
-// LSLk
+/* LSLk */
 case 0xE108:
 {
 	u32 res;
@@ -1404,7 +1404,7 @@ case 0xEB4F:
 case 0xED4F:
 case 0xEF4F:
 
-// LSLk
+/* LSLk */
 case 0xE148:
 {
 	u32 res;
@@ -1486,7 +1486,7 @@ case 0xEB8F:
 case 0xED8F:
 case 0xEF8F:
 
-// LSLk
+/* LSLk */
 case 0xE188:
 {
 	u32 res;
@@ -1568,7 +1568,7 @@ case 0xEB17:
 case 0xED17:
 case 0xEF17:
 
-// ROXLk
+/* ROXLk */
 case 0xE110:
 {
 	u32 res;
@@ -1651,7 +1651,7 @@ case 0xEB57:
 case 0xED57:
 case 0xEF57:
 
-// ROXLk
+/* ROXLk */
 case 0xE150:
 {
 	u32 res;
@@ -1734,7 +1734,7 @@ case 0xEB97:
 case 0xED97:
 case 0xEF97:
 
-// ROXLk
+/* ROXLk */
 case 0xE190:
 {
 	u32 res;
@@ -1818,7 +1818,7 @@ case 0xEB1F:
 case 0xED1F:
 case 0xEF1F:
 
-// ROLk
+/* ROLk */
 case 0xE118:
 {
 	u32 res;
@@ -1900,7 +1900,7 @@ case 0xEB5F:
 case 0xED5F:
 case 0xEF5F:
 
-// ROLk
+/* ROLk */
 case 0xE158:
 {
 	u32 res;
@@ -1982,7 +1982,7 @@ case 0xEB9F:
 case 0xED9F:
 case 0xEF9F:
 
-// ROLk
+/* ROLk */
 case 0xE198:
 {
 	u32 res;
@@ -2064,7 +2064,7 @@ case 0xEA27:
 case 0xEC27:
 case 0xEE27:
 
-// ASRD
+/* ASRD */
 case 0xE020:
 {
 	u32 res;
@@ -2179,7 +2179,7 @@ case 0xEA67:
 case 0xEC67:
 case 0xEE67:
 
-// ASRD
+/* ASRD */
 case 0xE060:
 {
 	u32 res;
@@ -2294,7 +2294,7 @@ case 0xEAA7:
 case 0xECA7:
 case 0xEEA7:
 
-// ASRD
+/* ASRD */
 case 0xE0A0:
 {
 	u32 res;
@@ -2409,7 +2409,7 @@ case 0xEA2F:
 case 0xEC2F:
 case 0xEE2F:
 
-// LSRD
+/* LSRD */
 case 0xE028:
 {
 	u32 res;
@@ -2510,7 +2510,7 @@ case 0xEA6F:
 case 0xEC6F:
 case 0xEE6F:
 
-// LSRD
+/* LSRD */
 case 0xE068:
 {
 	u32 res;
@@ -2611,7 +2611,7 @@ case 0xEAAF:
 case 0xECAF:
 case 0xEEAF:
 
-// LSRD
+/* LSRD */
 case 0xE0A8:
 {
 	u32 res;
@@ -2714,7 +2714,7 @@ case 0xEA37:
 case 0xEC37:
 case 0xEE37:
 
-// ROXRD
+/* ROXRD */
 case 0xE030:
 {
 	u32 res;
@@ -2808,7 +2808,7 @@ case 0xEA77:
 case 0xEC77:
 case 0xEE77:
 
-// ROXRD
+/* ROXRD */
 case 0xE070:
 {
 	u32 res;
@@ -2902,7 +2902,7 @@ case 0xEAB7:
 case 0xECB7:
 case 0xEEB7:
 
-// ROXRD
+/* ROXRD */
 case 0xE0B0:
 {
 	u32 res;
@@ -3001,7 +3001,7 @@ case 0xEA3F:
 case 0xEC3F:
 case 0xEE3F:
 
-// RORD
+/* RORD */
 case 0xE038:
 {
 	u32 res;
@@ -3094,7 +3094,7 @@ case 0xEA7F:
 case 0xEC7F:
 case 0xEE7F:
 
-// RORD
+/* RORD */
 case 0xE078:
 {
 	u32 res;
@@ -3187,7 +3187,7 @@ case 0xEABF:
 case 0xECBF:
 case 0xEEBF:
 
-// RORD
+/* RORD */
 case 0xE0B8:
 {
 	u32 res;
@@ -3280,7 +3280,7 @@ case 0xEB27:
 case 0xED27:
 case 0xEF27:
 
-// ASLD
+/* ASLD */
 case 0xE120:
 {
 	u32 res;
@@ -3390,7 +3390,7 @@ case 0xEB67:
 case 0xED67:
 case 0xEF67:
 
-// ASLD
+/* ASLD */
 case 0xE160:
 {
 	u32 res;
@@ -3500,7 +3500,7 @@ case 0xEBA7:
 case 0xEDA7:
 case 0xEFA7:
 
-// ASLD
+/* ASLD */
 case 0xE1A0:
 {
 	u32 res;
@@ -3610,7 +3610,7 @@ case 0xEB2F:
 case 0xED2F:
 case 0xEF2F:
 
-// LSLD
+/* LSLD */
 case 0xE128:
 {
 	u32 res;
@@ -3712,7 +3712,7 @@ case 0xEB6F:
 case 0xED6F:
 case 0xEF6F:
 
-// LSLD
+/* LSLD */
 case 0xE168:
 {
 	u32 res;
@@ -3814,7 +3814,7 @@ case 0xEBAF:
 case 0xEDAF:
 case 0xEFAF:
 
-// LSLD
+/* LSLD */
 case 0xE1A8:
 {
 	u32 res;
@@ -3918,7 +3918,7 @@ case 0xEB37:
 case 0xED37:
 case 0xEF37:
 
-// ROXLD
+/* ROXLD */
 case 0xE130:
 {
 	u32 res;
@@ -4012,7 +4012,7 @@ case 0xEB77:
 case 0xED77:
 case 0xEF77:
 
-// ROXLD
+/* ROXLD */
 case 0xE170:
 {
 	u32 res;
@@ -4106,7 +4106,7 @@ case 0xEBB7:
 case 0xEDB7:
 case 0xEFB7:
 
-// ROXLD
+/* ROXLD */
 case 0xE1B0:
 {
 	u32 res;
@@ -4205,7 +4205,7 @@ case 0xEB3F:
 case 0xED3F:
 case 0xEF3F:
 
-// ROLD
+/* ROLD */
 case 0xE138:
 {
 	u32 res;
@@ -4305,7 +4305,7 @@ case 0xEB7F:
 case 0xED7F:
 case 0xEF7F:
 
-// ROLD
+/* ROLD */
 case 0xE178:
 {
 	u32 res;
@@ -4405,7 +4405,7 @@ case 0xEBBF:
 case 0xEDBF:
 case 0xEFBF:
 
-// ROLD
+/* ROLD */
 case 0xE1B8:
 {
 	u32 res;
@@ -4449,7 +4449,7 @@ case 0xE0D5:
 case 0xE0D6:
 case 0xE0D7:
 
-// ASR
+/* ASR */
 case 0xE0D0:
 {
 	u32 adr;
@@ -4474,7 +4474,7 @@ case 0xE0DC:
 case 0xE0DD:
 case 0xE0DE:
 
-// ASR
+/* ASR */
 case 0xE0D8:
 {
 	u32 adr;
@@ -4500,7 +4500,7 @@ case 0xE0E4:
 case 0xE0E5:
 case 0xE0E6:
 
-// ASR
+/* ASR */
 case 0xE0E0:
 {
 	u32 adr;
@@ -4527,7 +4527,7 @@ case 0xE0ED:
 case 0xE0EE:
 case 0xE0EF:
 
-// ASR
+/* ASR */
 case 0xE0E8:
 {
 	u32 adr;
@@ -4554,7 +4554,7 @@ case 0xE0F5:
 case 0xE0F6:
 case 0xE0F7:
 
-// ASR
+/* ASR */
 case 0xE0F0:
 {
 	u32 adr;
@@ -4574,7 +4574,7 @@ case 0xE0F0:
 }
 RET(18)
 
-// ASR
+/* ASR */
 case 0xE0F8:
 {
 	u32 adr;
@@ -4594,7 +4594,7 @@ case 0xE0F8:
 }
 RET(16)
 
-// ASR
+/* ASR */
 case 0xE0F9:
 {
 	u32 adr;
@@ -4614,7 +4614,7 @@ case 0xE0F9:
 }
 RET(20)
 
-// ASR
+/* ASR */
 case 0xE0DF:
 {
 	u32 adr;
@@ -4634,7 +4634,7 @@ case 0xE0DF:
 }
 RET(12)
 
-// ASR
+/* ASR */
 case 0xE0E7:
 {
 	u32 adr;
@@ -4661,7 +4661,7 @@ case 0xE2D5:
 case 0xE2D6:
 case 0xE2D7:
 
-// LSR
+/* LSR */
 case 0xE2D0:
 {
 	u32 adr;
@@ -4685,7 +4685,7 @@ case 0xE2DC:
 case 0xE2DD:
 case 0xE2DE:
 
-// LSR
+/* LSR */
 case 0xE2D8:
 {
 	u32 adr;
@@ -4710,7 +4710,7 @@ case 0xE2E4:
 case 0xE2E5:
 case 0xE2E6:
 
-// LSR
+/* LSR */
 case 0xE2E0:
 {
 	u32 adr;
@@ -4736,7 +4736,7 @@ case 0xE2ED:
 case 0xE2EE:
 case 0xE2EF:
 
-// LSR
+/* LSR */
 case 0xE2E8:
 {
 	u32 adr;
@@ -4762,7 +4762,7 @@ case 0xE2F5:
 case 0xE2F6:
 case 0xE2F7:
 
-// LSR
+/* LSR */
 case 0xE2F0:
 {
 	u32 adr;
@@ -4781,7 +4781,7 @@ case 0xE2F0:
 }
 RET(18)
 
-// LSR
+/* LSR */
 case 0xE2F8:
 {
 	u32 adr;
@@ -4800,7 +4800,7 @@ case 0xE2F8:
 }
 RET(16)
 
-// LSR
+/* LSR */
 case 0xE2F9:
 {
 	u32 adr;
@@ -4819,7 +4819,7 @@ case 0xE2F9:
 }
 RET(20)
 
-// LSR
+/* LSR */
 case 0xE2DF:
 {
 	u32 adr;
@@ -4838,7 +4838,7 @@ case 0xE2DF:
 }
 RET(12)
 
-// LSR
+/* LSR */
 case 0xE2E7:
 {
 	u32 adr;
@@ -4864,7 +4864,7 @@ case 0xE4D5:
 case 0xE4D6:
 case 0xE4D7:
 
-// ROXR
+/* ROXR */
 case 0xE4D0:
 {
 	u32 adr;
@@ -4889,7 +4889,7 @@ case 0xE4DC:
 case 0xE4DD:
 case 0xE4DE:
 
-// ROXR
+/* ROXR */
 case 0xE4D8:
 {
 	u32 adr;
@@ -4915,7 +4915,7 @@ case 0xE4E4:
 case 0xE4E5:
 case 0xE4E6:
 
-// ROXR
+/* ROXR */
 case 0xE4E0:
 {
 	u32 adr;
@@ -4942,7 +4942,7 @@ case 0xE4ED:
 case 0xE4EE:
 case 0xE4EF:
 
-// ROXR
+/* ROXR */
 case 0xE4E8:
 {
 	u32 adr;
@@ -4969,7 +4969,7 @@ case 0xE4F5:
 case 0xE4F6:
 case 0xE4F7:
 
-// ROXR
+/* ROXR */
 case 0xE4F0:
 {
 	u32 adr;
@@ -4989,7 +4989,7 @@ case 0xE4F0:
 }
 RET(18)
 
-// ROXR
+/* ROXR */
 case 0xE4F8:
 {
 	u32 adr;
@@ -5009,7 +5009,7 @@ case 0xE4F8:
 }
 RET(16)
 
-// ROXR
+/* ROXR */
 case 0xE4F9:
 {
 	u32 adr;
@@ -5029,7 +5029,7 @@ case 0xE4F9:
 }
 RET(20)
 
-// ROXR
+/* ROXR */
 case 0xE4DF:
 {
 	u32 adr;
@@ -5049,7 +5049,7 @@ case 0xE4DF:
 }
 RET(12)
 
-// ROXR
+/* ROXR */
 case 0xE4E7:
 {
 	u32 adr;
@@ -5076,7 +5076,7 @@ case 0xE6D5:
 case 0xE6D6:
 case 0xE6D7:
 
-// ROR
+/* ROR */
 case 0xE6D0:
 {
 	u32 adr;
@@ -5101,7 +5101,7 @@ case 0xE6DC:
 case 0xE6DD:
 case 0xE6DE:
 
-// ROR
+/* ROR */
 case 0xE6D8:
 {
 	u32 adr;
@@ -5127,7 +5127,7 @@ case 0xE6E4:
 case 0xE6E5:
 case 0xE6E6:
 
-// ROR
+/* ROR */
 case 0xE6E0:
 {
 	u32 adr;
@@ -5154,7 +5154,7 @@ case 0xE6ED:
 case 0xE6EE:
 case 0xE6EF:
 
-// ROR
+/* ROR */
 case 0xE6E8:
 {
 	u32 adr;
@@ -5181,7 +5181,7 @@ case 0xE6F5:
 case 0xE6F6:
 case 0xE6F7:
 
-// ROR
+/* ROR */
 case 0xE6F0:
 {
 	u32 adr;
@@ -5201,7 +5201,7 @@ case 0xE6F0:
 }
 RET(18)
 
-// ROR
+/* ROR */
 case 0xE6F8:
 {
 	u32 adr;
@@ -5221,7 +5221,7 @@ case 0xE6F8:
 }
 RET(16)
 
-// ROR
+/* ROR */
 case 0xE6F9:
 {
 	u32 adr;
@@ -5241,7 +5241,7 @@ case 0xE6F9:
 }
 RET(20)
 
-// ROR
+/* ROR */
 case 0xE6DF:
 {
 	u32 adr;
@@ -5261,7 +5261,7 @@ case 0xE6DF:
 }
 RET(12)
 
-// ROR
+/* ROR */
 case 0xE6E7:
 {
 	u32 adr;
@@ -5288,7 +5288,7 @@ case 0xE1D5:
 case 0xE1D6:
 case 0xE1D7:
 
-// ASL
+/* ASL */
 case 0xE1D0:
 {
 	u32 adr;
@@ -5313,7 +5313,7 @@ case 0xE1DC:
 case 0xE1DD:
 case 0xE1DE:
 
-// ASL
+/* ASL */
 case 0xE1D8:
 {
 	u32 adr;
@@ -5339,7 +5339,7 @@ case 0xE1E4:
 case 0xE1E5:
 case 0xE1E6:
 
-// ASL
+/* ASL */
 case 0xE1E0:
 {
 	u32 adr;
@@ -5366,7 +5366,7 @@ case 0xE1ED:
 case 0xE1EE:
 case 0xE1EF:
 
-// ASL
+/* ASL */
 case 0xE1E8:
 {
 	u32 adr;
@@ -5393,7 +5393,7 @@ case 0xE1F5:
 case 0xE1F6:
 case 0xE1F7:
 
-// ASL
+/* ASL */
 case 0xE1F0:
 {
 	u32 adr;
@@ -5413,7 +5413,7 @@ case 0xE1F0:
 }
 RET(18)
 
-// ASL
+/* ASL */
 case 0xE1F8:
 {
 	u32 adr;
@@ -5433,7 +5433,7 @@ case 0xE1F8:
 }
 RET(16)
 
-// ASL
+/* ASL */
 case 0xE1F9:
 {
 	u32 adr;
@@ -5453,7 +5453,7 @@ case 0xE1F9:
 }
 RET(20)
 
-// ASL
+/* ASL */
 case 0xE1DF:
 {
 	u32 adr;
@@ -5473,7 +5473,7 @@ case 0xE1DF:
 }
 RET(12)
 
-// ASL
+/* ASL */
 case 0xE1E7:
 {
 	u32 adr;
@@ -5500,7 +5500,7 @@ case 0xE3D5:
 case 0xE3D6:
 case 0xE3D7:
 
-// LSL
+/* LSL */
 case 0xE3D0:
 {
 	u32 adr;
@@ -5525,7 +5525,7 @@ case 0xE3DC:
 case 0xE3DD:
 case 0xE3DE:
 
-// LSL
+/* LSL */
 case 0xE3D8:
 {
 	u32 adr;
@@ -5551,7 +5551,7 @@ case 0xE3E4:
 case 0xE3E5:
 case 0xE3E6:
 
-// LSL
+/* LSL */
 case 0xE3E0:
 {
 	u32 adr;
@@ -5578,7 +5578,7 @@ case 0xE3ED:
 case 0xE3EE:
 case 0xE3EF:
 
-// LSL
+/* LSL */
 case 0xE3E8:
 {
 	u32 adr;
@@ -5605,7 +5605,7 @@ case 0xE3F5:
 case 0xE3F6:
 case 0xE3F7:
 
-// LSL
+/* LSL */
 case 0xE3F0:
 {
 	u32 adr;
@@ -5625,7 +5625,7 @@ case 0xE3F0:
 }
 RET(18)
 
-// LSL
+/* LSL */
 case 0xE3F8:
 {
 	u32 adr;
@@ -5645,7 +5645,7 @@ case 0xE3F8:
 }
 RET(16)
 
-// LSL
+/* LSL */
 case 0xE3F9:
 {
 	u32 adr;
@@ -5665,7 +5665,7 @@ case 0xE3F9:
 }
 RET(20)
 
-// LSL
+/* LSL */
 case 0xE3DF:
 {
 	u32 adr;
@@ -5685,7 +5685,7 @@ case 0xE3DF:
 }
 RET(12)
 
-// LSL
+/* LSL */
 case 0xE3E7:
 {
 	u32 adr;
@@ -5712,7 +5712,7 @@ case 0xE5D5:
 case 0xE5D6:
 case 0xE5D7:
 
-// ROXL
+/* ROXL */
 case 0xE5D0:
 {
 	u32 adr;
@@ -5737,7 +5737,7 @@ case 0xE5DC:
 case 0xE5DD:
 case 0xE5DE:
 
-// ROXL
+/* ROXL */
 case 0xE5D8:
 {
 	u32 adr;
@@ -5763,7 +5763,7 @@ case 0xE5E4:
 case 0xE5E5:
 case 0xE5E6:
 
-// ROXL
+/* ROXL */
 case 0xE5E0:
 {
 	u32 adr;
@@ -5790,7 +5790,7 @@ case 0xE5ED:
 case 0xE5EE:
 case 0xE5EF:
 
-// ROXL
+/* ROXL */
 case 0xE5E8:
 {
 	u32 adr;
@@ -5817,7 +5817,7 @@ case 0xE5F5:
 case 0xE5F6:
 case 0xE5F7:
 
-// ROXL
+/* ROXL */
 case 0xE5F0:
 {
 	u32 adr;
@@ -5837,7 +5837,7 @@ case 0xE5F0:
 }
 RET(18)
 
-// ROXL
+/* ROXL */
 case 0xE5F8:
 {
 	u32 adr;
@@ -5857,7 +5857,7 @@ case 0xE5F8:
 }
 RET(16)
 
-// ROXL
+/* ROXL */
 case 0xE5F9:
 {
 	u32 adr;
@@ -5877,7 +5877,7 @@ case 0xE5F9:
 }
 RET(20)
 
-// ROXL
+/* ROXL */
 case 0xE5DF:
 {
 	u32 adr;
@@ -5897,7 +5897,7 @@ case 0xE5DF:
 }
 RET(12)
 
-// ROXL
+/* ROXL */
 case 0xE5E7:
 {
 	u32 adr;
@@ -5924,7 +5924,7 @@ case 0xE7D5:
 case 0xE7D6:
 case 0xE7D7:
 
-// ROL
+/* ROL */
 case 0xE7D0:
 {
 	u32 adr;
@@ -5949,7 +5949,7 @@ case 0xE7DC:
 case 0xE7DD:
 case 0xE7DE:
 
-// ROL
+/* ROL */
 case 0xE7D8:
 {
 	u32 adr;
@@ -5975,7 +5975,7 @@ case 0xE7E4:
 case 0xE7E5:
 case 0xE7E6:
 
-// ROL
+/* ROL */
 case 0xE7E0:
 {
 	u32 adr;
@@ -6002,7 +6002,7 @@ case 0xE7ED:
 case 0xE7EE:
 case 0xE7EF:
 
-// ROL
+/* ROL */
 case 0xE7E8:
 {
 	u32 adr;
@@ -6029,7 +6029,7 @@ case 0xE7F5:
 case 0xE7F6:
 case 0xE7F7:
 
-// ROL
+/* ROL */
 case 0xE7F0:
 {
 	u32 adr;
@@ -6049,7 +6049,7 @@ case 0xE7F0:
 }
 RET(18)
 
-// ROL
+/* ROL */
 case 0xE7F8:
 {
 	u32 adr;
@@ -6069,7 +6069,7 @@ case 0xE7F8:
 }
 RET(16)
 
-// ROL
+/* ROL */
 case 0xE7F9:
 {
 	u32 adr;
@@ -6089,7 +6089,7 @@ case 0xE7F9:
 }
 RET(20)
 
-// ROL
+/* ROL */
 case 0xE7DF:
 {
 	u32 adr;
@@ -6109,7 +6109,7 @@ case 0xE7DF:
 }
 RET(12)
 
-// ROL
+/* ROL */
 case 0xE7E7:
 {
 	u32 adr;

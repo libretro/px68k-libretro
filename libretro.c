@@ -324,7 +324,7 @@ void retro_set_controller_descriptors()
    }
    else if (joypad1 || joypad2)
    {
-      for (unsigned i = 0; i < size; i++)
+      for (i = 0; i < size; i++)
       {
          if (joypad1)
             inputDescriptors[i] = inputDescriptorsP1[i];

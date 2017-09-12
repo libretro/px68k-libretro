@@ -4094,7 +4094,7 @@ case 0xFFFD:
 case 0xFFFE:
 case 0xFFFF:
 
-// 1111
+/* 1111 */
 case 0xF000:
 {
 	u32 res;

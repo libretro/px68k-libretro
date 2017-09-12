@@ -236,10 +236,10 @@ static void Gen0xFAC3(void);
 #endif
 
 static c68k_op_info_struc op_info_table[OP_INFO_TABLE_LEN] =
-{   //                                                       DAAAAddaaddi    DAAAAddaaddi
-    //                                                         iid181318m      iid181318m
-    //                              siz siz eam ear eam ear    nne6A626Pm      nne6A626Pm
-    //  opname      opbase  opmask  typ sft  1   1   2   2     dccAX  PX       dccAX  PX    GenFunc
+{   /*                                                       DAAAAddaaddi    DAAAAddaaddi */
+    /*                                                         iid181318m      iid181318m */
+    /*                              siz siz eam ear eam ear    nne6A626Pm      nne6A626Pm */
+    /*  opname      opbase  opmask  typ sft  1   1   2   2     dccAX  PX       dccAX  PX    GenFunc */
     {   "1010",     0xA000, 0xF000, 0,  0,  -1, -1, -1, -1, "------------", "------------", Gen1010     },
     {   "1111",     0xF000, 0xF000, 0,  0,  -1, -1, -1, -1, "------------", "------------", Gen1111     },
     {   "ORI",      0x0000, 0xFF00, 2,  6,  3,  0,  -1, -1, "o-ooooooo---", "------------", GenORI      },
@@ -427,11 +427,11 @@ static u16 op_jump_table[0x10000];
 #endif
 #endif
 
-// files where code is generated
+/* files where code is generated */
 static FILE* ini_file = NULL;
 static FILE* opcode_file = NULL;
 
-// current generated instruction infos
+/* current generated instruction infos */
 static c68k_op_info_struc *current_op;
 static u32 current_ea;
 static u32 current_eam;
@@ -514,8 +514,8 @@ static const u32 movem_cycle_table[16] =
     0, 0, 0, 0
 };
 
-// general emitter function
-////////////////////////////
+/* general emitter function */
+/*==========================*/
 
 static u32 prepare_generate(void)
 {
@@ -660,7 +660,7 @@ static void start_op(u32 op, int v)
     current_io_sav = 0;
     current_cycle = 0;
 
-    wf_op("\n// %s\n", current_op->op_name);
+    wf_op("\n/* %s */\n", current_op->op_name);
 #ifndef C68K_NO_JUMP_TABLE
     wf_op("OP_0x%.4X:\n", op & 0xFFFF);
 #else
@@ -687,7 +687,7 @@ static void adds_CCnt(char *str)
     wf_op("\tCCnt -= %s;\n", str);
 }
 
-#if 0  // FIXME: warning removal
+#if 0  /* FIXME: warning removal */
 static void sub_CCnt(u32 cycle)
 {
     if (current_io_sav) wf_op("\tPOST_IO\n");
@@ -754,8 +754,8 @@ static void mem_op(char* fmt, ...)
 	va_end(args);
 }
 
-// flag emitter function
-/////////////////////////
+/* flag emitter function    */
+/*==========================*/
 
 static void set_logic_flag(void)
 {
@@ -820,7 +820,7 @@ static void set_add_flag(void)
         case SIZE_LONG:
             wf_op("\tCPU->flag_notZ = res;\n");
 	        wf_op("\tCPU->flag_X = CPU->flag_C = (((u32)src & (u32)dst & 1) + ((u32)src >> 1) + ((u32)dst >> 1)) >> 23;\n");
-//            wf_op("\tCPU->flag_X = CPU->flag_C = ((src & dst) | (~res & (src | dst))) >> 23;\n");
+            /* wf_op("\tCPU->flag_X = CPU->flag_C = ((src & dst) | (~res & (src | dst))) >> 23;\n"); */
         	wf_op("\tCPU->flag_V = (((u32)src ^ res) & ((u32)dst ^ res)) >> 24;\n");
             wf_op("\tCPU->flag_N = res >> 24;\n");
         	break;
@@ -845,9 +845,9 @@ static void set_addx_flag(void)
 
         case SIZE_LONG:
             wf_op("\tCPU->flag_notZ |= res;\n");
-//	        wf_op("\tCPU->flag_X = CPU->flag_C = (((u32)src & dst & 1) + ((u32)src >> 1) + ((u32)dst >> 1)) >> 23;\n"); //ORIGIN
+	        /* wf_op("\tCPU->flag_X = CPU->flag_C = (((u32)src & dst & 1) + ((u32)src >> 1) + ((u32)dst >> 1)) >> 23;\n"); */ /* ORIGIN */
 	        wf_op("\tCPU->flag_X = CPU->flag_C = (((((u32)src & 1) + ((u32)dst & 1) + (((CPU->flag_X >> 8) & 1) & 1)) >> 1) + ((u32)src >> 1) + ((u32)dst >> 1)) >> 23;\n");
-//            wf_op("\tCPU->flag_X = CPU->flag_C = ((src & dst) | (~res & (src | dst))) >> 23;\n");
+            /* wf_op("\tCPU->flag_X = CPU->flag_C = ((src & dst) | (~res & (src | dst))) >> 23;\n"); */
         	wf_op("\tCPU->flag_V = (((u32)src ^ res) & ((u32)dst ^ res)) >> 24;\n");
             wf_op("\tCPU->flag_N = res >> 24;\n");
         	break;
@@ -873,7 +873,7 @@ static void set_sub_flag(void)
         case SIZE_LONG:
             wf_op("\tCPU->flag_notZ = res;\n");
 	        wf_op("\tCPU->flag_X = CPU->flag_C = (((u32)src & res & 1) + ((u32)src >> 1) + (res >> 1)) >> 23;\n");
-//            wf_op("\tCPU->flag_X = CPU->flag_C = ((src & res) | (~dst & (src | res))) >> 23;\n");
+            /* wf_op("\tCPU->flag_X = CPU->flag_C = ((src & res) | (~dst & (src | res))) >> 23;\n"); */
         	wf_op("\tCPU->flag_V = (((u32)src ^ (u32)dst) & (res ^ (u32)dst)) >> 24;\n");
             wf_op("\tCPU->flag_N = res >> 24;\n");
         	break;
@@ -898,9 +898,9 @@ static void set_subx_flag(void)
 
         case SIZE_LONG:
             wf_op("\tCPU->flag_notZ |= res;\n");
-//	        wf_op("\tCPU->flag_X = CPU->flag_C = (((u32)src & res & 1) + ((u32)src >> 1) + (res >> 1)) >> 23;\n"); //ORIGIN
+	        /* wf_op("\tCPU->flag_X = CPU->flag_C = (((u32)src & res & 1) + ((u32)src >> 1) + (res >> 1)) >> 23;\n"); */ /* ORIGIN */
 	        wf_op("\tCPU->flag_X = CPU->flag_C = (((((u32)src & 1) + (res & 1) + (((CPU->flag_X >> 8) & 1) & 1)) >> 1) + ((u32)src >> 1) + (res >> 1)) >> 23;\n");
-//            wf_op("\tCPU->flag_X = CPU->flag_C = ((src & res) | (~dst & (src | res))) >> 23;\n");
+            /* wf_op("\tCPU->flag_X = CPU->flag_C = ((src & res) | (~dst & (src | res))) >> 23;\n"); */
         	wf_op("\tCPU->flag_V = (((u32)src ^ (u32)dst) & (res ^ (u32)dst)) >> 24;\n");
             wf_op("\tCPU->flag_N = res >> 24;\n");
         	break;
@@ -926,7 +926,7 @@ static void set_cmp_flag(void)
         case SIZE_LONG:
             wf_op("\tCPU->flag_notZ = res;\n");
 	        wf_op("\tCPU->flag_C = (((u32)src & res & 1) + ((u32)src >> 1) + (res >> 1)) >> 23;\n");
-//            wf_op("\tCPU->flag_C = ((src & res) | (~dst & (src | res))) >> 23;\n");
+            /* wf_op("\tCPU->flag_C = ((src & res) | (~dst & (src | res))) >> 23;\n"); */
         	wf_op("\tCPU->flag_V = (((u32)src ^ (u32)dst) & (res ^ (u32)dst)) >> 24;\n");
             wf_op("\tCPU->flag_N = res >> 24;\n");
         	break;
@@ -953,7 +953,7 @@ static void set_negx_flag(void)
             wf_op("\tCPU->flag_notZ |= res;\n");
             wf_op("\tCPU->flag_V = (res & (u32)src) >> 24;\n");
 	        wf_op("\tCPU->flag_X = CPU->flag_C = (((u32)src & res & 1) + ((u32)src >> 1) + (res >> 1)) >> 23;\n");
-//            wf_op("\tCPU->flag_X = CPU->flag_C = (((u32)src & res) | (~(u32)dst & ((u32)src | res))) >> 23;\n");
+            /* wf_op("\tCPU->flag_X = CPU->flag_C = (((u32)src & res) | (~(u32)dst & ((u32)src | res))) >> 23;\n"); */
             wf_op("\tCPU->flag_N = res >> 24;\n");
         	break;
 	}
@@ -979,7 +979,7 @@ static void set_neg_flag(void)
             wf_op("\tCPU->flag_notZ = res;\n");
             wf_op("\tCPU->flag_V = (res & (u32)src) >> 24;\n");
 	        wf_op("\tCPU->flag_X = CPU->flag_C = (((u32)src & res & 1) + ((u32)src >> 1) + (res >> 1)) >> 23;\n");
-//            wf_op("\tCPU->flag_X = CPU->flag_C = ((src & res) | (~dst & (src | res))) >> 23;\n");
+            /* wf_op("\tCPU->flag_X = CPU->flag_C = ((src & res) | (~dst & (src | res))) >> 23;\n"); */
             wf_op("\tCPU->flag_N = res >> 24;\n");
         	break;
 	}
@@ -1059,8 +1059,8 @@ static char* get_cond_as_cond(u32 cond, u32 notvar)
     return current_cond_char;
 }
 
-// effective address related function
-//////////////////////////////////////
+/* effective address related function */
+/*====================================*/
 
 static u32 has_ea(u32 ea)
 {
@@ -1078,7 +1078,7 @@ static u32 has_ea2(u32 ea)
     return 0;
 }
 
-#if 0  // FIXME: warning removal
+#if 0  /* FIXME: warning removal */
 static u32 _eamreg_to_ea(u32 eam, u32 reg)
 {
     if ((eam > 7) || (reg > 7)) return EA_ILLEGAL;
@@ -1129,11 +1129,11 @@ static void _ea_calc_free(u32 ea, u32 rsft)
   	switch (ea)
 	{
 		case EA_DREG:
-//            wf_op("\tadr = (u32)(&CPU->D[(Opcode >> %d) & 7]);\n", rsft);
+            /* wf_op("\tadr = (u32)(&CPU->D[(Opcode >> %d) & 7]);\n", rsft); */
 			break;
 
 		case EA_AREG:
-//            wf_op("\tadr = (u32)(&CPU->A[(Opcode >> %d) & 7]);\n", rsft);
+            /* wf_op("\tadr = (u32)(&CPU->A[(Opcode >> %d) & 7]);\n", rsft); */
 			break;
 
 		case EA_AIND:
@@ -1219,11 +1219,11 @@ static void _ea_calc(u32 ea, u32 rsft)
   	switch (ea)
 	{
 		case EA_DREG:
-//            wf_op("\tadr = (u32)(&CPU->D[(Opcode >> %d) & 7]);\n", rsft);
+            /* wf_op("\tadr = (u32)(&CPU->D[(Opcode >> %d) & 7]);\n", rsft); */
 			break;
 
 		case EA_AREG:
-//            wf_op("\tadr = (u32)(&CPU->A[(Opcode >> %d) & 7]);\n", rsft);
+            /* wf_op("\tadr = (u32)(&CPU->A[(Opcode >> %d) & 7]);\n", rsft); */
 			break;
 
 		case EA_IMM:
@@ -1325,7 +1325,7 @@ static void _ea_read_(u32 ea, u32 rsft, char dest[4])
 		case EA_AREG:
             if (current_size == SIZE_BYTE)
             {
-                wf_op("\t// can't read byte from Ax registers !\n");
+                wf_op("\t/* can't read byte from Ax registers ! */\n");
                 wf_op("\tCPU->Status |= C68K_FAULTED;\n");
                 wf_op("\tCCnt = 0;\n");
                 wf_op("\tgoto C68k_Exec_Really_End;\n");
@@ -1417,7 +1417,7 @@ static void _ea_read_sx_(u32 ea, u32 rsft, char dest[4])
 		case EA_AREG:
             if (current_size == SIZE_BYTE)
             {
-                wf_op("\t// can't read byte from Ax registers !\n");
+                wf_op("\t/* can't read byte from Ax registers !*/\n");
                 wf_op("\tCPU->Status |= C68K_FAULTED;\n");
                 wf_op("\tCCnt = 0;\n");
                 wf_op("\tgoto C68k_Exec_Really_End;\n");
@@ -1503,7 +1503,7 @@ rsft);
 			break;
 
 		case EA_AREG:
-            // writes in Ax registers are always 32 bits sized
+            /* writes in Ax registers are always 32 bits sized */
             wf_op("\tCPU->A[(Opcode >> %d) & 7] = res;\n", rsft);
 			break;
 /*
@@ -1528,8 +1528,8 @@ rsft);
 	}
 }
 
-// misc function
-/////////////////
+/* misc function            */
+/*==========================*/
 
 static u32 get_current_opcode_base(void)
 {
@@ -1552,10 +1552,10 @@ static void start_all(int v)
 
     base = get_current_opcode_base();
 
-    // generate jump table
+    /* generate jump table */
     gen_opjumptable(base);
 
-    // generate label & declarations
+    /* generate label & declarations */
     start_op(base, v);
 }
 
@@ -1593,36 +1593,36 @@ static void set_current_size(u32 sz)
     }
 }
 
-// gen privilege exception (happen when S flag is not set)
+/* gen privilege exception (happen when S flag is not set) */
 static void gen_privilege_exception(char *pre)
 {
-    // swap A7 and USP (because S not set)
+    /* swap A7 and USP (because S not set) */
     wf_op("%sres = CPU->USP;\n", pre);
     wf_op("%sCPU->USP = CPU->A[7];\n", pre);
     wf_op("%sCPU->A[7] = res;\n", pre);
 
-    // get vector & add cycle
+    /* get vector & add cycle */
     wf_op("%sres = C68K_PRIVILEGE_VIOLATION_EX;\n", pre);
     adds_CCnt("c68k_exception_cycle_table[res]");
 
-    // we will do some mem/io access
+    /* we will do some mem/io access */
     do_pre_io();
 
-    // push PC and SR
+    /* push PC and SR */
     mem_op("%sPUSH_32_F((u32)(PC - CPU->BasePC))\n", pre);
     mem_op("%sPUSH_16_F(GET_SR)\n", pre);
 
-    // adjust SR
+    /* adjust SR */
     wf_op("%sCPU->flag_S = C68K_SR_S;\n", pre);
 
-    // fetch new PC
+    /* fetch new PC */
     mem_op("%sREAD_LONG_F(res * 4, PC)\n", pre);
     wf_op("%sSET_PC(PC)\n", pre);
 }
 
 static void gen_exception(char *pre, char* exception)
 {
-    // swap A7 and USP if needed
+    /* swap A7 and USP if needed */
     wf_op("%sif (!CPU->flag_S)\n", pre);
     wf_op("%s{\n", pre);
         wf_op("%s\tres = CPU->USP;\n", pre);
@@ -1630,21 +1630,21 @@ static void gen_exception(char *pre, char* exception)
         wf_op("%s\tCPU->A[7] = res;\n", pre);
     wf_op("%s}\n", pre);
 
-    // get vector & add cycle
+    /* get vector & add cycle */
     wf_op("%sres = %s;\n", pre, exception);
     adds_CCnt("c68k_exception_cycle_table[res]");
 
-    // we will do some mem/io access
+    /* we will do some mem/io access */
     do_pre_io();
 
-    // push PC and SR
+    /* push PC and SR */
     mem_op("%sPUSH_32_F((u32)(PC - CPU->BasePC))\n", pre);
     mem_op("%sPUSH_16_F(GET_SR)\n", pre);
 
-    // adjust SR
+    /* adjust SR */
     wf_op("%sCPU->flag_S = C68K_SR_S;\n", pre);
 
-    // fetch new PC
+    /* fetch new PC */
     mem_op("%sREAD_LONG_F(res * 4, PC)\n", pre);
     wf_op("%sSET_PC(PC)\n", pre);
 }
