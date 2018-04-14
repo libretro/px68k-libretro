@@ -299,6 +299,7 @@ void LoadConfig(void)
 		}
 	}
 
+#if 0
 	for (i = 0; i < 2; i++) {
 		sprintf(buf, "FDD%d", i);
 		GetPrivateProfileString(ini_title, buf, "", Config.FDDImage[i], MAX_PATH, winx68k_ini);
@@ -310,7 +311,6 @@ void LoadConfig(void)
 		GetPrivateProfileString(ini_title, buf, "", Config.HDImage[i], MAX_PATH, winx68k_ini);
 	}
 
-#if 0
 	fp = File_OpenCurDir(KEYCONFFILE);
 	if (fp)
 	{
@@ -435,6 +435,7 @@ void SaveConfig(void)
 		}
 	}
 
+#if 0
 	for (i = 0; i < 2; i++)
 	{
 		printf("i: %d", i);
@@ -448,7 +449,6 @@ void SaveConfig(void)
 		WritePrivateProfileString(ini_title, buf, Config.HDImage[i], winx68k_ini);
 	}
 
-#if 0
 	fp = File_OpenCurDir(KEYCONFFILE);
 	if (!fp)
 		fp = File_CreateCurDir(KEYCONFFILE, FTYPE_TEXT);
