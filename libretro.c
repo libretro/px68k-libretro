@@ -606,29 +606,31 @@ static void update_variables(void)
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
       if (strcmp(var.value, "1MB") == 0)
-         ram_size = 0x100000;
+         ram_size = 1;
       else if (strcmp(var.value, "2MB") == 0)
-         ram_size = 0x200000;
+         ram_size = 2;
       else if (strcmp(var.value, "3MB") == 0)
-         ram_size = 0x300000;
+         ram_size = 3;
       else if (strcmp(var.value, "4MB") == 0)
-         ram_size = 0x400000;
+         ram_size = 4;
       else if (strcmp(var.value, "5MB") == 0)
-         ram_size = 0x500000;
+         ram_size = 5;
       else if (strcmp(var.value, "6MB") == 0)
-         ram_size = 0x600000;
+         ram_size = 6;
       else if (strcmp(var.value, "7MB") == 0)
-         ram_size = 0x700000;
+         ram_size = 7;
       else if (strcmp(var.value, "8MB") == 0)
-         ram_size = 0x800000;
+         ram_size = 8;
       else if (strcmp(var.value, "9MB") == 0)
-         ram_size = 0x900000;
+         ram_size = 9;
       else if (strcmp(var.value, "10MB") == 0)
-         ram_size = 0xa00000;
+         ram_size = 10;
       else if (strcmp(var.value, "11MB") == 0)
-         ram_size = 0xb00000;
+         ram_size = 11;
       else if (strcmp(var.value, "12MB") == 0)
-         ram_size = 0xc00000;
+         ram_size = 12;
+
+      ram_size <<= 20; /* convert to bytes */
    }
 
    var.key = "px68k_analog";

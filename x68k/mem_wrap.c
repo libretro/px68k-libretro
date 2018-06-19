@@ -255,10 +255,8 @@ wm_cnt(DWORD addr, BYTE val)
 {
 
 	addr &= 0x00ffffff;
-	if (addr < 0x00a00000) {	// RAM 10MB
+	if (addr < 0x00c00000) {	// Use RAM upto 12MB
 		MEM[addr ^ 1] = val;
-	} else if (addr < 0x00c00000) {
-		wm_buserr(addr, val);
 	} else if (addr < 0x00e00000) {
 		GVRAM_Write(addr, val);
 	} else {
@@ -422,11 +420,8 @@ rm_main(DWORD addr)
 	BYTE v;
 
 	addr &= 0x00ffffff;
-	if (addr < 0x00a00000) {	// RAM 10MB
+	if (addr < 0x00c00000) {	// Use RAM upto 12MB
 		v = MEM[addr ^ 1];
-	} else if (addr < 0x00c00000) {
-		rm_buserr(addr);
-		v = 0;
 	} else if (addr < 0x00e00000) {
 		v = GVRAM_Read(addr);
 	} else {
