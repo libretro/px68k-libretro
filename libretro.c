@@ -48,8 +48,7 @@ int CHANGEAV = 0;
 int CHANGEAV_TIMING = 0; /* Separate change of geometry from change of refresh rate */
 int VID_MODE = 1;
 float FRAMERATE = MODE_HIGH;
-int JOY1_TYPE;
-int JOY2_TYPE;
+int JOY_TYPE[2] = {0}; /* Set controller type for each player to use */
 int clockmhz = 10;
 DWORD ram_size;
 int pcm_vol, opm_vol;
@@ -557,7 +556,26 @@ void retro_set_environment(retro_environment_t cb)
 
 static void update_variables(void)
 {
+   int i;
+   char key[256];
    struct retro_variable var = {0};
+
+   strcpy(key, "px68k_joytype");
+   var.key = key;
+   for (i = 0; i < 2; i++)
+   {
+      key[strlen("px68k_joytype")] = '1' + i;
+      var.value = NULL;
+      if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value) {
+         if (!(strcmp(var.value, "Default (2 Buttons)"))) {
+            JOY_TYPE[i] = 0;
+         } else if (!(strcmp(var.value, "CPSF-MD (8 Buttons)"))) {
+            JOY_TYPE[i] = 1;
+         } else if (!(strcmp(var.value, "CPSF-SFC (8 Buttons)"))) {
+            JOY_TYPE[i] = 2;
+         }
+      }
+   }
 
    var.key = "px68k_cpuspeed";
    var.value = NULL;
@@ -625,32 +643,6 @@ static void update_variables(void)
          opt_analog = true;
 
       //fprintf(stderr, "[libretro-test]: Analog: %s.\n",opt_analog?"ON":"OFF");
-   }
-
-   var.key = "px68k_joytype1";
-   var.value = NULL;
-
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      if (strcmp(var.value, "Default (2 Buttons)") == 0)
-         JOY1_TYPE = 0;
-      else if (strcmp(var.value, "CPSF-MD (8 Buttons)") == 0)
-         JOY1_TYPE = 1;
-      else if (strcmp(var.value, "CPSF-SFC (8 Buttons)") == 0)
-         JOY1_TYPE = 2;
-   }
-
-   var.key = "px68k_joytype2";
-   var.value = NULL;
-
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      if (strcmp(var.value, "Default (2 Buttons)") == 0)
-         JOY2_TYPE = 0;
-      else if (strcmp(var.value, "CPSF-MD (8 Buttons)") == 0)
-         JOY2_TYPE = 1;
-      else if (strcmp(var.value, "CPSF-SFC (8 Buttons)") == 0)
-         JOY2_TYPE = 2;
    }
 
    var.key = "px68k_adpcm_vol";
