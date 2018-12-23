@@ -539,9 +539,6 @@ void WinX68k_Exec(void)
 		}
 	}
 
-	Joystick_Update(FALSE, -1, 0);
-	Joystick_Update(FALSE, -1, 1);
-
 	FDD_SetFDInt();
 	if ( !DispFrame )
 		WinDraw_Draw();
@@ -876,6 +873,10 @@ extern "C" void handle_retrok(){
 extern "C" void exec_app_retro(){
 
 	int menu_key_down;
+
+	Joystick_Update(FALSE, -1, 0);
+	Joystick_Update(FALSE, -1, 1);
+
 	//while (1) {
 		// OPM_RomeoOut(Config.BufferSize * 5);
 		if (menu_mode == menu_out
@@ -890,14 +891,14 @@ extern "C" void exec_app_retro(){
 		}
 
 		menu_key_down = -1;
- 		//end_loop=1;
+		//end_loop=1;
 
 		static int mbL = 0, mbR = 0;
 
-	      	int mouse_x = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_X);
+		int mouse_x = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_X);
 		int mouse_y = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_Y);
 
-     		Mouse_Event(0, mouse_x, mouse_y);
+		Mouse_Event(0, mouse_x, mouse_y);
 
 		int mouse_l    = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_LEFT);
 		int mouse_r    = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_RIGHT);
