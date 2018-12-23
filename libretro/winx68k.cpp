@@ -329,15 +329,18 @@ WinX68k_Cleanup(void)
 // -----------------------------------------------------------------------------------
 void WinX68k_Exec(void)
 {
-	if(!(Memory_ReadD(0xed0008)==ram_size)){
-		Memory_WriteB(0xe8e00d, 0x31);             // SRAM write permission
-		Memory_WriteD(0xed0008, ram_size);         // Define RAM amount
-	}
-	
 	//char *test = NULL;
 	int clk_total, clkdiv, usedclk, hsync, clk_next, clk_count, clk_line=0;
 	int KeyIntCnt = 0, MouseIntCnt = 0;
 	DWORD t_start = timeGetTime(), t_end;
+
+	if(!(Memory_ReadD(0xed0008)==ram_size)){
+		Memory_WriteB(0xe8e00d, 0x31);             // SRAM write permission
+		Memory_WriteD(0xed0008, ram_size);         // Define RAM amount
+	}
+
+	Joystick_Update(FALSE, -1, 0);
+	Joystick_Update(FALSE, -1, 1);
 
 	if ( Config.FrameRate != 7 ) {
 		DispFrame = (DispFrame+1)%Config.FrameRate;
@@ -538,9 +541,6 @@ void WinX68k_Exec(void)
 			GVRAM_FastClear();
 		}
 	}
-
-	Joystick_Update(FALSE, -1, 0);
-	Joystick_Update(FALSE, -1, 1);
 
 	FDD_SetFDInt();
 	if ( !DispFrame )
