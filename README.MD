@@ -1,3 +1,16 @@
+jfroco/px68k-libretro
+
+Forked to enable mapping of the select key of the joy1 to one of these keys: XF1, XF2, XF3, XF4, XF5, F1 or F2, configurable via Options
+
+This allows to start this games using select key of the joy1 (after mapping the right key):
+
+- Kyuukyoku Tiger (press XF3 to insert coin)
+- Parodius Da! (press F1 or F2 to start)
+
+Tested on Win10 64 bits. Compiled dll: http://jfroco.github.io/px68k_libretro.dll
+
+_________________________________________________________________________________________________________________________________________
+
 px68k-libretro 
 
 forked from https://github.com/hissorii/px68k

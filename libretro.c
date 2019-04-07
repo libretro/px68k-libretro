@@ -43,6 +43,8 @@ bool joypad1, joypad2;
 
 bool opt_analog;
 
+int joy1_select_mapping = 0;
+
 int retrow = 800;
 int retroh = 600;
 int CHANGEAV = 0;
@@ -534,6 +536,7 @@ void retro_set_environment(retro_environment_t cb)
       { "px68k_adpcm_vol" , "ADPCM Volume; 15|0|1|2|3|4|5|6|7|8|9|10|11|12|13|14" },
       { "px68k_opm_vol" , "OPM Volume; 12|13|14|15|0|1|2|3|4|5|6|7|8|9|10|11" },
       { "px68k_disk_drive" , "Swap Disks on Drive; FDD1|FDD0" },
+      { "px68k_joy1_select" , "P1 Joystick Select Mapping; XF1|XF2|XF3|XF4|XF5|F1|F2" },
 #ifndef NO_MERCURY
       { "px68k_mercury_vol" , "OPM Volume; 13|14|15|0|1|2|3|4|5|6|7|8|9|10|11|12" },
 #endif
@@ -684,6 +687,29 @@ static void update_variables(void)
       else
          disk_drive = 1;
    }
+
+   var.key = "px68k_joy1_select";
+   var.value = NULL;
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (strcmp(var.value, "XF1") == 0)
+         joy1_select_mapping = 0;
+      else if (strcmp(var.value, "XF2") == 0)
+         joy1_select_mapping = 1;
+      else if (strcmp(var.value, "XF3") == 0)
+         joy1_select_mapping = 2;
+      else if (strcmp(var.value, "XF4") == 0)
+         joy1_select_mapping = 3;
+      else if (strcmp(var.value, "XF5") == 0)
+         joy1_select_mapping = 4;
+      else if (strcmp(var.value, "F1") == 0)
+         joy1_select_mapping = 5;
+      else if (strcmp(var.value, "F2") == 0)
+         joy1_select_mapping = 6;
+   }
+
+
 }
 
 void update_input(void)

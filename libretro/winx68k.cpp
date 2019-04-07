@@ -95,6 +95,8 @@ static int FrameSkipQueue = 0;
 extern DWORD ram_size;
 extern int clockmhz;
 
+extern int joy1_select_mapping;
+
 DWORD old_ram_size = 0;
 int old_clkdiv = 0;
 
@@ -841,6 +843,28 @@ extern "C" void handle_retrok(){
 //	KEYP(RETROK_MENU,0x55); //xf1
 //	KEYP(RETROK_KP_PERIOD,0x56); //xf2
 //	KEYP(RETROK_KP_PERIOD,0x57); //xf3
+	if (joy1_select_mapping==0) {
+		KEYP(RETROK_XFX,0x55);
+	}
+	else if (joy1_select_mapping==1) {
+		KEYP(RETROK_XFX,0x56);
+	}
+	else if (joy1_select_mapping==2) {
+		KEYP(RETROK_XFX,0x57);
+	}
+	else if (joy1_select_mapping==3) {
+		KEYP(RETROK_XFX,0x58);
+	}
+	else if (joy1_select_mapping==4){
+		KEYP(RETROK_XFX,0x59);
+	}
+	else if (joy1_select_mapping==5){
+		KEYP(RETROK_XFX,0x63);
+	}
+	else if (joy1_select_mapping==6){
+		KEYP(RETROK_XFX,0x64);
+	}
+
 //	KEYP(RETROK_KP_PERIOD,0x58); //xf4 
 //	KEYP(RETROK_KP_PERIOD,0x59); //xf5
 //	KEYP(RETROK_KP_PERIOD,0x5a); //kana
@@ -926,8 +950,14 @@ extern "C" void exec_app_retro(){
    		for(i=0;i<320;i++)
       			Core_Key_Sate[i]=input_state_cb(0, RETRO_DEVICE_KEYBOARD, 0,i) ? 0x80: 0;
 
+      	Core_Key_Sate[RETROK_XFX] = 0;
+
+
    		if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_L2))	//Joypad Key for Menu
 				Core_Key_Sate[RETROK_F12] = 0x80;
+
+		if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_SELECT))	//Joypad Key for Mapping
+				Core_Key_Sate[RETROK_XFX] = 0x80;
 			
 		if(memcmp( Core_Key_Sate,Core_old_Key_Sate , sizeof(Core_Key_Sate) ) )
 			handle_retrok();
