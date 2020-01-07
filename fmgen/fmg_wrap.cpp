@@ -1,9 +1,9 @@
-// cisc•ø•Û•Œ•®•Ì•¨•æ•¶•≠•‹•Û•Ã§Ú∂Ø∞˙§À§±§Ì§‘°º§À∑“§∞§ø§·§Œ
-// extern "C" §Œ∆˛§Ï ˝§¨§≠§¡§„§ §Ø§∆•π•∆•≠° §©
+// ciscタンノエロガゾウキボンヌを強引にけろぴーに繋ぐための
+// extern "C" の入れ方がきちゃなくてステキ（ぉ
 
-// readme.txt§ÀΩæ§√§∆°¢≤˛ —≈¿°ß
-//  - opna.cpp§ÀYMF288Õ—§Œ•Ø•È•πƒ…≤√§∑§∆§ﬁ§π°£OPNA§Ω§Œ§ﬁ§Û§ﬁ§¿§±§…§Õ° §€§Û§»§œ¿µ§∑§Ø§ §§§¨§ﬁ§¢§§§§§‰°À
-//  - ¬ø ¨¬æ§œœÆ§√§∆§ §§§œ§∫°ƒ°ƒ
+// readme.txtに従って、改変点：
+//  - opna.cppにYMF288用のクラス追加してます。OPNAそのまんまだけどね（ほんとは正しくないがまあいいや）
+//  - 多分他は弄ってないはず……
 
 extern "C" {
 
@@ -69,7 +69,7 @@ void MyOPM::WriteIO(DWORD adr, BYTE data)
 #if 0
 				RMData[RMPtrW].time = timeGetTime();
 				RMData[RMPtrW].reg  = CurReg;
-if ( CurReg==0x14 ) data &= 0xf3;	// Int Enable§œ•ﬁ•π•Ø§π§Î
+if ( CurReg==0x14 ) data &= 0xf3;	// Int Enableはマスクする
 				RMData[RMPtrW].data = data;
 				RMPtrW = newptr;
 			}
@@ -78,7 +78,7 @@ if ( CurReg==0x14 ) data &= 0xf3;	// Int Enable§œ•ﬁ•π•Ø§π§Î
 			}
 			RMData[RMPtrW].time = timeGetTime();
 			RMData[RMPtrW].reg  = CurReg;
-if ( CurReg==0x14 ) data &= 0xf3;	// Int Enable§œ•ﬁ•π•Ø§π§Î
+if ( CurReg==0x14 ) data &= 0xf3;	// Int Enableはマスクする
 			RMData[RMPtrW].data = data;
 			RMPtrW = newptr;
 #endif
@@ -182,7 +182,7 @@ void FASTCALL OPM_Timer(DWORD step)
 
 void OPM_SetVolume(BYTE vol)
 {
-	int v = (vol)?((16-vol)*4):192;		// §≥§Œ§Ø§È§§§´§ §°
+	int v = (vol)?((16-vol)*4):192;		// このくらいかなぁ
 	if ( opm ) opm->SetVolume(-v);
 }
 
@@ -202,9 +202,9 @@ void OPM_RomeoOut(unsigned int delay)
 }
 
 // ----------------------------------------------------------
-// ---------------------------- YMF288 (À˛≥´»«§ﬁ°¡§≠§Â§Í°¡)
+// ---------------------------- YMF288 (満開版ま〜きゅり〜)
 // ----------------------------------------------------------
-// TODO : ROMEO§Œ288§Ú√°§Ø§Œ
+// TODO : ROMEOの288を叩くの
 
 class YMF288 : public FM::Y288
 {
@@ -351,8 +351,8 @@ void FASTCALL M288_Timer(DWORD step)
 
 void M288_SetVolume(BYTE vol)
 {
-	int v1 = (vol)?((16-vol)*4-24):192;		// §≥§Œ§Ø§È§§§´§ §°
-	int v2 = (vol)?((16-vol)*4):192;		// æØ§∑æÆ§µ§·§À
+	int v1 = (vol)?((16-vol)*4-24):192;		// このくらいかなぁ
+	int v2 = (vol)?((16-vol)*4):192;		// 少し小さめに
 	if ( ymf288a ) {
 		ymf288a->SetVolumeFM(-v1);
 		ymf288a->SetVolumePSG(-v2);

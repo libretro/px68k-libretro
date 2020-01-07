@@ -4,21 +4,21 @@
 // ---------------------------------------------------------------------------
 //	$fmgen-Id: fmgen.cpp,v 1.49 2003/09/02 14:51:04 cisc Exp $
 // ---------------------------------------------------------------------------
-//	ª≤πÕ:
+//	参考:
 //		FM sound generator for M.A.M.E., written by Tatsuyuki Satoh.
 //
-// 	∆Ê:
-//		OPNB §Œ CSM •‚°º•…(ª≈ÕÕ§¨§Ë§Ø§Ô§´§È§ §§)
+// 	謎:
+//		OPNB の CSM モード(仕様がよくわからない)
 //
-//	¿©∏¬:
-//		°¶AR!=31 §« SSGEC §Úª»§¶§»«»∑¡§¨º¬∫›§»∞€§ §Î≤ƒ«Ω¿≠§¢§Í
+//	制限:
+//		・AR!=31 で SSGEC を使うと波形が実際と異なる可能性あり
 //
-//	º’º≠:
-//		Tatsuyuki Satoh §µ§Û(fm.c)
-//		Hiromitsu Shioya §µ§Û(ADPCM-A)
-//		DMP-SOFT. §µ§Û(OPNB)
-//		KAJA §µ§Û(test program)
-//		§€§´∑«º®»ƒ≈˘§«ÕÕ°π§ §¥Ωı∏¿°§§¥ªŸ±Á§Ú§™¥Û§ª§§§ø§¿§§§ø≥ßÕÕ§À
+//	謝辞:
+//		Tatsuyuki Satoh さん(fm.c)
+//		Hiromitsu Shioya さん(ADPCM-A)
+//		DMP-SOFT. さん(OPNB)
+//		KAJA さん(test program)
+//		ほか掲示板等で様々なご助言，ご支援をお寄せいただいた皆様に
 // ---------------------------------------------------------------------------
 
 #include "headers.h"
@@ -177,7 +177,7 @@ namespace FM
 {
 
 // ---------------------------------------------------------------------------
-//	•∆°º•÷•Î∫Ó¿Æ
+//	テーブル作成
 //
 void MakeLFOTable()
 {
@@ -235,14 +235,14 @@ void MakeLFOTable()
 
 
 // ---------------------------------------------------------------------------
-//	•¡•√•◊∆‚§«∂¶ƒÃ§ …Ù ¨
+//	チップ内で共通な部分
 //
 Chip::Chip()
 : ratio_(0), aml_(0), pml_(0), pmv_(0), optype_(typeN)
 {
 }
 
-//	•Ø•Ì•√•Ø°¶•µ•Û•◊•Í•Û•∞•Ï°º•»»Ê§À∞Õ¬∏§π§Î•∆°º•÷•Î§Ú∫Ó¿Æ
+//	クロック・サンプリングレート比に依存するテーブルを作成
 void Chip::SetRatio(uint ratio)
 {
 	if (ratio_ != ratio)
@@ -278,7 +278,7 @@ bool FM::Operator::tablehasmade = false;
 uint FM::Operator::sinetable[1024];
 int32 FM::Operator::cltable[FM_CLENTS];
 
-//	πΩ√€
+//	構築
 FM::Operator::Operator()
 : chip_(0)
 {
@@ -304,7 +304,7 @@ FM::Operator::Operator()
 //	Reset();
 }
 
-//	ΩÈ¥¸≤Ω
+//	初期化
 void FM::Operator::Reset()
 {
 	// EG part
@@ -326,7 +326,7 @@ void FM::Operator::Reset()
 
 void Operator::MakeTable()
 {
-	// ¬–øÙ•∆°º•÷•Î§Œ∫Ó¿Æ
+	// 対数テーブルの作成
 	assert(FM_CLENTS >= 256);
 
 	int* p = cltable;
@@ -347,7 +347,7 @@ void Operator::MakeTable()
 //	for (i=0; i<13*256; i++)
 //		printf("%4d, %d, %d\n", i, cltable[i*2], cltable[i*2+1]);
 
-	// •µ•§•Û•∆°º•÷•Î§Œ∫Ó¿Æ
+	// サインテーブルの作成
 	double log2 = log(2.);
 	for (i=0; i<FM_OPSINENTS/2; i++)
 	{
@@ -373,7 +373,7 @@ inline void FM::Operator::SetDPBN(uint dp, uint bn)
 }
 
 
-//	Ω‡»˜
+//	準備
 void Operator::Prepare()
 {
 	if (param_changed_)
@@ -425,7 +425,7 @@ void Operator::Prepare()
 		dbgopout_ = 0;
 	}
 }
-//	envelop §Œ eg_phase_  —ππ
+//	envelop の eg_phase_ 変更
 void Operator::ShiftPhase(EGPhase nextphase)
 {
 	switch (nextphase)
@@ -504,13 +504,13 @@ void Operator::SetFNum(uint f)
 	PARAMCHANGE(2);
 }
 
-//	£±•µ•Û•◊•ÎπÁ¿Æ
+//	１サンプル合成
 
-//	ISample §Ú envelop count (2¶–) §À —¥π§π§Î•∑•’•»ŒÃ
+//	ISample を envelop count (2π) に変換するシフト量
 #define IS2EC_SHIFT		((20 + FM_PGBITS) - 13)
 
 
-// ∆˛Œœ: s = 20+FM_PGBITS = 29
+// 入力: s = 20+FM_PGBITS = 29
 #define Sine(s)	sinetable[((s) >> (20+FM_PGBITS-FM_OPSINBITS))&(FM_OPSINENTS-1)]
 #define SINE(s) sinetable[(s) & (FM_OPSINENTS-1)]
 
@@ -541,10 +541,10 @@ inline void Operator::SetEGRate(uint rate)
 	eg_count_diff_ = decaytable2[rate / 4] * chip_->GetRatio();
 }
 
-//	EG ∑◊ªª
+//	EG 計算
 void FM::Operator::EGCalc()
 {
-	eg_count_ = (2047 * 3) << FM_RATIOBITS;				// ##§≥§ŒºÍ»¥§≠§œ∫∆∏Ω¿≠§Úƒ„≤º§µ§ª§Î
+	eg_count_ = (2047 * 3) << FM_RATIOBITS;				// ##この手抜きは再現性を低下させる
 	
 	if (eg_phase_ == attack)
 	{
@@ -598,12 +598,12 @@ inline void FM::Operator::EGStep()
 {
 	eg_count_ -= eg_count_diff_;
 
-	// EG §Œ —≤Ω§œ¡¥•π•Ì•√•»§«∆±¥¸§∑§∆§§§Î§»§§§¶±Ω§‚§¢§Î
+	// EG の変化は全スロットで同期しているという噂もある
 	if (eg_count_ <= 0)
 		EGCalc();
 }
 
-//	PG ∑◊ªª
+//	PG 計算
 //	ret:2^(20+PGBITS) / cycle
 inline uint32 FM::Operator::PGCalc()
 {
@@ -621,8 +621,8 @@ inline uint32 FM::Operator::PGCalcL()
 	return ret /* + pmv * pg_diff_;*/;
 }
 
-//	OP ∑◊ªª
-//	in: ISample (∫«¬Á 8¶–)
+//	OP 計算
+//	in: ISample (最大 8π)
 inline FM::ISample FM::Operator::Calc(ISample in)
 {
 	EGStep();
@@ -654,7 +654,7 @@ inline FM::ISample FM::Operator::CalcN(uint noise)
 	
 	int lv = Max(0, 0x3ff - (tl_out_ + eg_level_)) << 1;
 	
-	// noise & 1 ? lv : -lv §»≈˘≤¡ 
+	// noise & 1 ? lv : -lv と等価 
 	noise = (noise & 1) - 1;
 	out_ = (lv + noise) ^ noise;
 
@@ -662,8 +662,8 @@ inline FM::ISample FM::Operator::CalcN(uint noise)
 	return out_;
 }
 
-//	OP (FB) ∑◊ªª
-//	Self Feedback §Œ —ƒ¥∫«¬Á = 4¶–
+//	OP (FB) 計算
+//	Self Feedback の変調最大 = 4π
 inline FM::ISample FM::Operator::CalcFB(uint fb)
 {
 	EGStep();
@@ -730,7 +730,7 @@ void Channel4::MakeTable()
 	}
 }
 
-// •Í•ª•√•»
+// リセット
 void Channel4::Reset()
 {
 	op[0].Reset();
@@ -739,7 +739,7 @@ void Channel4::Reset()
 	op[3].Reset();
 }
 
-//	Calc §ŒÕ—∞’
+//	Calc の用意
 int Channel4::Prepare()
 {
 	op[0].Prepare();
@@ -753,14 +753,14 @@ int Channel4::Prepare()
 	return key | lfo;
 }
 
-//	F-Number/BLOCK §Ú¿ﬂƒÍ
+//	F-Number/BLOCK を設定
 void Channel4::SetFNum(uint f)
 {
 	for (int i=0; i<4; i++)
 		op[i].SetFNum(f);
 }
 
-//	KC/KF §Ú¿ﬂƒÍ
+//	KC/KF を設定
 void Channel4::SetKCKF(uint kc, uint kf)
 {
 	static const uint kctable[16] = 
@@ -788,7 +788,7 @@ void Channel4::SetKCKF(uint kc, uint kf)
 //printf(" %.8x\n", dp);
 }
 
-//	•≠°º¿©∏Ê
+//	キー制御
 void Channel4::KeyControl(uint key)
 {
 	if (key & 0x1) op[0].KeyOn(); else op[0].KeyOff();
@@ -797,7 +797,7 @@ void Channel4::KeyControl(uint key)
 	if (key & 0x8) op[3].KeyOn(); else op[3].KeyOff();
 }
 
-//	•¢•Î•¥•Í•∫•‡§Ú¿ﬂƒÍ
+//	アルゴリズムを設定
 void Channel4::SetAlgorithm(uint algo)
 {
 	static const uint8 table1[8][6] = 
@@ -819,7 +819,7 @@ void Channel4::SetAlgorithm(uint algo)
 	algo_ = algo;
 }
 
-//  πÁ¿Æ
+//  合成
 ISample Channel4::Calc()
 {
 	int r = 0;
@@ -877,7 +877,7 @@ ISample Channel4::Calc()
 	return r;
 }
 
-//  πÁ¿Æ
+//  合成
 ISample Channel4::CalcL()
 {
 	chip_->SetPMV(pms[chip_->GetPML()]);
@@ -937,7 +937,7 @@ ISample Channel4::CalcL()
 	return r;
 }
 
-//  πÁ¿Æ
+//  合成
 ISample Channel4::CalcN(uint noise)
 {
 	buf[1] = buf[2] = buf[3] = 0;
@@ -950,7 +950,7 @@ ISample Channel4::CalcN(uint noise)
 	return *out[2] + o;
 }
 
-//  πÁ¿Æ
+//  合成
 ISample Channel4::CalcLN(uint noise)
 {
 	chip_->SetPMV(pms[chip_->GetPML()]);

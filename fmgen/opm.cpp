@@ -17,7 +17,7 @@ int OPM::amtable[4][OPM_LFOENTS] = { -1, };
 int OPM::pmtable[4][OPM_LFOENTS];
 
 // ---------------------------------------------------------------------------
-//	πΩ√€
+//	構築
 //
 OPM::OPM()
 {
@@ -32,7 +32,7 @@ OPM::OPM()
 }
 
 // ---------------------------------------------------------------------------
-//	ΩÈ¥¸≤Ω
+//	初期化
 //
 bool OPM::Init(uint c, uint rf, bool ip)
 {
@@ -47,7 +47,7 @@ bool OPM::Init(uint c, uint rf, bool ip)
 }
 
 // ---------------------------------------------------------------------------
-//	∫∆¿ﬂƒÍ
+//	再設定
 //
 bool OPM::SetRate(uint c, uint r, bool)
 {
@@ -61,7 +61,7 @@ bool OPM::SetRate(uint c, uint r, bool)
 }
 
 // ---------------------------------------------------------------------------
-//	•¡•„•Û•Õ•Î•ﬁ•π•Ø§Œ¿ﬂƒÍ
+//	チャンネルマスクの設定
 //
 void OPM::SetChannelMask(uint mask)
 {
@@ -70,7 +70,7 @@ void OPM::SetChannelMask(uint mask)
 }
 
 // ---------------------------------------------------------------------------
-//	•Í•ª•√•»
+//	リセット
 //
 void OPM::Reset()
 {
@@ -88,7 +88,7 @@ void OPM::Reset()
 }
 
 // ---------------------------------------------------------------------------
-//	¿ﬂƒÍ§À∞Õ¬∏§π§Î•∆°º•÷•Î§Œ∫Ó¿Æ
+//	設定に依存するテーブルの作成
 //
 void OPM::RebuildTimeTable()
 {
@@ -109,7 +109,7 @@ void OPM::RebuildTimeTable()
 }
 
 // ---------------------------------------------------------------------------
-//	•ø•§•ﬁ°º A »Ø¿∏ª˛•§•Ÿ•Û•» (CSM)
+//	タイマー A 発生時イベント (CSM)
 //
 void OPM::TimerA()
 {
@@ -124,7 +124,7 @@ void OPM::TimerA()
 }
 
 // ---------------------------------------------------------------------------
-//	≤ªŒÃ¿ﬂƒÍ
+//	音量設定
 //
 void OPM::SetVolume(int db)
 {
@@ -136,7 +136,7 @@ void OPM::SetVolume(int db)
 }
 
 // ---------------------------------------------------------------------------
-//	•π•∆°º•ø•π•’•È•∞¿ﬂƒÍ
+//	ステータスフラグ設定
 //
 void OPM::SetStatus(uint bits)
 {
@@ -148,7 +148,7 @@ void OPM::SetStatus(uint bits)
 }
 
 // ---------------------------------------------------------------------------
-//	•π•∆°º•ø•π•’•È•∞≤ÚΩ¸
+//	ステータスフラグ解除
 //
 void OPM::ResetStatus(uint bits)
 {
@@ -161,7 +161,7 @@ void OPM::ResetStatus(uint bits)
 }
 
 // ---------------------------------------------------------------------------
-//	•Ï•∏•π•ø•¢•Ï•§§À•«°º•ø§Ú¿ﬂƒÍ
+//	レジスタアレイにデータを設定
 //
 void OPM::SetReg(uint addr, uint data)
 {
@@ -266,7 +266,7 @@ void OPM::SetReg(uint addr, uint data)
 
 
 // ---------------------------------------------------------------------------
-//	•—•È•·°º•ø•ª•√•»
+//	パラメータセット
 //
 void OPM::SetParameter(uint addr, uint data)
 {
@@ -415,7 +415,7 @@ inline uint OPM::Noise()
 }
 
 // ---------------------------------------------------------------------------
-//	πÁ¿Æ§Œ∞Ï…Ù
+//	合成の一部
 //
 inline void OPM::MixSub(int activech, ISample** idest)
 {
@@ -455,7 +455,7 @@ inline void OPM::MixSubL(int activech, ISample** idest)
 
 
 // ---------------------------------------------------------------------------
-//	πÁ¿Æ (stereo)
+//	合成 (stereo)
 //
 void OPM::Mix(Sample* buffer, int nsamples, int rate, BYTE* pbsp, BYTE* pbep)
 {
@@ -475,7 +475,7 @@ void OPM::Mix(Sample* buffer, int nsamples, int rate, BYTE* pbsp, BYTE* pbep)
 
 	if (activech & 0x5555)
 	{
-		// LFO «»∑¡ΩÈ¥¸≤Ω•”•√•» = 1 § §È§– LFO §œ§´§´§È§ §§?
+		// LFO 波形初期化ビット = 1 ならば LFO はかからない?
 		if (reg01 & 0x02)
 			activech &= 0x5555;
 
@@ -501,7 +501,7 @@ void OPM::Mix(Sample* buffer, int nsamples, int rate, BYTE* pbsp, BYTE* pbep)
 
 			StoreSample(dest[0], IStoSample(ibuf[1] + ibuf[3]));
 			StoreSample(dest[1], IStoSample(ibuf[2] + ibuf[3]));
-			// PSP∞ ≥∞§œrate§œ0
+			// PSP以外はrateは0
 			dval0 = dest[0];
 			dval1 = dest[1];
 			switch (rate) {
