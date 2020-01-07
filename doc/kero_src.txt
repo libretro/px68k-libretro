@@ -1,159 +1,159 @@
 ===================================================================
-===== ����ҁ[�iWinX68k�j�\�[�X�R�[�h�h�L�������g             =====
+===== けろぴー（WinX68k）ソースコードドキュメント             =====
 =====                                       (c) 2000,01 Kenjo =====
 ===================================================================
 
 ---------------
-1. �����
+1. これは
 ---------------
 
-�@X68000�G�~�����[�^�u����ҁ[�v�i���uWinX68k�v�j�̃\�[�X�R�[�h��
-���Ẵh�L�������g�ł��B
+　X68000エミュレータ「けろぴー」（旧「WinX68k」）のソースコードに
+ついてのドキュメントです。
 
 
 
 ---------------
-2. �t�@�C���\��
+2. ファイル構成
 ---------------
 
-�@Microsoft Visual C++ 6.0 �{ NASMW �ō쐬����Ă��܂��B
-�@�f�B���N�g���͈ȉ��̂悤�ȍ\���ɂȂ��Ă��܂��i�w�b�_�t�@�C���͏�
-���j�B
+　Microsoft Visual C++ 6.0 ＋ NASMW で作成されています。
+　ディレクトリは以下のような構造になっています（ヘッダファイルは省
+略）。
 
-  --+-- Makefile	VC++�pMake�t�@�C��
+  --+-- Makefile	VC++用Makeファイル
     |
-    +--win32		Windows���̃t�@�C���Q
+    +--win32		Windows側のファイル群
     |    |
-    |    +- about.c		About�_�C�A���O
-    |    +- common.c		�G���[�_�C�A���O�Ȃ�
-    |    +- cdaspi.c		ASPI�ɂ��CD-ROM�A�N�Z�X
-    |    +- cdctrl.c		IOCTRL�ɂ��CD-ROM�A�N�Z�X
-    |    +- cdrom.c		CD-ROM�iSCSI IOCS �t�b�N���j
+    |    +- about.c		Aboutダイアログ
+    |    +- common.c		エラーダイアログなど
+    |    +- cdaspi.c		ASPIによるCD-ROMアクセス
+    |    +- cdctrl.c		IOCTRLによるCD-ROMアクセス
+    |    +- cdrom.c		CD-ROM（SCSI IOCS フック部）
     |    +- dsound.c		DirectSound
-    |    +- fileio.c		�t�@�C���A�N�Z�X
-    |    +- joystick.c		�W���C�X�e�B�b�N����
-    |    +- keyboard.c		�L�[�{�[�h����
-    |    +- keyconf.c		�L�[�R���t�B�O�_�C�A���O
-    |    +- mkcgrom.c		CGROM�쐬���[�`��
-    |    +- mouse.c		�}�E�X����
-    |    +- prop.c		�ݒ�p�v���p�e�B�V�[�g
-    |    +- status.c		�X�e�[�^�X�o�[�\��
-    |    +- timer.c		�^�C�}�[
-    |    +- windraw.c		DirectDraw�ɂ��\�����[�`��
-    |    +- winui.c		���j���[�Ȃǂ�UI�֘A
-    |    +- winx68k.c		���C��
-    |    +- winx68k.rc		���\�[�X�t�@�C��
-    |    +- adpcm.bmp		���\�[�X�p�摜�f�[�^�Ȃ�
-    |    +- opm.bmp			�V
-    |    +- nekolgc.bmp			�V
-    |    +- motorola.bmp		�V
-    |    +- keropi.bmp			�V
-    |    +- keropi.ico			�V
+    |    +- fileio.c		ファイルアクセス
+    |    +- joystick.c		ジョイスティック入力
+    |    +- keyboard.c		キーボード入力
+    |    +- keyconf.c		キーコンフィグダイアログ
+    |    +- mkcgrom.c		CGROM作成ルーチン
+    |    +- mouse.c		マウス入力
+    |    +- prop.c		設定用プロパティシート
+    |    +- status.c		ステータスバー表示
+    |    +- timer.c		タイマー
+    |    +- windraw.c		DirectDrawによる表示ルーチン
+    |    +- winui.c		メニューなどのUI関連
+    |    +- winx68k.c		メイン
+    |    +- winx68k.rc		リソースファイル
+    |    +- adpcm.bmp		リソース用画像データなど
+    |    +- opm.bmp			〃
+    |    +- nekolgc.bmp			〃
+    |    +- motorola.bmp		〃
+    |    +- keropi.bmp			〃
+    |    +- keropi.ico			〃
     |    |
-    |    +- msfiles		Microsoft����񋟂̃w�b�_�^���C�u����
+    |    +- msfiles		Microsoftから提供のヘッダ／ライブラリ
     |          |
-    |          +- msfiles.txt	���̃f�B���N�g�����̃t�@�C���̓��茳����
+    |          +- msfiles.txt	このディレクトリ内のファイルの入手元説明
     |
-    +--x68k		X68k�̉��z�f�o�C�X�Q
+    +--x68k		X68kの仮想デバイス群
     |    |
-    |    +- 68kem.asm		MPU�R�A�iMake68k�Ŏ��������{�C���j
-    |    +- comptab.asm		���Ŏg����W�����v�e�[�u��
+    |    +- 68kem.asm		MPUコア（Make68kで自動生成＋修正）
+    |    +- comptab.asm		↑で使われるジャンプテーブル
     |    +- adpcm.c		ADPCM
-    |    +- bg.c		BG/�X�v���C�g
-    |    +- bg.x86		���p�̃A�Z���u���C���N���[�h�t�@�C��
+    |    +- bg.c		BG/スプライト
+    |    +- bg.x86		↑用のアセンブラインクルードファイル
     |    +- crtc.c		CRTC
     |    +- dmac.c		DMAC
     |    +- fdc.c		FDC
-    |    +- fdd.c		FD�h���C�u
-    |    +- gvram.c		�O���t�B�b�NVRAM
-    |    +- ioc.c		I/O�R���g���[��
-    |    +- irqh.c		IRQ�n���h��
-    |    +- memory.asm		�������A�N�Z�X���[�`��
-    |    +- memory.c		�������A�N�Z�X �f�o�b�O���[�`��
-    |    +- mercury.c		�܁`�����`��ɂ���
+    |    +- fdd.c		FDドライブ
+    |    +- gvram.c		グラフィックVRAM
+    |    +- ioc.c		I/Oコントローラ
+    |    +- irqh.c		IRQハンドラ
+    |    +- memory.asm		メモリアクセスルーチン
+    |    +- memory.c		メモリアクセス デバッグルーチン
+    |    +- mercury.c		ま〜きゅり〜ゆにっと
     |    +- mfp.c		MFP
-    |    +- midi.c		MIDI�{�[�h
+    |    +- midi.c		MIDIボード
     |    +- opm.c		OPM
-    |    +- palette.c		�p���b�g
-    |    +- pia.c		8255�i�W���C�X�e�B�b�N�p�j
+    |    +- palette.c		パレット
+    |    +- pia.c		8255（ジョイスティック用）
     |    +- rtc.c		RTC
     |    +- sasi.c		SASI
-    |    +- scc.c		SCC�i�}�E�X�p�j
-    |    +- scsi.c		SCSI�{�[�h�^BIOS�iSPC�ւ�I/O�̓_�~�[�j
+    |    +- scc.c		SCC（マウス用）
+    |    +- scsi.c		SCSIボード／BIOS（SPCへのI/Oはダミー）
     |    +- sram.c		SRAM
-    |    +- sysport.c		�V�X�e���|�[�g
-    |    +- tvram.c		�e�L�X�gVRAM
-    |    +- windrv.c		yamama�����Windrv.sys�p�f�o�C�X
+    |    +- sysport.c		システムポート
+    |    +- tvram.c		テキストVRAM
+    |    +- windrv.c		yamamaさんのWindrv.sys用デバイス
     |
-    +-- release		�I�u�W�F�N�g�t�@�C�����i�[�����f�B���N�g��
+    +-- release		オブジェクトファイルが格納されるディレクトリ
 
 
 
 ---------------
-3. �R���p�C��
+3. コンパイル
 ---------------
 
-�@����ҁ[���R���p�C������ɂ́AVC++��NASMW�ɉ����ADirectX SDK���K�v��
-���B
-�@����炪����ɃC���X�g�[�����ꂽ�}�V����DOS�����J���AVC++��NASMW�Ƀp
-�X���ʂ�����ԂŁAMakefile �̂���f�B���N�g���Ɉړ����A
+　けろぴーをコンパイルするには、VC++とNASMWに加え、DirectX SDKが必要で
+す。
+　これらが正常にインストールされたマシンでDOS窓を開き、VC++とNASMWにパ
+スが通った状態で、Makefile のあるディレクトリに移動し、
 
         nmake
 
-�Ŏ��s�t�@�C�����쐬����܂��B
+で実行ファイルが作成されます。
 
 
 
 ---------------
-4. 2���g�p�A�z�z�����Ȃ�
+4. 2次使用、配布条件など
 ---------------
 
-�@�����p���Ȃ�����ɂ����āA�ꕔ�̃t�@�C���������A���ρA�p�N��Ȃǂ͎��R
-�ł��B�p�N���č�����\�t�g�Ɋւ��Ă��\�[�X�R�[�h���J�̋`���͂���܂���B
-�A�����s�v�ł��i�ł��A�g������`�Ɖ]���Ă��炦��Ɗ������ł��i�΁j�j�B
+　商利用しない限りにおいて、一部のファイルを除き、改変、パクりなどは自由
+です。パクって作ったソフトに関してもソースコード公開の義務はありません。
+連絡も不要です（でも、使ったよ〜と云ってもらえると嬉しいです（笑））。
 
-�@��L�̏�������O���̂́A
+　上記の条件から外れるのは、
 
-  1. MPU�R�A
-     Mike Coates ���� Darren Olafson ���̒��앨�ł��B���p����ۂ́A����
-   �֘A�����A�g�p�������ĉ������B
+  1. MPUコア
+     Mike Coates 氏と Darren Olafson 氏の著作物です。流用する際は、両氏
+   へ連絡し、使用許可を貰って下さい。
 
-         Mike Coates���A���� : mcoates@mame.freeserve.co.uk
-         Darren Olafson���A���� : deo@mail.island.net
+         Mike Coates氏連絡先 : mcoates@mame.freeserve.co.uk
+         Darren Olafson氏連絡先 : deo@mail.island.net
 
   2. WINDRV.C
-     yamama���̒��앨�ł��B���p����ۂ́Ayamama���֘A�����A�g�p������
-   �ĉ������B
+     yamama氏の著作物です。流用する際は、yamama氏へ連絡し、使用許可を貰っ
+   て下さい。
 
-         yamama���A���� : yamama@ps.ksky.ne.jp
+         yamama氏連絡先 : yamama@ps.ksky.ne.jp
 
-�@���ꂩ��AOPM.C�ɂ��ẮA�����ϐ����E�֐��͕ς���Ă��܂����A��{�I��
-�� Jarek Burczynski���̃R�[�h���x�[�X�ɂ��Ă��܂��̂ŁA���̓_�����ӂ�����
-����΍K���ł��B
+　それから、OPM.Cについては、多少変数名・関数は変わっていますが、基本的に
+は Jarek Burczynski氏のコードをベースにしていますので、その点ご留意いただ
+ければ幸いです。
 
-�@���̃R�[�h���̂̔z�z��ړI�Ƃ���ꍇ�́A�A�[�J�C�u�̒��g�͕ύX�����ɁA
-�����Z�b�g�Ŕz�z���ĉ������ˁB
+　このコード自体の配布を目的とする場合は、アーカイブの中身は変更せずに、
+ワンセットで配布して下さいね。
 
-�@���쌠�Ɋւ��Ă͕������܂���i�������Ⴕ�����Ă��ł��Ȃ����ǁj�B���A
-�܂��D���Ɏg���ĉ������i�΁j�B
+　著作権に関しては放棄しません（国内じゃしたくてもできないけど）。が、
+まぁ好きに使って下さい（笑）。
 
 
 
 ---------------
-5. �Ō��
+5. 最後に
 ---------------
 
-�@���������B���ꂵ�������B�v���O�������蕳�����B���p���l�͖��������B����
-�ł�������A���ĕ��͂����R�ɂ��g�����������i���B
+　汚いっす。見苦しいっす。プログラム下手糞っす。利用価値は無いっす。それ
+でもいいよ、って方はご自由にお使いください（汗。
 
-�@��ԕ�����Â炢�̂́uwindraw.c�v����ł��傤���c�c�B
-�@�`��̗v�͂قڑS�Ă����ɏW�܂��Ă��܂����A�t���O���Ă܂���Ŋ��Ɏ��ɂ�
-�󂪕�����܂���i�����B�C���������琮�����h�L�������g�쐬�ł����܂��傤
-���c�c�B
+　一番分かりづらいのは「windraw.c」周りでしょうか……。
+　描画の要はほぼ全てここに集まっていますが、フラグ立てまくりで既に私にも
+訳が分かりません（ぉぃ。気が向いたら整理＆ドキュメント作成でもしましょう
+か……。
 
 
 -----
-de ���񂶂�
+de けんじょ
 kenjo@ceres.dti.ne.jp
 kenjo@retropc.net
 
