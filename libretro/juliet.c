@@ -5,7 +5,7 @@
 
 #if 0
 /*
- * Juliet ¥À¥ß¡¼
+ * Juliet ãƒ€ãƒŸãƒ¼
  */
 
 BOOL
@@ -28,8 +28,8 @@ juliet_prepare(void)
 }
 
 
-// ---- YM2151Éô
-// ¥ê¥»¥Ã¥È¤ÈÆ±»ş¤Ë¡¢OPM¥Á¥Ã¥×¤ÎÍ­Ìµ¤â³ÎÇ§
+// ---- YM2151éƒ¨
+// ãƒªã‚»ãƒƒãƒˆã¨åŒæ™‚ã«ã€OPMãƒãƒƒãƒ—ã®æœ‰ç„¡ã‚‚ç¢ºèª
 void
 juliet_YM2151Reset(void)
 {
@@ -55,7 +55,7 @@ juliet_YM2151W(BYTE reg, BYTE data)
 {
 }
 
-// ---- YMF288Éô
+// ---- YMF288éƒ¨
 
 void
 juliet_YMF288Reset(void)

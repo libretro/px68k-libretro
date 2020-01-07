@@ -166,7 +166,7 @@ static int IncTrk(int drv, int r)
 			r = (r+1)&7;
 			break;
 		case DIM_2HS:				// 1024byte/sct, 9sct/trk
-			if ( r>8 ) r -= 9;		// 9SCDRVÍÑ
+			if ( r>8 ) r -= 9;		// 9SCDRVç”¨
 		case DIM_2HDE:
 			r = (r+1)%9;
 			break;
@@ -192,13 +192,13 @@ static int GetPos(int drv, FDCID* id)
 			ret += sizeof(DIM_HEADER);
 			break;
 		case DIM_2HS:				// 1024byte/sct, 9sct/trk
-			if ( r>9 ) r -= 9;		// 9SCDRVÍÑ
+			if ( r>9 ) r -= 9;		// 9SCDRVç”¨
 			if ( (c<0)||(c>84)||(h<0)||(h>1)||(r<1)||(r>9)||(n!=3) ) return 0;
 			ret = SctLength[type]*(c*2+h)+((r-1)<<10);
 			ret += sizeof(DIM_HEADER);
 			break;
 		case DIM_2HDE:
-			h &= 1;					// 9SCDRVÍÑ
+			h &= 1;					// 9SCDRVç”¨
 			if ( (c<0)||(c>84)||(h<0)||(h>1)||(r<1)||(r>9)||(n!=3) ) return 0;
 			ret = SctLength[type]*(c*2+h)+((r-1)<<10);
 			ret += sizeof(DIM_HEADER);

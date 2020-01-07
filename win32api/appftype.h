@@ -1,20 +1,20 @@
 
-// DOSIO═╤д╬е╒ебедеые┐еде╫
+// DOSIOчФиуБоуГХуВбуВдуГлуВ┐уВдуГЧ
 
 enum {
-	FTYPE_NONE = 0,		// ╝л╞░╚╜╩╠ or PC
-	FTYPE_SMIL,			// е╖е╣е╞ер═╜╠є
-	FTYPE_TEXT,			// е╞ене╣е╚е╒ебедеы
+	FTYPE_NONE = 0,		// шЗкхЛХхИдхИе or PC
+	FTYPE_SMIL,			// уВ╖уВ╣уГЖуГаф║Ич┤Д
+	FTYPE_TEXT,			// уГЖуВнуВ╣уГИуГХуВбуВдуГл
 	FTYPE_BMP,			// Bitmap
-	FTYPE_PICT,			// Picture (═╜╠є)
-	FTYPE_PNG,			// Png (═╜╠є)
+	FTYPE_PICT,			// Picture (ф║Ич┤Д)
+	FTYPE_PNG,			// Png (ф║Ич┤Д)
 	FTYPE_WAV,			// Wave
 	FTYPE_D88,			// D88
-	FTYPE_BETA,			// е┘е┐едесб╝е╕
-	FTYPE_THD,			// .thd е╧б╝е╔е╟еге╣епедесб╝е╕
-	FTYPE_HDI,			// .hdi е╧б╝е╔е╟еге╣епедесб╝е╕
-	FTYPE_HDD,			// .hdd е╧б╝е╔е╟еге╣епедесб╝е╕ (═╜╠є)
-	FTYPE_S98,			// .s98 е╧б╝е╔е╟еге╣епедесб╝е╕
-	FTYPE_MIMPI,			// mimpi defaultе╒ебедеы
+	FTYPE_BETA,			// уГЩуВ┐уВдуГбуГ╝уВ╕
+	FTYPE_THD,			// .thd уГПуГ╝уГЙуГЗуВгуВ╣уВпуВдуГбуГ╝уВ╕
+	FTYPE_HDI,			// .hdi уГПуГ╝уГЙуГЗуВгуВ╣уВпуВдуГбуГ╝уВ╕
+	FTYPE_HDD,			// .hdd уГПуГ╝уГЙуГЗуВгуВ╣уВпуВдуГбуГ╝уВ╕ (ф║Ич┤Д)
+	FTYPE_S98,			// .s98 уГПуГ╝уГЙуГЗуВгуВ╣уВпуВдуГбуГ╝уВ╕
+	FTYPE_MIMPI,			// mimpi defaultуГХуВбуВдуГл
 	FTYPE_SRAM			// SRAM
 };

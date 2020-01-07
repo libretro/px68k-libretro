@@ -14,24 +14,24 @@
 
 	BYTE	GVRAM[0x80000];
 	WORD	Grp_LineBuf[1024];
-	WORD	Grp_LineBufSP[1024];		// ÆÃ¼ì¥×¥é¥¤¥ª¥ê¥Æ¥£¡¿È¾Æ©ÌÀÍÑ¥Ğ¥Ã¥Õ¥¡
-	WORD	Grp_LineBufSP2[1024];		// È¾Æ©ÌÀ¥Ù¡¼¥¹¥×¥ì¡¼¥óÍÑ¥Ğ¥Ã¥Õ¥¡¡ÊÈóÈ¾Æ©ÌÀ¥Ó¥Ã¥È³ÊÇ¼¡Ë
+	WORD	Grp_LineBufSP[1024];		// ç‰¹æ®Šãƒ—ãƒ©ã‚¤ã‚ªãƒªãƒ†ã‚£ï¼åŠé€æ˜ç”¨ãƒãƒƒãƒ•ã‚¡
+	WORD	Grp_LineBufSP2[1024];		// åŠé€æ˜ãƒ™ãƒ¼ã‚¹ãƒ—ãƒ¬ãƒ¼ãƒ³ç”¨ãƒãƒƒãƒ•ã‚¡ï¼ˆéåŠé€æ˜ãƒ“ãƒƒãƒˆæ ¼ç´ï¼‰
 	WORD	Grp_LineBufSP_Tr[1024];
-	WORD	Pal16Adr[256];			// 16bit color ¥Ñ¥ì¥Ã¥È¥¢¥É¥ì¥¹·×»»ÍÑ
+	WORD	Pal16Adr[256];			// 16bit color ãƒ‘ãƒ¬ãƒƒãƒˆã‚¢ãƒ‰ãƒ¬ã‚¹è¨ˆç®—ç”¨
 
 // xxx: for little endian only
 #define GET_WORD_W8(src) (*(BYTE *)(src) | *((BYTE *)(src) + 1) << 8)
 
 
 // -----------------------------------------------------------------------
-//   ½é´ü²½¡Á
+//   åˆæœŸåŒ–ã€œ
 // -----------------------------------------------------------------------
 void GVRAM_Init(void)
 {
 	int i;
 
 	ZeroMemory(GVRAM, 0x80000);
-	for (i=0; i<128; i++)			// 16bit color ¥Ñ¥ì¥Ã¥È¥¢¥É¥ì¥¹·×»»ÍÑ
+	for (i=0; i<128; i++)			// 16bit color ãƒ‘ãƒ¬ãƒƒãƒˆã‚¢ãƒ‰ãƒ¬ã‚¹è¨ˆç®—ç”¨
 	{
 		Pal16Adr[i*2] = i*4;
 		Pal16Adr[i*2+1] = i*4+1;
@@ -40,7 +40,7 @@ void GVRAM_Init(void)
 
 
 // -----------------------------------------------------------------------------------
-//  ¹âÂ®¥¯¥ê¥¢ÍÑ¥ë¡¼¥Á¥ó
+//  é«˜é€Ÿã‚¯ãƒªã‚¢ç”¨ãƒ«ãƒ¼ãƒãƒ³
 // -----------------------------------------------------------------------------------
 
 void FASTCALL GVRAM_FastClear(void)
@@ -48,7 +48,7 @@ void FASTCALL GVRAM_FastClear(void)
 	DWORD v, h;
 	v = ((CRTC_Regs[0x29]&4)?512:256);
 	h = ((CRTC_Regs[0x29]&3)?512:256);
-	// ¤ä¤Ã¤Ñ¤Á¤ã¤ó¤ÈÈÏ°Ï»ØÄê¤·¤Ê¤¤¤ÈÊÑ¤Ë¤Ê¤ë¤â¤Î¤â¤¢¤ë¡Ê¥À¥¤¥Ê¥Ş¥¤¥È¥Ç¥å¡¼¥¯¤È¤«¡Ë
+	// ã‚„ã£ã±ã¡ã‚ƒã‚“ã¨ç¯„å›²æŒ‡å®šã—ãªã„ã¨å¤‰ã«ãªã‚‹ã‚‚ã®ã‚‚ã‚ã‚‹ï¼ˆãƒ€ã‚¤ãƒŠãƒã‚¤ãƒˆãƒ‡ãƒ¥ãƒ¼ã‚¯ã¨ã‹ï¼‰
 #ifdef USE_ASM
 	_asm
 	{
@@ -147,7 +147,7 @@ BYTE FASTCALL GVRAM_Read(DWORD adr)
 	adr ^= 1;
 	adr -= 0xc00000;
 
-	if (CRTC_Regs[0x28]&8) {			// ÆÉ¤ß¹ş¤ßÂ¦¤â65536¥â¡¼¥É¤ÎVRAMÇÛÃÖ¡Ê¶ì°ßÆ¬ÊáÊªÄ¢¡Ë
+	if (CRTC_Regs[0x28]&8) {			// èª­ã¿è¾¼ã¿å´ã‚‚65536ãƒ¢ãƒ¼ãƒ‰ã®VRAMé…ç½®ï¼ˆè‹¦èƒƒé ­æ•ç‰©å¸³ï¼‰
 		if (adr<0x80000) ret = GVRAM[adr];
 	} else {
 		switch(CRTC_Regs[0x28]&3)
@@ -208,7 +208,7 @@ void FASTCALL GVRAM_Write(DWORD adr, BYTE data)
 	adr -= 0xc00000;
 
 
-	if (CRTC_Regs[0x28]&8)				// 65536¥â¡¼¥É¤ÎVRAMÇÛÃÖ¡©¡ÊNemesis¡Ë
+	if (CRTC_Regs[0x28]&8)				// 65536ãƒ¢ãƒ¼ãƒ‰ã®VRAMé…ç½®ï¼Ÿï¼ˆNemesisï¼‰
 	{
 		if ( adr<0x80000 )
 		{
@@ -254,7 +254,7 @@ void FASTCALL GVRAM_Write(DWORD adr, BYTE data)
 				{
 					scr = GrphScrollY[(adr>>18)&2];
 					line = (((adr&0x7ffff)>>10)-scr)&511;
-					TextDirtyLine[line] = 1;			// 32¿§4ÌÌ¤ß¤¿¤¤¤Ê»ÈÍÑÊıË¡»ş
+					TextDirtyLine[line] = 1;			// 32è‰²4é¢ã¿ãŸã„ãªä½¿ç”¨æ–¹æ³•æ™‚
 					scr = GrphScrollY[((adr>>18)&2)+1];		//
 					line = (((adr&0x7ffff)>>10)-scr)&511;		//
 					if (adr&0x80000) adr+=1;
@@ -287,7 +287,7 @@ void FASTCALL GVRAM_Write(DWORD adr, BYTE data)
 
 
 // -----------------------------------------------------------------------
-//   ¤³¤Ã¤«¤é¸å¤Ï¥é¥¤¥óÃ±°Ì¤Ç¤Î²èÌÌÅ¸³«Éô
+//   ã“ã£ã‹ã‚‰å¾Œã¯ãƒ©ã‚¤ãƒ³å˜ä½ã§ã®ç”»é¢å±•é–‹éƒ¨
 // -----------------------------------------------------------------------
 LABEL void Grp_DrawLine16(void)
 {
@@ -369,7 +369,7 @@ LABEL void Grp_DrawLine16(void)
 		"pushf;"
 		"cld;"
 
-#if 0	/* ¤Ş¤¢¡¢Æ±¤¸¥»¥°¥á¥ó¥Èº¹¤·¤Æ¤ëÈ¦¤À¤·¡Ä */
+#if 0	/* ã¾ã‚ã€åŒã˜ã‚»ã‚°ãƒ¡ãƒ³ãƒˆå·®ã—ã¦ã‚‹ç­ˆã ã—â€¦ */
 		"pushl	%%es;"
 
 		"movw	%%ds, %%ax;"
@@ -433,7 +433,7 @@ LABEL void Grp_DrawLine16(void)
 		"stosw;"
 		"loop	.gp16linelp_b;"
 
-#if 0	/* ¤Ş¤¢¡¢Æ±¤¸¥»¥°¥á¥ó¥Èº¹¤·¤Æ¤ëÈ¦¤À¤·¡Ä */
+#if 0	/* ã¾ã‚ã€åŒã˜ã‚»ã‚°ãƒ¡ãƒ³ãƒˆå·®ã—ã¦ã‚‹ç­ˆã ã—â€¦ */
 		"popl	%%es;"
 #endif
 		"popl	%%edi;"
@@ -876,7 +876,7 @@ LABEL void FASTCALL Grp_DrawLine8(int page, int opaq)
 #endif /* USE_ASM */
 }
 
-				// Manhattan Requiem Opening 7.0¢ª7.5MHz
+				// Manhattan Requiem Opening 7.0â†’7.5MHz
 LABEL void FASTCALL Grp_DrawLine4(DWORD page, int opaq)
 {
 #ifdef USE_ASM
@@ -947,7 +947,7 @@ LABEL void FASTCALL Grp_DrawLine4(DWORD page, int opaq)
 		gp4linelp2_a:
 			lodsw
 			mov	ah, 0
-			shr	al, 4			// shr¤ÎZF¤Ï³ÎÇ§ºÑ
+			shr	al, 4			// shrã®ZFã¯ç¢ºèªæ¸ˆ
 			jz	gp4lineskip2_a
 			mov	ax, word ptr GrphPal[eax*2]
 			mov	[edx], ax
@@ -959,7 +959,7 @@ LABEL void FASTCALL Grp_DrawLine4(DWORD page, int opaq)
 		gp4linelp2_b:
 			lodsw
 			mov	ah, 0
-			shr	al, 4			// shr¤ÎZF¤Ï³ÎÇ§ºÑ
+			shr	al, 4			// shrã®ZFã¯ç¢ºèªæ¸ˆ
 			jz	gp4lineskip2_b
 			mov	ax, word ptr GrphPal[eax*2]
 			mov	[edx], ax
@@ -1102,7 +1102,7 @@ LABEL void FASTCALL Grp_DrawLine4(DWORD page, int opaq)
 	".gp4linelp2_a:"
 		"lodsw;"
 		"movb	$0, %%ah;"
-		"shrb	$4, %%al;"			// shr¤ÎZF¤Ï³ÎÇ§ºÑ
+		"shrb	$4, %%al;"			// shrã®ZFã¯ç¢ºèªæ¸ˆ
 		"jz	.gp4lineskip2_a;"
 		"movw	GrphPal(, %%eax, 2), %%ax;"
 		"movw	%%ax, (%%edx);"
@@ -1114,7 +1114,7 @@ LABEL void FASTCALL Grp_DrawLine4(DWORD page, int opaq)
 	".gp4linelp2_b:"
 		"lodsw;"
 		"movb	$0,%%ah;"
-		"shrb	$4, %%al;"			// shr¤ÎZF¤Ï³ÎÇ§ºÑ
+		"shrb	$4, %%al;"			// shrã®ZFã¯ç¢ºèªæ¸ˆ
 		"jz	.gp4lineskip2_b;"
 		"movw	GrphPal(, %%eax, 2), %%ax;"
 		"movw	%%ax, (%%edx);"
@@ -1290,7 +1290,7 @@ LABEL void FASTCALL Grp_DrawLine4(DWORD page, int opaq)
 #endif /* USE_ASM */
 }
 
-					// ¤³¤Î²èÌÌ¥â¡¼¥É¤Ï´ªÊÛ¤·¤Æ²¼¤µ¤¤¡Ä
+					// ã“ã®ç”»é¢ãƒ¢ãƒ¼ãƒ‰ã¯å‹˜å¼ã—ã¦ä¸‹ã•ã„â€¦
 void FASTCALL Grp_DrawLine4h(void)
 {
 #ifdef USE_ASM
@@ -1466,7 +1466,7 @@ void FASTCALL Grp_DrawLine4h(void)
 
 
 // -------------------------------------------------
-// --- È¾Æ©ÌÀ¡¿ÆÃ¼ìPri¤Î¥Ù¡¼¥¹¤È¤Ê¤ë¥Ú¡¼¥¸¤ÎÉÁ²è ---
+// --- åŠé€æ˜ï¼ç‰¹æ®ŠPriã®ãƒ™ãƒ¼ã‚¹ã¨ãªã‚‹ãƒšãƒ¼ã‚¸ã®æç”» ---
 // -------------------------------------------------
 void FASTCALL Grp_DrawLine16SP(void)
 {
@@ -1668,10 +1668,10 @@ or al, ah
 			jmp	gp8osplineskip
 		gp8osplinesp:
 			and	eax, 0feh
-			jz	gp8onotzero			// ¤Ä¤¤¤ó¤Ó¡¼¡£Palette0°Ê³°¤Î$0000¤ÏÆÃ¼ìPri¤Ç¤ÏÆ©ÌÀ¤¸¤ã¤Ê¤¯¹õ°·¤¤¤é¤·¤¤
+			jz	gp8onotzero			// ã¤ã„ã‚“ã³ãƒ¼ã€‚Palette0ä»¥å¤–ã®$0000ã¯ç‰¹æ®ŠPriã§ã¯é€æ˜ã˜ã‚ƒãªãé»’æ‰±ã„ã‚‰ã—ã„
 			mov	ax, word ptr GrphPal[eax*2]
-			or	ax, Ibit			// Palette0°Ê³°¤ÏIbitÎ©¤Æ¤Æ¤´¤Ş¤«¤½¡¼
-		gp8onotzero:					// È¾Æ©ÌÀ¤¬ÊÑ¤Ë¤Ê¤ë»ş¤Ï¡¢È¾Æ©ÌÀ¤ÈÆÃ¼ìPri¤òÊÌ¥ë¡¼¥Á¥ó¤Ë¤·¤Ê¤­¤ã¡Ä
+			or	ax, Ibit			// Palette0ä»¥å¤–ã¯Ibitç«‹ã¦ã¦ã”ã¾ã‹ããƒ¼
+		gp8onotzero:					// åŠé€æ˜ãŒå¤‰ã«ãªã‚‹æ™‚ã¯ã€åŠé€æ˜ã¨ç‰¹æ®ŠPriã‚’åˆ¥ãƒ«ãƒ¼ãƒãƒ³ã«ã—ãªãã‚ƒâ€¦
 			mov	word ptr Grp_LineBufSP[edx], ax
 			mov	word ptr Grp_LineBufSP2[edx], 0
 		gp8osplineskip:
@@ -1835,7 +1835,7 @@ void FASTCALL Grp_DrawLine4SP(DWORD page/*, int opaq*/)
 {
 	DWORD scrx, scry;
 	page &= 3;
-	switch(page)		// Èş¤·¤¯¤Ê¤µ¤¹¤®¤ë¡Ê¾Ğ¡Ë
+	switch(page)		// ç¾ã—ããªã•ã™ãã‚‹ï¼ˆç¬‘ï¼‰
 	{
 	case 0:	scrx = GrphScrollX[0]; scry = GrphScrollY[0]; break;
 	case 1: scrx = GrphScrollX[1]; scry = GrphScrollY[1]; break;
@@ -2435,16 +2435,16 @@ void FASTCALL Grp_DrawLine4hSP(void)
 
 
 // -------------------------------------------------
-// --- È¾Æ©ÌÀ¤ÎÂĞ¾İ¤È¤Ê¤ë¥Ú¡¼¥¸¤ÎÉÁ²è --------------
-// 2¥Ú¡¼¥¸°Ê¾å¤¢¤ë¥°¥é¥Õ¥£¥Ã¥¯¥â¡¼¥É¤Î¤ß¤Ê¤Î¤Ç¡¢
-// 256¿§2ÌÌ or 16¿§4ÌÌ¤Î¥â¡¼¥É¤Î¤ß¡£
-// 256¿§»ş¤Ï¡¢Opaque¤Ç¤Ê¤¤Êı¤Î¥â¡¼¥É¤Ï¤¤¤é¤Ê¤¤¤«¤â¡Ä
-// ¡ÊÉ¬¤ºOpaque¥â¡¼¥É¤ÎÈ¦¡Ë
+// --- åŠé€æ˜ã®å¯¾è±¡ã¨ãªã‚‹ãƒšãƒ¼ã‚¸ã®æç”» --------------
+// 2ãƒšãƒ¼ã‚¸ä»¥ä¸Šã‚ã‚‹ã‚°ãƒ©ãƒ•ã‚£ãƒƒã‚¯ãƒ¢ãƒ¼ãƒ‰ã®ã¿ãªã®ã§ã€
+// 256è‰²2é¢ or 16è‰²4é¢ã®ãƒ¢ãƒ¼ãƒ‰ã®ã¿ã€‚
+// 256è‰²æ™‚ã¯ã€Opaqueã§ãªã„æ–¹ã®ãƒ¢ãƒ¼ãƒ‰ã¯ã„ã‚‰ãªã„ã‹ã‚‚â€¦
+// ï¼ˆå¿…ãšOpaqueãƒ¢ãƒ¼ãƒ‰ã®ç­ˆï¼‰
 // -------------------------------------------------
-// ¤³¤³¤Ï¤Ş¤À32¿§x4ÌÌ¥â¡¼¥É¤Î¼ÂÁõ¤ò¤·¤Æ¤Ê¤¤¤ì¤¹¡Ä
-// ¡Ê¤ì¤¸¤¹¤¿Â­¤ê¤Ê¤¤¤è¤¥¡Ä¡Ë
+// ã“ã“ã¯ã¾ã 32è‰²x4é¢ãƒ¢ãƒ¼ãƒ‰ã®å®Ÿè£…ã‚’ã—ã¦ãªã„ã‚Œã™â€¦
+// ï¼ˆã‚Œã˜ã™ãŸè¶³ã‚Šãªã„ã‚ˆã…â€¦ï¼‰
 // -------------------------------------------------
-							// ¤ä¤±¤Ë¤¹¤Ã¤­¤ê
+							// ã‚„ã‘ã«ã™ã£ãã‚Š
 LABEL void FASTCALL
 Grp_DrawLine8TR(int page, int opaq)
 {
@@ -2480,17 +2480,17 @@ Grp_DrawLine8TR(int page, int opaq)
 			mov	cx, word ptr GrphPal[ecx*2]
 			jmp	gp8otrlinenorm
 		gp8otrlinetr:
-			jcxz	gp8otrlinenorm		// ¤±¤í¤Ô¡¼¡Ä
+			jcxz	gp8otrlinenorm		// ã‘ã‚ã´ãƒ¼â€¦
 			mov	cx, word ptr GrphPal[ecx*2]
-			jcxz	gp8otrlinenorm		// ¤±¤í¤Ô¡¼¡Ä
+			jcxz	gp8otrlinenorm		// ã‘ã‚ã´ãƒ¼â€¦
 			and	ax, Pal_HalfMask
 			test	cx, Ibit
 			jz	gp8otrlinetrI
 			or	ax, Pal_Ix2
 		gp8otrlinetrI:
 			and	cx, Pal_HalfMask
-			add	cx, ax			// 17bit·×»»Ãæ
-			rcr	cx, 1			// 17bit·×»»Ãæ
+			add	cx, ax			// 17bitè¨ˆç®—ä¸­
+			rcr	cx, 1			// 17bitè¨ˆç®—ä¸­
 		gp8otrlinenorm:
 			mov	Grp_LineBuf[edi], cx
 			inc	bx
@@ -2537,17 +2537,17 @@ Grp_DrawLine8TR(int page, int opaq)
 		"movw	GrphPal(, %%ecx, 2), %%cx;"
 		"jmp	.gp8otrlinenorm;"
 	".gp8otrlinetr:"
-		"jcxz	.gp8otrlinenorm;"	// ¤±¤í¤Ô¡¼¡Ä
+		"jcxz	.gp8otrlinenorm;"	// ã‘ã‚ã´ãƒ¼â€¦
 		"movw	GrphPal(, %%ecx, 2), %%cx;"
-		"jcxz	.gp8otrlinenorm;"	// ¤±¤í¤Ô¡¼¡Ä
+		"jcxz	.gp8otrlinenorm;"	// ã‘ã‚ã´ãƒ¼â€¦
 		"andw	%5, %%ax;"
 		"testw	%6, %%cx;"
 		"jz	.gp8otrlinetrI;"
 		"orw	%7, %%ax;"
 	".gp8otrlinetrI:"
 		"andw	%5, %%cx;"
-		"addw	%%ax, %%cx;"		// 17bit·×»»Ãæ
-		"rcrw	$1, %%cx;"		// 17bit·×»»Ãæ
+		"addw	%%ax, %%cx;"		// 17bitè¨ˆç®—ä¸­
+		"rcrw	$1, %%cx;"		// 17bitè¨ˆç®—ä¸­
 	".gp8otrlinenorm:"
 		"movw	%%cx, Grp_LineBuf(%%edi);"
 		"incw	%%bx;"
@@ -2664,17 +2664,17 @@ Grp_DrawLine4TR(DWORD page, int opaq)
 			mov	cx, word ptr GrphPal[ecx*2]
 			jmp	gp4otrlinenorm2
 		gp4otrlinetr2:
-			jcxz	gp4otrlinenorm2		// ¤±¤í¤Ô¡¼
+			jcxz	gp4otrlinenorm2		// ã‘ã‚ã´ãƒ¼
 			mov	cx, word ptr GrphPal[ecx*2]
-			jcxz	gp4otrlinenorm2		// ¤±¤í¤Ô¡¼
+			jcxz	gp4otrlinenorm2		// ã‘ã‚ã´ãƒ¼
 			and	ax, Pal_HalfMask
 			test	cx, Ibit
 			jz	gp4otrlinetr2I
 			or	ax, Pal_Ix2
 		gp4otrlinetr2I:
 			and	cx, Pal_HalfMask
-			add	cx, ax			// 17bit·×»»Ãæ
-			rcr	cx, 1			// 17bit·×»»Ãæ
+			add	cx, ax			// 17bitè¨ˆç®—ä¸­
+			rcr	cx, 1			// 17bitè¨ˆç®—ä¸­
 		gp4otrlinenorm2:
 			mov	Grp_LineBuf[edi], cx
 			inc	bx
@@ -2702,17 +2702,17 @@ Grp_DrawLine4TR(DWORD page, int opaq)
 		gp4trlinetr2:
 			movzx	ecx, byte ptr GVRAM[esi+ebx*2]
 			shr	cl, 4
-			jcxz	gp4trlinenorm2		// ¤±¤í¤Ô¡¼
+			jcxz	gp4trlinenorm2		// ã‘ã‚ã´ãƒ¼
 			mov	cx, word ptr GrphPal[ecx*2]
-			jcxz	gp4trlineskip2		// ¤±¤í¤Ô¡¼
+			jcxz	gp4trlineskip2		// ã‘ã‚ã´ãƒ¼
 			and	ax, Pal_HalfMask
 			test	cx, Ibit
 			jz	gp4trlinetr2I
 			or	ax, Pal_Ix2
 		gp4trlinetr2I:
 			and	cx, Pal_HalfMask
-			add	cx, ax			// 17bit·×»»Ãæ
-			rcr	cx, 1			// 17bit·×»»Ãæ
+			add	cx, ax			// 17bitè¨ˆç®—ä¸­
+			rcr	cx, 1			// 17bitè¨ˆç®—ä¸­
 		gp4trlinenorm2:
 			mov	Grp_LineBuf[edi], cx
 		gp4trlineskip2:
@@ -2742,17 +2742,17 @@ Grp_DrawLine4TR(DWORD page, int opaq)
 			mov	cx, word ptr GrphPal[ecx*2]
 			jmp	gp4otrlinenorm
 		gp4otrlinetr:
-			jcxz	gp4otrlinenorm		// ¤±¤í¤Ô¡¼
+			jcxz	gp4otrlinenorm		// ã‘ã‚ã´ãƒ¼
 			mov	cx, word ptr GrphPal[ecx*2]
-			jcxz	gp4otrlinenorm		// ¤±¤í¤Ô¡¼
+			jcxz	gp4otrlinenorm		// ã‘ã‚ã´ãƒ¼
 			and	ax, Pal_HalfMask
 			test	cx, Ibit
 			jz	gp4otrlinetrI
 			or	ax, Pal_Ix2
 		gp4otrlinetrI:
 			and	cx, Pal_HalfMask
-			add	cx, ax			// 17bit·×»»Ãæ
-			rcr	cx, 1			// 17bit·×»»Ãæ
+			add	cx, ax			// 17bitè¨ˆç®—ä¸­
+			rcr	cx, 1			// 17bitè¨ˆç®—ä¸­
 		gp4otrlinenorm:
 			mov	Grp_LineBuf[edi], cx
 			inc	bx
@@ -2780,17 +2780,17 @@ Grp_DrawLine4TR(DWORD page, int opaq)
 			jmp	gp4trlinenorm
 
 		gp4trlinetr:
-			jcxz	gp4trlinenorm		// ¤±¤í¤Ô¡¼
+			jcxz	gp4trlinenorm		// ã‘ã‚ã´ãƒ¼
 			mov	cx, word ptr GrphPal[ecx*2]
-			jcxz	gp4trlineskip		// ¤±¤í¤Ô¡¼
+			jcxz	gp4trlineskip		// ã‘ã‚ã´ãƒ¼
 			and	ax, Pal_HalfMask
 			test	cx, Ibit
 			jz	gp4trlinetrI
 			or	ax, Pal_Ix2
 		gp4trlinetrI:
 			and	cx, Pal_HalfMask
-			add	cx, ax			// 17bit·×»»Ãæ
-			rcr	cx, 1			// 17bit·×»»Ãæ
+			add	cx, ax			// 17bitè¨ˆç®—ä¸­
+			rcr	cx, 1			// 17bitè¨ˆç®—ä¸­
 		gp4trlinenorm:
 			mov	Grp_LineBuf[edi], cx
 		gp4trlineskip:
@@ -3097,7 +3097,7 @@ Grp_DrawLine4TR(DWORD page, int opaq)
 }
 
 /*
-MS-C ¤Î¤ò gas ¤Î¥¤¥ó¥é¥¤¥ó¥¢¥»¥ó¥Ö¥ê¤Ë¤Æ¤±¤È¡¼¤ËÊÑ´¹
+MS-C ã®ã‚’ gas ã®ã‚¤ãƒ³ãƒ©ã‚¤ãƒ³ã‚¢ã‚»ãƒ³ãƒ–ãƒªã«ã¦ã‘ã¨ãƒ¼ã«å¤‰æ›
 
 s/\<.*:/.&/
 s/[^ \t]/"&/
@@ -3108,7 +3108,7 @@ s/\<e*[ds]i\>/%%&/g
 s/\<[0-9]*[^h]\>/$&/g
 s/\([^%]\)\(\<0*[0-9a-fA-F]*\)h/\1$0x\2/g
 s/"\([^ \t]*\)[ \t][ \t]*\(.*\), \(.*\);/"\1 \3, \2;/
-                                            + ¤³¤³¤Ï¥¿¥Ö
+                                            + ã“ã“ã¯ã‚¿ãƒ–
 s/\[/(/g
 s/]/)/g
 */

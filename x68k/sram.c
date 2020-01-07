@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------------------
-//  SRAM.C - SRAM (16kb) �ΰ�
+//  SRAM.C - SRAM (16kb) 領域
 // ---------------------------------------------------------------------------------------
 
 #include	"common.h"
@@ -15,21 +15,21 @@
 
 
 // -----------------------------------------------------------------------
-//   ���Ω���ʤ������뤹�����å�
+//   役に立たないうぃるすチェック
 // -----------------------------------------------------------------------
 void SRAM_VirusCheck(void)
 {
 	//int i, ret;
 
-	if (!Config.SRAMWarning) return;				// Warningȯ���⡼�ɤǤʤ���е���
+	if (!Config.SRAMWarning) return;				// Warning発生モードでなければ帰る
 
 	if ( (cpu_readmem24_dword(0xed3f60)==0x60000002)
-	   &&(cpu_readmem24_dword(0xed0010)==0x00ed3f60) )		// ���ꤦ���뤹�ˤ��������ʤ����
+	   &&(cpu_readmem24_dword(0xed0010)==0x00ed3f60) )		// 特定うぃるすにしか効かないよ〜
 	{
 #if 0 /* XXX */
 		ret = MessageBox(hWndMain,
-			"����SRAM�ǡ����ϥ����륹�˴������Ƥ����ǽ��������ޤ���\n�����Ľ�Υ��꡼�󥢥åפ�Ԥ��ޤ�����",
-			"�����ԡ�����ηٹ�", MB_ICONWARNING | MB_YESNO);
+			"このSRAMデータはウィルスに感染している可能性があります。\n該当個所のクリーンアップを行いますか？",
+			"けろぴーからの警告", MB_ICONWARNING | MB_YESNO);
 		if (ret == IDYES)
 		{
 			for (i=0x3c00; i<0x4000; i++)
@@ -42,13 +42,13 @@ void SRAM_VirusCheck(void)
 		}
 #endif /* XXX */
 		SRAM_Cleanup();
-		SRAM_Init();			// Virus���꡼�󥢥å׸�Υǡ�����񤭹���Ǥ���
+		SRAM_Init();			// Virusクリーンアップ後のデータを書き込んでおく
 	}
 }
 
 
 // -----------------------------------------------------------------------
-//   �����
+//   初期化
 // -----------------------------------------------------------------------
 void SRAM_Init(void)
 {
@@ -75,7 +75,7 @@ void SRAM_Init(void)
 
 
 // -----------------------------------------------------------------------
-//   ű����
+//   撤収〜
 // -----------------------------------------------------------------------
 void SRAM_Cleanup(void)
 {
@@ -102,7 +102,7 @@ void SRAM_Cleanup(void)
 
 
 // -----------------------------------------------------------------------
-//   �꡼��
+//   りーど
 // -----------------------------------------------------------------------
 BYTE FASTCALL SRAM_Read(DWORD adr)
 {
@@ -116,7 +116,7 @@ BYTE FASTCALL SRAM_Read(DWORD adr)
 
 
 // -----------------------------------------------------------------------
-//   �餤��
+//   らいと
 // -----------------------------------------------------------------------
 void FASTCALL SRAM_Write(DWORD adr, BYTE data)
 {
@@ -124,17 +124,17 @@ void FASTCALL SRAM_Write(DWORD adr, BYTE data)
 
 	if ( (SysPort[5]==0x31)&&(adr<0xed4000) )
 	{
-		if ((adr==0xed0018)&&(data==0xb0))	// SRAM��ư�ؤ��ڤ��ؤ��ʴ�ñ�ʥ����륹�к���
+		if ((adr==0xed0018)&&(data==0xb0))	// SRAM起動への切り替え（簡単なウィルス対策）
 		{
-			if (Config.SRAMWarning)		// Warningȯ���⡼�ɡʥǥե���ȡ�
+			if (Config.SRAMWarning)		// Warning発生モード（デフォルト）
 			{
 #if 0 /* XXX */
 				ret = MessageBox(hWndMain,
-					"SRAM�֡��Ȥ��ڤ��ؤ��褦�Ȥ��Ƥ��ޤ���\n�����륹�δ������ʤ������ǧ���Ƥ���������\nSRAM�֡��Ȥ��ڤ��ؤ�����³���ޤ�����",
-					"�����ԡ�����ηٹ�", MB_ICONWARNING | MB_YESNO);
+					"SRAMブートに切り替えようとしています。\nウィルスの危険がない事を確認してください。\nSRAMブートに切り替え、継続しますか？",
+					"けろぴーからの警告", MB_ICONWARNING | MB_YESNO);
 				if (ret != IDYES)
 				{
-					data = 0;	// STD�֡��Ȥˤ���
+					data = 0;	// STDブートにする
 				}
 #endif /* XXX */
 			}

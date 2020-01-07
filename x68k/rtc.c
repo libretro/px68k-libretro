@@ -14,7 +14,7 @@ static int RTC_Timer16 = 0;
 
 
 // -----------------------------------------------------------------------
-//   ΩÈ¥¸≤Ω
+//   ÂàùÊúüÂåñ
 // -----------------------------------------------------------------------
 void RTC_Init(void)
 {
@@ -26,7 +26,7 @@ void RTC_Init(void)
 
 
 // -----------------------------------------------------------------------
-//   §»§±§§§Œ§Í°º§…
+//   „Å®„Åë„ÅÑ„ÅÆ„Çä„Éº„Å©
 // -----------------------------------------------------------------------
 BYTE FASTCALL RTC_Read(DWORD adr)
 {
@@ -74,7 +74,7 @@ BYTE FASTCALL RTC_Read(DWORD adr)
 
 
 // -----------------------------------------------------------------------
-//   §È§§§»
+//   „Çâ„ÅÑ„Å®
 // -----------------------------------------------------------------------
 void FASTCALL RTC_Write(DWORD adr, BYTE data)
 {
@@ -82,9 +82,9 @@ void FASTCALL RTC_Write(DWORD adr, BYTE data)
 //		RTC_Timer1  = 0;
 //		RTC_Timer16 = 0;
 	} else if ( adr==0xe8a01b ) {
-		RTC_Regs[0][13] = RTC_Regs[1][13] = data&0x0c;		// Alarm/Timer Enable¿©∏Ê
+		RTC_Regs[0][13] = RTC_Regs[1][13] = data&0x0c;		// Alarm/Timer EnableÂà∂Âæ°
 	} else if ( adr==0xe8a01f ) {
-		RTC_Regs[0][15] = RTC_Regs[1][15] = data&0x0c;		// Alarm√ºª“Ω–Œœ¿©∏Ê
+		RTC_Regs[0][15] = RTC_Regs[1][15] = data&0x0c;		// AlarmÁ´ØÂ≠êÂá∫ÂäõÂà∂Âæ°
 	}
 }
 

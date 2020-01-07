@@ -1,19 +1,19 @@
 // ---------------------------------------------------------------------------------------
 //  MIDI.C - MIDI Board (CZ-6BM1) emulator
-//                           Powered by �פˤ夵���
+//                           Powered by ぷにゅさん〜
 // ---------------------------------------------------------------------------------------
 
-// 4/18 ̤��: ���������롼���������ޤ��̤�ʤ��Τ���
-// 4/18 ī��: ��ʥ���Ĥ�ʤ��ä��Τ���
-// 4/18 �롡: ���������롼����������λ�������ԤĻ��ǥɥ饭��餪�ä���
+// 4/18 未明: エクスクルーシヴがうまく通らないのを修正
+// 4/18 朝　: レナムで鳴らなかったのを修正
+// 4/18 昼　: エクスクルーシヴ送信完了を完全に待つ事でドラキュラおっけー
 
-// ToDo: �����������롼����������(�㤨�Хɥ饭���β���������)��
-//         ή�Ф�1MHz�ޤ��������Τϡ�
-//         MIDI�ξ��֤��֤��ݡ��Ȥ򶵤��Ƥ�餦���ȡ�
-//       ��MT-32�ǤΥ��˥󥰥��ơ������λ��ͤ�����å�
-//       ����λ���β����Υꥻ�å�
-//       ��IPL�ꥻ�åȻ��ϼµ��Ǥ�ꥻ�åȤ���ʤ�Ȧ������
-//         �������դϹ��ߤʤΤ� config������Ǥ��Ƥ⤤������
+// ToDo: ・エクスクルーシヴ送信中(例えばドラキュラの音色設定中)に
+//         流石に1MHzまで落ち込むのは…
+//         MIDIの状態を返すポートを教えてもらうこと〜
+//       ・MT-32でのランニングステータスの仕様をチェック
+//       ・終了時の音源のリセット
+//       ・IPLリセット時は実機でもリセットされない筈だが、
+//         ここら辺は好みなので configで設定できてもいいかも
 
 
 #include "common.h"
@@ -26,12 +26,12 @@
 #include "midi.h"
 #include "m68000.h"
 
-#define MIDIBUFFERS 1024			// 1024��ή�Ф˱ۤ��ʤ��Ǥ��礦^_^;
-#define MIDIBUFTIMER 3200			// 10MHz / (31.25K / 10bit) = 3200 ������ˤʤ�ޤ�... 
+#define MIDIBUFFERS 1024			// 1024は流石に越えないでしょう^_^;
+#define MIDIBUFTIMER 3200			// 10MHz / (31.25K / 10bit) = 3200 が正解になります... 
 #define MIDIFIFOSIZE 256
-#define MIDIDELAYBUF 4096			// 31250/10 = 3125 byts (1sʬ) ����Ф��ä���
+#define MIDIDELAYBUF 4096			// 31250/10 = 3125 byts (1s分) あればおっけ？
 
-enum {						// �Ƶ���ꥻ�å��Ѥ˰����
+enum {						// 各機種リセット用に一応。
 	MIDI_NOTUSED,
 	MIDI_DEFAULT,
 	MIDI_MT32,
@@ -41,7 +41,7 @@ enum {						// �Ƶ���ꥻ�å��Ѥ˰����
 	MIDI_CM500,
 	MIDI_SC55,
 	MIDI_SC88,
-	MIDI_LA,				// ��̣��ʤ��ɲä��Ƥߤ���
+	MIDI_LA,				// 意味もなく追加してみたり
 	MIDI_GM,
 	MIDI_GS,
 	MIDI_XG,
@@ -57,8 +57,8 @@ BYTE		MIDI_BUF[MIDIBUFFERS];
 BYTE		MIDI_EXCVBUF[MIDIBUFFERS];
 BYTE		MIDI_EXCVWAIT;
 
-BYTE		MIDI_RegHigh = 0;				// X68K��
-BYTE		MIDI_Playing = 0;				// �ޥ��������å�
+BYTE		MIDI_RegHigh = 0;				// X68K用
+BYTE		MIDI_Playing = 0;				// マスタスイッチ
 BYTE		MIDI_Vector = 0;
 BYTE		MIDI_IntEnable = 0;
 BYTE		MIDI_IntVect = 0;
@@ -73,7 +73,7 @@ long		MIDI_MTimerVal = 0;
 BYTE		MIDI_TxFull = 0;
 BYTE		MIDI_MODULE = MIDI_NOTUSED;
 
-static BYTE MIDI_ResetType[5] = {		// Config.MIDI_Type �˹�碌�ơ�
+static BYTE MIDI_ResetType[5] = {		// Config.MIDI_Type に合わせて…
 	MIDI_LA, MIDI_GM, MIDI_GS, MIDI_XG
 };
 
@@ -87,7 +87,7 @@ static int DBufPtrW = 0;
 static int DBufPtrR = 0;
 
 // ------------------------------------------------------------------
-// �ͤ��ߤ�6��MIMPI�ȡ���ޥå��б��ط�
+// ねこみぢ6、MIMPIトーンマップ対応関係
 // ------------------------------------------------------------------
 
 enum {
@@ -134,7 +134,7 @@ static BYTE EXCV_XGRESET[] = { 0xf0, 0x43, 0x10, 0x4C, 0x00, 0x00, 0x7E, 0x00, 0
 #define MIDIOUTS(a,b,c) (((DWORD)c << 16) | ((DWORD)b << 8) | (DWORD)a)
 
 // -----------------------------------------------------------------------
-//   ������
+//   割り込み
 // -----------------------------------------------------------------------
 DWORD FASTCALL MIDI_Int(BYTE irq)
 {
@@ -154,11 +154,11 @@ DWORD FASTCALL MIDI_Int(BYTE irq)
 
 
 // -----------------------------------------------------------------------
-//   �����ޤ�ʤ��
+//   たいまを進める
 // -----------------------------------------------------------------------
 void FASTCALL MIDI_Timer(DWORD clk)
 {
-	if ( !Config.MIDI_SW ) return;	// MIDI OFF���ϵ���
+	if ( !Config.MIDI_SW ) return;	// MIDI OFF時は帰る
 
 	MIDI_BufTimer -= clk;
 	if (MIDI_BufTimer<0)
@@ -167,7 +167,7 @@ void FASTCALL MIDI_Timer(DWORD clk)
 		if (MIDI_Buffered)
 		{
 			MIDI_Buffered--;
-			if ( (MIDI_Buffered<MIDIFIFOSIZE)&&(MIDI_IntEnable&0x40) )		// Tx FIFO Empty Interrupt�ʥ��ȥץ��
+			if ( (MIDI_Buffered<MIDIFIFOSIZE)&&(MIDI_IntEnable&0x40) )		// Tx FIFO Empty Interrupt（エトプリ）
 			{
 				MIDI_IntFlag |= 0x40;
 				MIDI_IntVect = 0x0c;
@@ -179,7 +179,7 @@ void FASTCALL MIDI_Timer(DWORD clk)
 	if (MIDI_MTimerMax)
 	{
 		 MIDI_MTimerVal -= clk;
-		if (MIDI_MTimerVal<0)		// �ߤ¤����ޡ������ߡ���ˡ������
+		if (MIDI_MTimerVal<0)		// みぢたいまー割り込み（魔法大作戦）
 		{
 			while (MIDI_MTimerVal<0) MIDI_MTimerVal += MIDI_MTimerMax*80;
 			if ( (!(MIDI_R05&0x80))&&(MIDI_IntEnable&0x02) )
@@ -194,7 +194,7 @@ void FASTCALL MIDI_Timer(DWORD clk)
 	if (MIDI_GTimerMax)
 	{
 		MIDI_GTimerVal -= clk;
-		if (MIDI_GTimerVal<0)		// �����ͤ�뤿���ޡ������ߡ�RCD.X��
+		if (MIDI_GTimerVal<0)		// じぇねらるたいまー割り込み（RCD.X）
 		{
 			while (MIDI_GTimerVal<0) MIDI_GTimerVal += MIDI_GTimerMax*80;
 			if ( MIDI_IntEnable&0x80 )
@@ -209,7 +209,7 @@ void FASTCALL MIDI_Timer(DWORD clk)
 
 
 // -----------------------------------------------------------------------
-//   MIDI�⥸�塼�������
+//   MIDIモジュールの設定
 // -----------------------------------------------------------------------
 void MIDI_SetModule(void)
 {
@@ -221,11 +221,11 @@ void MIDI_SetModule(void)
 
 
 // -----------------------------------------------------------------------
-//   ���������롼���� ����
+//   えくすくるーしぶ ごー
 // -----------------------------------------------------------------------
 void MIDI_Sendexclusive(BYTE *excv, int length)
 {
-	// ���������롼����������ޤ�
+	// エクスクルーシヴを送ります
 	CopyMemory(MIDI_EXCVBUF, excv, length);
 	hHdr.lpData = MIDI_EXCVBUF;
 	hHdr.dwFlags = 0;
@@ -237,11 +237,11 @@ void MIDI_Sendexclusive(BYTE *excv, int length)
 
 
 // -----------------------------------------------------------------------
-//   ���������롼���֤����꽪����ޤ��ԤĤ�
+//   えくすくるーしぶを送り終えるまで待つお
 // -----------------------------------------------------------------------
 void MIDI_Waitlastexclusiveout(void) {
 
-	// ���������롼����������λ�ޤ��Ԥ��ޤ��礦��
+	// エクスクルーシヴ送信完了まで待ちましょう〜
 	if (MIDI_EXCVWAIT) {
 		while(midiOutUnprepareHeader(hOut, &hHdr, sizeof(MIDIHDR))
 						== MIDIERR_STILLPLAYING);
@@ -251,7 +251,7 @@ void MIDI_Waitlastexclusiveout(void) {
 
 
 // -----------------------------------------------------------------------
-//   �ꤻ�äȡ�
+//   りせっと〜
 // -----------------------------------------------------------------------
 void MIDI_Reset(void) {
 
@@ -268,8 +268,8 @@ void MIDI_Reset(void) {
 			case MIDI_CM32L:
 			case MIDI_CM64:
 			case MIDI_LA:
-				// ����ä���˽���ʤ���
-				// ��� SC�ϤǤ��̤�Ȧ�Ǥ����ɡ�
+				// ちょっと乱暴かなぁ…
+				// 一応 SC系でも通る筈ですけど…
 				MIDI_Waitlastexclusiveout();
 				MIDI_Sendexclusive(EXCV_MTRESET, sizeof(EXCV_MTRESET));
 				break;
@@ -297,7 +297,7 @@ void MIDI_Reset(void) {
 
 
 // -----------------------------------------------------------------------
-//   ���礭����
+//   しょきか〜
 // -----------------------------------------------------------------------
 void MIDI_Init(void) {
 
@@ -328,7 +328,7 @@ void MIDI_Init(void) {
 
 
 // -----------------------------------------------------------------------
-//   ű����
+//   撤収〜
 // -----------------------------------------------------------------------
 void MIDI_Cleanup(void) {
 
@@ -343,7 +343,7 @@ void MIDI_Cleanup(void) {
 
 
 // -----------------------------------------------------------------------
-//   ��å�����Ƚ��
+//   メッセージ判別
 // -----------------------------------------------------------------------
 void MIDI_Message(BYTE mes) {
 
@@ -351,18 +351,18 @@ void MIDI_Message(BYTE mes) {
 		return;
 	}
 
-	switch(mes) {								// �������б��Ϥ����ߤ�
+	switch(mes) {								// ここの対応はお好みで
 		case MIDI_TIMING:
 		case MIDI_START:
 		case MIDI_CONTINUE:
 		case MIDI_STOP:
 		case MIDI_ACTIVESENSE:
 			return;
-		case MIDI_SYSTEMRESET:					// ������꡼�����
+		case MIDI_SYSTEMRESET:					// 一応イリーガル〜
 			return;
 	}
 
-	if (MIDI_CTRL == MIDICTRL_READY) {			// ������
+	if (MIDI_CTRL == MIDICTRL_READY) {			// 初回限定
 		if (mes & 0x80) {
 			// status
 			MIDI_POS = 0;
@@ -376,7 +376,7 @@ void MIDI_Message(BYTE mes) {
 				case 0xa0:
 				case 0xb0:
 				case 0xe0:
-					MIDI_LAST = mes;			// �����������Ԥ��ʤ��ʤ��
+					MIDI_LAST = mes;			// この方が失敗しないなり…
 					MIDI_CTRL = MIDICTRL_3BYTES;
 					break;
 				default:
@@ -405,7 +405,7 @@ void MIDI_Message(BYTE mes) {
 					break;
 			}
 		}
-		else {						// Key-on�Τߤʵ��������������˺�줿��
+		else {						// Key-onのみな気がしたんだけど忘れた…
 			// running status
 			MIDI_BUF[0] = MIDI_LAST;
 			MIDI_POS = 1;
@@ -413,7 +413,7 @@ void MIDI_Message(BYTE mes) {
 		}
 	}
 	else if ( (mes&0x80) && ((MIDI_CTRL!=MIDICTRL_EXCLUSIVE)||(mes!=MIDI_EOX)) )
-	{			// ��å������Υǡ������˥���ȥ�����Х��Ȥ��Ф����ġ�GENOCIDE2��
+	{			// メッセージのデータ部にコントロールバイトが出た時…（GENOCIDE2）
 		// status
 		MIDI_POS = 0;
 		switch(mes & 0xf0) {
@@ -426,7 +426,7 @@ void MIDI_Message(BYTE mes) {
 			case 0xa0:
 			case 0xb0:
 			case 0xe0:
-				MIDI_LAST = mes;			// �����������Ԥ��ʤ��ʤ��
+				MIDI_LAST = mes;			// この方が失敗しないなり…
 				MIDI_CTRL = MIDICTRL_3BYTES;
 				break;
 			default:
@@ -486,14 +486,14 @@ void MIDI_Message(BYTE mes) {
 				MIDI_Sendexclusive(MIDI_BUF, MIDI_POS);
 				MIDI_CTRL = MIDICTRL_READY;
 			}
-			else if (MIDI_POS >= MIDIBUFFERS) {		// �����С��դ���
+			else if (MIDI_POS >= MIDIBUFFERS) {		// おーばーふろー
 				MIDI_CTRL = MIDICTRL_READY;
 			}
 			break;
 		case MIDICTRL_TIMECODE:
 			if (MIDI_POS >= 2) {
 				if ((mes == 0x7e) || (mes == 0x7f)) {
-					// exclusive��Ʊ���Ǥ���Ȧ��
+					// exclusiveと同じでいい筈…
 					MIDI_CTRL = MIDICTRL_EXCLUSIVE;
 				}
 				else {
@@ -517,8 +517,8 @@ BYTE FASTCALL MIDI_Read(DWORD adr)
 {
 	BYTE ret = 0;
 
-	if ( (adr<0xeafa01)||(adr>=0xeafa10)||(!Config.MIDI_SW) )	// �Ѥʥ��ɥ쥹����
-	{								// MIDI OFF���ˤϥХ����顼�ˤ���
+	if ( (adr<0xeafa01)||(adr>=0xeafa10)||(!Config.MIDI_SW) )	// 変なアドレスか、
+	{								// MIDI OFF時にはバスエラーにする
 		BusErrFlag = 1;
 		return 0;
 	}
@@ -677,8 +677,8 @@ void MIDI_DelayOut(unsigned int delay)
 // -----------------------------------------------------------------------
 void FASTCALL MIDI_Write(DWORD adr, BYTE data)
 {
-	if ( (adr<0xeafa01)||(adr>=0xeafa10)||(!Config.MIDI_SW) )	// �Ѥʥ��ɥ쥹����
-	{								// MIDI OFF���ˤϥХ����顼�ˤ���
+	if ( (adr<0xeafa01)||(adr>=0xeafa10)||(!Config.MIDI_SW) )	// 変なアドレスか、
+	{								// MIDI OFF時にはバスエラーにする
 		BusErrFlag = 1;
 		return;
 	}
@@ -815,7 +815,7 @@ void FASTCALL MIDI_Write(DWORD adr, BYTE data)
 
 
 // -----------------------------------------------------------------------
-// MIMPI�ȡ���ե������ɤ߹��ߡʤͤ��ߤ�6��
+// MIMPIトーンファイル読み込み（ねこみぢ6）
 // -----------------------------------------------------------------------
 
 static int exstrcmp(char *str, char *cmp) {

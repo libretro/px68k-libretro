@@ -84,7 +84,7 @@ midiOutPrepareHeader(HMIDIOUT hmo, LPMIDIHDR pmh, UINT cbmh)
 	(void)hmo;
 	(void)pmh;
 	(void)cbmh;
-	return !MIDIERR_STILLPLAYING;	// (§©
+	return !MIDIERR_STILLPLAYING;	// („Åâ
 }
 
 WINMMAPI MMRESULT WINAPI
@@ -126,7 +126,7 @@ midiOutOpen(LPHMIDIOUT phmo, UINT uDeviceID, DWORD dwCallback,
 	(void)dwCallback;
 	(void)dwInstance;
 	(void)fdwOpen;
-	return !MMSYSERR_NOERROR;	// (§£
+	return !MMSYSERR_NOERROR;	// („ÅÉ
 }
 
 WINMMAPI MMRESULT WINAPI

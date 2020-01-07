@@ -56,7 +56,7 @@ dosio_term(void)
 	/* Nothing to do. */
 }
 
-/* ¥Õ¥¡¥¤¥ëÁàºî */
+/* ãƒ•ã‚¡ã‚¤ãƒ«æ“ä½œ */
 FILEH
 file_open(LPSTR filename)
 {
@@ -205,7 +205,7 @@ file_attr(LPSTR filename)
 }
 
 
-							// ¥«¥ì¥ó¥È¥Õ¥¡¥¤¥ëÁàºî
+							// ã‚«ãƒ¬ãƒ³ãƒˆãƒ•ã‚¡ã‚¤ãƒ«æ“ä½œ
 void
 file_setcd(LPSTR exename)
 {
@@ -449,7 +449,7 @@ fname_mix(LPSTR str, LPSTR mix, int size)
 }
 
 /*
- * UNIX -> DOS Æü»şÊÑ´¹
+ * UNIX -> DOS æ—¥æ™‚å¤‰æ›
  */
 /* $NetBSD: msdosfs_conv.c,v 1.29 2001/01/18 20:28:27 jdolecek Exp $ */
 /*-

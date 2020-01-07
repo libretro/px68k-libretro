@@ -81,7 +81,7 @@ BYTE (*MemReadTable[])(DWORD) = {
 	rm_font, rm_font, rm_font, rm_font, rm_font, rm_font, rm_font, rm_font,
 	rm_font, rm_font, rm_font, rm_font, rm_font, rm_font, rm_font, rm_font,
 	rm_font, rm_font, rm_font, rm_font, rm_font, rm_font, rm_font, rm_font,
-/* SCSI ¤Î¾ì¹ç¤Ï rm_buserr ¤Ë¤Ê¤ë¡© */
+/* SCSI ã®å ´åˆã¯ rm_buserr ã«ãªã‚‹ï¼Ÿ */
 	rm_ipl, rm_ipl, rm_ipl, rm_ipl, rm_ipl, rm_ipl, rm_ipl, rm_ipl,
 	rm_ipl, rm_ipl, rm_ipl, rm_ipl, rm_ipl, rm_ipl, rm_ipl, rm_ipl,
 	rm_ipl, rm_ipl, rm_ipl, rm_ipl, rm_ipl, rm_ipl, rm_ipl, rm_ipl,
@@ -109,7 +109,7 @@ void (*MemWriteTable[])(DWORD, BYTE) = {
 	SRAM_Write, SRAM_Write, SRAM_Write, SRAM_Write, SRAM_Write, SRAM_Write, SRAM_Write, SRAM_Write,
 	wm_buserr, wm_buserr, wm_buserr, wm_buserr, wm_buserr, wm_buserr, wm_buserr, wm_buserr,
 	wm_buserr, wm_buserr, wm_buserr, wm_buserr, wm_buserr, wm_buserr, wm_buserr, wm_buserr,
-/* ROM¥¨¥ê¥¢¤Ø¤Î½ñ¤­¤³¤ß¤ÏÁ´¤Æ¥Ğ¥¹¥¨¥é¡¼ */
+/* ROMã‚¨ãƒªã‚¢ã¸ã®æ›¸ãã“ã¿ã¯å…¨ã¦ãƒã‚¹ã‚¨ãƒ©ãƒ¼ */
 	wm_buserr, wm_buserr, wm_buserr, wm_buserr, wm_buserr, wm_buserr, wm_buserr, wm_buserr,
 	wm_buserr, wm_buserr, wm_buserr, wm_buserr, wm_buserr, wm_buserr, wm_buserr, wm_buserr,
 	wm_buserr, wm_buserr, wm_buserr, wm_buserr, wm_buserr, wm_buserr, wm_buserr, wm_buserr,

@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------------------------
-//  DMAC.C - DMAе│еєе╚еэб╝ещб╩HD63450б╦
-//  ToDo : дтд├д╚┤ё╬яд╦ ^^;
+//  DMAC.C - DMAуВ│уГ│уГИуГнуГ╝уГйя╝ИHD63450я╝Й
+//  ToDo : уВВуБгуБихеЗщ║ЧуБл ^^;
 // ---------------------------------------------------------------------------------------
 
 #include "common.h"
@@ -41,7 +41,7 @@ void DMA_SetReadyCB(int ch, int (*func)(void))
 }
 
 // -----------------------------------------------------------------------
-//   │фдъ╣■д▀е┘епе┐дЄ╩╓д╣
+//   хЙ▓уВКш╛╝уБ┐уГЩуВпуВ┐уВТш┐ФуБЩ
 // -----------------------------------------------------------------------
 DWORD FASTCALL DMA_Int(BYTE irq)
 {
@@ -77,7 +77,7 @@ BYTE FASTCALL DMA_Read(DWORD adr)
 	unsigned char* p;
 	int off = adr&0x3f, ch = ((adr-0xe84000)>>6);
 
-	if ( adr>=0xe84100 ) return 0;		// д╨д╣дидщб╝бй
+	if ( adr>=0xe84100 ) return 0;		// уБ░уБЩуБИуВЙуГ╝я╝Я
 
 	p = (unsigned char*)&DMA[ch];
 
@@ -116,7 +116,7 @@ void FASTCALL DMA_Write(DWORD adr, BYTE data)
 	int off = adr&0x3f, ch = ((adr-0xe84000)>>6);
 	BYTE old;
 
-	if ( adr>=0xe84100 ) return;		// д╨д╣дидщб╝бй
+	if ( adr>=0xe84100 ) return;		// уБ░уБЩуБИуВЙуГ╝я╝Я
 
 	p = (unsigned char*)&DMA[ch];
 
@@ -143,51 +143,51 @@ fclose(fp);
 		break;
 	case 0x07:
 		old = DMA[ch].CCR;
-		DMA[ch].CCR = (data&0xef) | (DMA[ch].CCR&0x80);	// CCRд╬STRд╧╜ёдн╣■д▀д╟д╧═юд╚д╗д╩дд
+		DMA[ch].CCR = (data&0xef) | (DMA[ch].CCR&0x80);	// CCRуБоSTRуБпцЫ╕уБНш╛╝уБ┐уБзуБпшР╜уБиуБЫуБкуБД
 		if ( (data&0x10)&&(DMA[ch].CCR&0x80) ) {		// Software Abort
 			DMAERR(ch,0x11)
 			break;
 		}
 		if ( data&0x20 ) {					// Halt
-//			DMA[ch].CSR &= 0xf7;			// ╦▄═шд╧═юд┴дыд╧д║бгNemesis'90д╟─┤╗╥░нддд╬д╟б─
+//			DMA[ch].CSR &= 0xf7;			// цЬмцЭеуБпшР╜уБбуВЛуБпуБЪуАВNemesis'90уБзшк┐хнРцВкуБДуБоуБзтАж
 			break;
 		}
-		if ( data&0x80 ) {							// ╞░║ю│л╗╧
-			if ( old&0x20 ) {				// Halt▓Є╜№
+		if ( data&0x80 ) {							// хЛХф╜ЬщЦЛхзЛ
+			if ( old&0x20 ) {				// HaltшзгщЩд
 				DMA[ch].CSR |= 0x08;
 				DMA_Exec(ch);
 			} else {
-				if ( DMA[ch].CSR&0xf8 ) {					// е┐еде▀еєе░еиещб╝
+				if ( DMA[ch].CSR&0xf8 ) {					// уВ┐уВдуГЯуГ│уВ░уВиуГйуГ╝
 					DMAERR(ch,0x02)
 					break;
 				}
 				DMA[ch].CSR |= 0x08;
-				if ( (DMA[ch].OCR&8)/*&&(!DMA[ch].MTC)*/ ) {	// евеьедб┐еъеєепевеьеде┴езедеє
+				if ( (DMA[ch].OCR&8)/*&&(!DMA[ch].MTC)*/ ) {	// уВвуГмуВдя╝ПуГкуГ│уВпуВвуГмуВдуГБуВзуВдуГ│
 					DMA[ch].MAR = dma_readmem24_dword(DMA[ch].BAR)&0xffffff;
 					DMA[ch].MTC = dma_readmem24_word(DMA[ch].BAR+4);
 					if (DMA[ch].OCR&4) {
 						DMA[ch].BAR = dma_readmem24_dword(DMA[ch].BAR+6);
 					} else {
 						DMA[ch].BAR += 6;
-						if ( !DMA[ch].BTC ) {			// д│дьдтележеєе╚еиещб╝
+						if ( !DMA[ch].BTC ) {			// уБУуВМуВВуВлуВжуГ│уГИуВиуГйуГ╝
 						DMAERR(ch,0x0f)
 							break;
 						}
 					}
 				}
-				if ( !DMA[ch].MTC ) {					// ележеєе╚еиещб╝
+				if ( !DMA[ch].MTC ) {					// уВлуВжуГ│уГИуВиуГйуГ╝
 					DMAERR(ch,0x0d)
 					break;
 				}
 				DMA[ch].CER  = 0x00;
-				DMA_Exec(ch);								// │л╗╧─╛╕хд╦ележеєе┐дЄ╕лд╞╞░║юе┴езе├епд╣ды╛ь╣чдмдвдыд╬д╟бв╛пд╖д└д▒╝┬╣╘д╖д╞дкдп
+				DMA_Exec(ch);								// щЦЛхзЛчЫ┤х╛МуБлуВлуВжуГ│уВ┐уВТшжЛуБжхЛХф╜ЬуГБуВзуГГуВпуБЩуВЛха┤хРИуБМуБВуВЛуБоуБзуАБх░СуБЧуБауБСхоЯшбМуБЧуБжуБКуБП
 			}
 		}
 		if ( (data&0x40)&&(!DMA[ch].MTC) ) {			// Continuous Op.
 			if ( DMA[ch].CCR&0x80 ) {
 				if ( DMA[ch].CCR&0x40 ) {
 					DMAERR(ch,0x02)
-				} else if ( DMA[ch].OCR&8 ) {				// евеьедб┐еъеєепевеьеде┴езедеє
+				} else if ( DMA[ch].OCR&8 ) {				// уВвуГмуВдя╝ПуГкуГ│уВпуВвуГмуВдуГБуВзуВдуГ│
 					DMAERR(ch,0x01)
 				} else {
 					DMA[ch].MAR = DMA[ch].BAR;
@@ -196,7 +196,7 @@ fclose(fp);
 					DMA[ch].BAR = 0;
 					DMA[ch].BTC = 0;
 					if ( !DMA[ch].MAR ) {
-						DMA[ch].CSR |= 0x40;			// е╓еэе├еп┼╛┴ў╜к╬╗е╙е├е╚б┐│фдъ╣■д▀
+						DMA[ch].CSR |= 0x40;			// уГЦуГнуГГуВпш╗вщАБч╡Вф║ЖуГУуГГуГИя╝ПхЙ▓уВКш╛╝уБ┐
 						DMAINT(ch)
 						break;
 					} else if ( !DMA[ch].MTC ) {
@@ -206,7 +206,7 @@ fclose(fp);
 					DMA[ch].CCR &= 0xbf;
 					DMA_Exec(ch);
 				}
-			} else {									// ╚єActive╗■д╬CNTе╙е├е╚д╧╞░║юе┐еде▀еєе░еиещб╝
+			} else {									// щЭЮActiveцЩВуБоCNTуГУуГГуГИуБпхЛХф╜ЬуВ┐уВдуГЯуГ│уВ░уВиуГйуГ╝
 				DMAERR(ch,0x02)
 			}
 		}
@@ -221,7 +221,7 @@ fclose(fp);
 
 
 // -----------------------------------------------------------------------
-//   DMA╝┬╣╘
+//   DMAхоЯшбМ
 // -----------------------------------------------------------------------
 int FASTCALL DMA_Exec(int ch)
 {
@@ -317,9 +317,9 @@ int FASTCALL DMA_Exec(int ch)
 		}
 
 		DMA[ch].MTC--;
-		if ( !DMA[ch].MTC ) {					// ╗╪─ъ╩мд╬е╨еде╚┐Ї┼╛┴ў╜к╬╗
-			if ( DMA[ch].OCR&8 ) {				// е┴езедеєетб╝е╔д╟╞░ддд╞ддды╛ь╣ч
-				if ( DMA[ch].OCR&4 ) {			// еъеєепевеьеде┴езедеє
+		if ( !DMA[ch].MTC ) {					// цМЗхоЪхИЖуБоуГРуВдуГИцХ░ш╗вщАБч╡Вф║Ж
+			if ( DMA[ch].OCR&8 ) {				// уГБуВзуВдуГ│уГвуГ╝уГЙуБзхЛХуБДуБжуБДуВЛха┤хРИ
+				if ( DMA[ch].OCR&4 ) {			// уГкуГ│уВпуВвуГмуВдуГБуВзуВдуГ│
 					if ( DMA[ch].BAR ) {
 						DMA[ch].MAR = dma_readmem24_dword(DMA[ch].BAR);
 						DMA[ch].MTC = dma_readmem24_word(DMA[ch].BAR+4);
@@ -336,9 +336,9 @@ int FASTCALL DMA_Exec(int ch)
 							break;
 						}
 					}
-				} else {						// евеьеде┴езедеє
+				} else {						// уВвуГмуВдуГБуВзуВдуГ│
 					DMA[ch].BTC--;
-					if ( DMA[ch].BTC ) {		// ╝бд╬е╓еэе├епдмдвды
+					if ( DMA[ch].BTC ) {		// цмбуБоуГЦуГнуГГуВпуБМуБВуВЛ
 						DMA[ch].MAR = dma_readmem24_dword(DMA[ch].BAR);
 						DMA[ch].MTC = dma_readmem24_word(DMA[ch].BAR+4);
 						DMA[ch].BAR += 6;
@@ -355,9 +355,9 @@ int FASTCALL DMA_Exec(int ch)
 						}
 					}
 				}
-			} else {								// ─╠╛яетб╝е╔б╩1е╓еэе├епд╬д▀б╦╜к╬╗
-				if ( DMA[ch].CCR&0x40 ) {			// Countinuous╞░║ю├ц
-					DMA[ch].CSR |= 0x40;			// е╓еэе├еп┼╛┴ў╜к╬╗е╙е├е╚б┐│фдъ╣■д▀
+			} else {								// щАЪх╕╕уГвуГ╝уГЙя╝И1уГЦуГнуГГуВпуБоуБ┐я╝Йч╡Вф║Ж
+				if ( DMA[ch].CCR&0x40 ) {			// CountinuousхЛХф╜Ьф╕н
+					DMA[ch].CSR |= 0x40;			// уГЦуГнуГГуВпш╗вщАБч╡Вф║ЖуГУуГГуГИя╝ПхЙ▓уВКш╛╝уБ┐
 					DMAINT(ch)
 					if ( DMA[ch].BAR ) {
 						DMA[ch].MAR  = DMA[ch].BAR;
@@ -386,7 +386,7 @@ int FASTCALL DMA_Exec(int ch)
 
 
 // -----------------------------------------------------------------------
-//   ╜щ┤№▓╜
+//   хИЭцЬЯхМЦ
 // -----------------------------------------------------------------------
 void DMA_Init(void)
 {

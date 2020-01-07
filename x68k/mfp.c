@@ -20,7 +20,7 @@ static int Timer_Tick[4] = {0, 0, 0, 0};
 static const int Timer_Prescaler[8] = {1, 10, 25, 40, 125, 160, 250, 500};
 
 // -----------------------------------------------------------------------
-//   ͥ������ߤΥ����å��򤷡������٥������֤�
+//   優先割り込みのチェックをし、該当ベクタを返す
 // -----------------------------------------------------------------------
 DWORD FASTCALL MFP_IntCallback(BYTE irq)
 {
@@ -71,7 +71,7 @@ DWORD FASTCALL MFP_IntCallback(BYTE irq)
 
 
 // -----------------------------------------------------------------------
-//   �����ߤ����ä��ˤʤäƤʤ���Ĵ�٤ޤ�
+//   割り込みが取り消しになってないか調べます
 // -----------------------------------------------------------------------
 void MFP_RecheckInt(void)
 {
@@ -94,10 +94,10 @@ void MFP_RecheckInt(void)
 
 
 // -----------------------------------------------------------------------
-//   ������ȯ��
+//   割り込み発生
 // -----------------------------------------------------------------------
-void MFP_Int(int irq)		// 'irq' �� 0����ͥ���HSYNC/GPIP7�ˡ�15���ǲ��̡�ALARM��
-{				// �٥����Ȥ��ֹ�ο��������դˤʤ�Τ����ա�
+void MFP_Int(int irq)		// 'irq' は 0が最優先（HSYNC/GPIP7）、15が最下位（ALARM）
+{				// ベクタとは番号の振り方が逆になるので注意〜
 	BYTE flag = 0x80;
 	if (irq<8)
 	{
@@ -128,7 +128,7 @@ void MFP_Int(int irq)		// 'irq' �� 0����ͥ���HSYNC/GPIP7�ˡ�15���ǲ��̡�ALARM��
 
 
 // -----------------------------------------------------------------------
-//   �����
+//   初期化
 // -----------------------------------------------------------------------
 void MFP_Init(void)
 {
@@ -152,7 +152,7 @@ BYTE FASTCALL MFP_Read(DWORD adr)
 	BYTE ret = 0;
 	int hpos;
 
-	if (adr>0xe8802f) return ret;		// �Ф����顼��
+	if (adr>0xe8802f) return ret;		// ばすえらー？
 
 	if (adr&1)
 	{
@@ -213,7 +213,7 @@ fclose(fp);
 		case MFP_IERA:
 		case MFP_IERB:
 			MFP[reg] = data;
-			MFP[reg+2] &= data;  // �ػߤ��줿��Τ�IPRA/B����Ȥ�
+			MFP[reg+2] &= data;  // 禁止されたものはIPRA/Bを落とす
 			MFP_RecheckInt();
 			break;
 		case MFP_IPRA:
@@ -229,7 +229,7 @@ fclose(fp);
 			MFP_RecheckInt();
 			break;
 		case MFP_TSR:
-			MFP[reg] = data|0x80; // Tx�Ͼ��Enable��
+			MFP[reg] = data|0x80; // Txは常にEnableに
 			break;
 		case MFP_TADR:
 			Timer_Reload[0] = MFP[reg] = data;
@@ -272,7 +272,7 @@ fclose(fp);
 short timertrace = 0;
 //static int TimerACounted = 0;
 // -----------------------------------------------------------------------
-//   �����ޤλ��֤�ʤ��ʤ⾯������˽�ľ�����ġġ�
+//   たいまの時間を進める（も少し奇麗に書き直そう……）
 // -----------------------------------------------------------------------
 void FASTCALL MFP_Timer(long clock)
 {
@@ -332,12 +332,12 @@ void FASTCALL MFP_Timer(long clock)
 
 void FASTCALL MFP_TimerA(void)
 {
-	if ( (MFP[MFP_TACR]&15)==8 ) {					// ���٤�Ȥ�����Ȥ⡼�ɡ�VDisp�ǥ�����ȡ�
-		if ( MFP[MFP_AER]&0x10 ) {				// VDisp�����ߤȥ����ߥ󥰤���äƤ�Τ����ˤʤ�Ȥ����е��ˤʤ�ʤ���
-			if (vline==CRTC_VSTART) MFP[MFP_TADR]--;	// �����Ʊ�����Ȼפ�������ɤʤ��ġĤ��줸��ư���󤷡ʴ�
+	if ( (MFP[MFP_TACR]&15)==8 ) {					// いべんとかうんともーど（VDispでカウント）
+		if ( MFP[MFP_AER]&0x10 ) {				// VDisp割り込みとタイミングが違ってるのが気になるといえば気になる（ぉぃ
+			if (vline==CRTC_VSTART) MFP[MFP_TADR]--;	// 本来は同じだと思うんだけどなぁ……それじゃ動かんし（汗
 		} else {
 			if ( CRTC_VEND>=VLINE_TOTAL ) {
-				if ( (long)vline==(VLINE_TOTAL-1) ) MFP[MFP_TADR]--;	// ɽ�����֤ν����ǥ�����Ȥ餷�ҡġʤ����ɤ���
+				if ( (long)vline==(VLINE_TOTAL-1) ) MFP[MFP_TADR]--;	// 表示期間の終わりでカウントらしひ…（ろーどす）
 			} else {
 				if ( vline==CRTC_VEND ) MFP[MFP_TADR]--;
 			}

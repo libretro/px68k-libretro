@@ -1,11 +1,11 @@
 
-// X68K��CGROM����
-// buf:           ����ΰ� (0xc0000�Х���ʬ�ΥХåե�)
-// x68030:        X68030�ե���Ȥ��뤫�� (����̵��)
-// primaryface:   ���Σ� (���16�ɥå���)
-// secondaryface: ���Σ� (���24�ɥå���)
+// X68KのCGROMを作る
+// buf:           作る領域 (0xc0000バイト分のバッファ)
+// x68030:        X68030フォントを作るか？ (現在無効)
+// primaryface:   書体１ (主に16ドット用)
+// secondaryface: 書体２ (主に24ドット用)
 //
-// �����:         FALSE: ����, TRUE: ����
+// 戻り値:         FALSE: 失敗, TRUE: 成功
 
 
 int make_cgromdat(BYTE *buf, int x68030, LPSTR primaryface, LPSTR secondaryface);

@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------------------------
 //  TVRAM.C - Text VRAM
-//  ToDo : ∆©Ã¿øßΩËÕ˝§»§´øß°π
+//  ToDo : ÈÄèÊòéËâ≤Âá¶ÁêÜ„Å®„ÅãËâ≤„ÄÖ
 // ---------------------------------------------------------------------------------------
 
 #include	"common.h"
@@ -18,13 +18,13 @@
 
 	BYTE	TextDrawPattern[2048*4];
 
-//	WORD	Text_LineBuf[1024];	// ¢™BG§Œ§Úª»§¶§Ë§¶§À —ππ
+//	WORD	Text_LineBuf[1024];	// ‚ÜíBG„ÅÆ„Çí‰Ωø„ÅÜ„Çà„ÅÜ„Å´Â§âÊõ¥
 	BYTE	Text_TrFlag[1024];
 
 INLINE void TVRAM_WriteByteMask(DWORD adr, BYTE data);
 
 // -----------------------------------------------------------------------
-//   ¡¥…ÙΩÒ§≠¥π§®°¡
+//   ÂÖ®ÈÉ®Êõ∏„ÅçÊèõ„Åà„Äú
 // -----------------------------------------------------------------------
 void TVRAM_SetAllDirty(void)
 {
@@ -33,7 +33,7 @@ void TVRAM_SetAllDirty(void)
 
 
 // -----------------------------------------------------------------------
-//   ΩÈ¥¸≤Ω
+//   ÂàùÊúüÂåñ
 // -----------------------------------------------------------------------
 void TVRAM_Init(void)
 {
@@ -42,7 +42,7 @@ void TVRAM_Init(void)
 	ZeroMemory(TextDrawWork, 1024*1024);
 	TVRAM_SetAllDirty();
 
-	ZeroMemory(TextDrawPattern, 2048*4);		// •—•ø°º•Û•∆°º•÷•ÎΩÈ¥¸≤Ω
+	ZeroMemory(TextDrawPattern, 2048*4);		// „Éë„Çø„Éº„É≥„ÉÜ„Éº„Éñ„É´ÂàùÊúüÂåñ
 	for (i=0; i<256; i++)
 	{
 		for (j=0, bit=0x80; j<8; j++, bit>>=1)
@@ -59,7 +59,7 @@ void TVRAM_Init(void)
 
 
 // -----------------------------------------------------------------------
-//   ≈±º˝
+//   Êí§Âèé
 // -----------------------------------------------------------------------
 void TVRAM_Cleanup(void)
 {
@@ -67,7 +67,7 @@ void TVRAM_Cleanup(void)
 
 
 // -----------------------------------------------------------------------
-//   ∆…§‡§ §Í
+//   Ë™≠„ÇÄ„Å™„Çä
 // -----------------------------------------------------------------------
 BYTE FASTCALL TVRAM_Read(DWORD adr)
 {
@@ -78,7 +78,7 @@ BYTE FASTCALL TVRAM_Read(DWORD adr)
 
 
 // -----------------------------------------------------------------------
-//   1§–§§§»ΩÒ§Ø§ §Í
+//   1„Å∞„ÅÑ„Å®Êõ∏„Åè„Å™„Çä
 // -----------------------------------------------------------------------
 INLINE void TVRAM_WriteByte(DWORD adr, BYTE data)
 {
@@ -91,7 +91,7 @@ INLINE void TVRAM_WriteByte(DWORD adr, BYTE data)
 
 
 // -----------------------------------------------------------------------
-//   §ﬁ§π§Ø…’§≠§«ΩÒ§Ø§ §Í
+//   „Åæ„Åô„Åè‰ªò„Åç„ÅßÊõ∏„Åè„Å™„Çä
 // -----------------------------------------------------------------------
 INLINE void TVRAM_WriteByteMask(DWORD adr, BYTE data)
 {
@@ -105,13 +105,13 @@ INLINE void TVRAM_WriteByteMask(DWORD adr, BYTE data)
 
 
 // -----------------------------------------------------------------------
-//   ΩÒ§Ø§ §Í
+//   Êõ∏„Åè„Å™„Çä
 // -----------------------------------------------------------------------
 void FASTCALL TVRAM_Write(DWORD adr, BYTE data)
 {
 	adr &= 0x7ffff;
 	adr ^= 1;
-	if (CRTC_Regs[0x2a]&1)			// ∆±ª˛•¢•Ø•ª•π
+	if (CRTC_Regs[0x2a]&1)			// ÂêåÊôÇ„Ç¢„ÇØ„Çª„Çπ
 	{
 		adr &= 0x1ffff;
 		if (CRTC_Regs[0x2a]&2)		// Text Mask
@@ -129,7 +129,7 @@ void FASTCALL TVRAM_Write(DWORD adr, BYTE data)
 			if (CRTC_Regs[0x2b]&0x80) TVRAM_WriteByte(adr+0x60000, data);
 		}
 	}
-	else					// •∑•Û•∞•Î•¢•Ø•ª•π
+	else					// „Ç∑„É≥„Ç∞„É´„Ç¢„ÇØ„Çª„Çπ
 	{
 		if (CRTC_Regs[0x2a]&2)		// Text Mask
 		{
@@ -149,7 +149,7 @@ void FASTCALL TVRAM_Write(DWORD adr, BYTE data)
 		mov	esi, eax
 		and	esi, 01ffffh		; TVRAM Adr
 		mov	edi, eax
-		and	edi, 01ff80h		; ≤º∞Ã7bit•ﬁ•π•Ø
+		and	edi, 01ff80h		; ‰∏ã‰Ωç7bit„Éû„Çπ„ÇØ
 		shl	edi, 3
 		and	eax, 07fh
 		xor	al, 1
@@ -182,7 +182,7 @@ void FASTCALL TVRAM_Write(DWORD adr, BYTE data)
 		"mov	%%eax, %%esi;"
 		"and	$0x1ffff, %%esi;"	/* TVRAM Adr */
 		"mov	%%eax, %%edi;"
-		"and	$0x1ff80, %%edi;"	/* ≤º∞Ã7bit•ﬁ•π•Ø */
+		"and	$0x1ff80, %%edi;"	/* ‰∏ã‰Ωç7bit„Éû„Çπ„ÇØ */
 		"shl	$3, %%edi;"
 		"and	$0x7f, %%eax;"
 		"xor	$1, %%al;"
@@ -240,7 +240,7 @@ void FASTCALL TVRAM_Write(DWORD adr, BYTE data)
 
 
 // -----------------------------------------------------------------------
-//   §È§π§ø§≥§‘°ºª˛§Œ§¢§√§◊§«°º§»
+//   „Çâ„Åô„Åü„Åì„Å¥„ÉºÊôÇ„ÅÆ„ÅÇ„Å£„Å∑„Åß„Éº„Å®
 // -----------------------------------------------------------------------
 void FASTCALL TVRAM_RCUpdate(void)
 {
@@ -350,7 +350,7 @@ void FASTCALL TVRAM_RCUpdate(void)
 }
 
 // -----------------------------------------------------------------------
-//   1•È•§•Û…¡≤Ë
+//   1„É©„Ç§„É≥ÊèèÁîª
 // -----------------------------------------------------------------------
 void FASTCALL Text_DrawLine(int opaq)
 {

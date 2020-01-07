@@ -27,7 +27,7 @@
 
 #if 0
 /* -------------------------------------------------------------------------- *
- *   FDDæı¬÷…Ωº®Õ—•π•∆°º•ø•π•–°º                                              *
+ *   FDDÁä∂ÊÖãË°®Á§∫Áî®„Çπ„ÉÜ„Éº„Çø„Çπ„Éê„Éº                                              *
  * -------------------------------------------------------------------------- */
 
 #include "common.h"
@@ -327,7 +327,7 @@ StatBar_ParamFDD(int drv, int access, int insert, int blink)
 void
 StatBar_FDName(int drv, char* name)
 {
-	/* Full screen ¿ÏÕ— */
+	/* Full screen Â∞ÇÁî® */
 	(void)drv;
 	(void)name;
 }
@@ -336,7 +336,7 @@ StatBar_FDName(int drv, char* name)
 void
 StatBar_FDD(int drv, int led, int col)
 {
-	/* Full screen ¿ÏÕ— */
+	/* Full screen Â∞ÇÁî® */
 	(void)drv;
 	(void)led;
 	(void)col;

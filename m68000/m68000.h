@@ -2,7 +2,7 @@
 
 	m68000.c
 
-	M68000 CPU���󥿥ե������ؿ�
+	M68000 CPUインタフェース関数
 
 ******************************************************************************/
 
@@ -17,7 +17,7 @@
 #include "cyclone.h"
 #endif
 
-// MAME�ߴ��Υ쥸�����ֹ� (����̤�б�)
+// MAME互換のレジスタ番号 (一部未対応)
 enum
 {
 	/* NOTE: M68K_SP fetches the current SP, be it USP, ISP, or MSP */

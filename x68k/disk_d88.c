@@ -5,7 +5,7 @@
 #include "disk_d88.h"
 
 
-// ¥»¥¯¥¿¡¼Éô (16 Bytes)
+// ã‚»ã‚¯ã‚¿ãƒ¼éƒ¨ (16 Bytes)
 typedef struct {
 	BYTE	c;
 	BYTE	h;

@@ -43,10 +43,10 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-							// DOSIO:´Ø¿ô¤Î½àÈ÷
+							// DOSIO:é–¢æ•°ã®æº–å‚™
 void dosio_init(void);
 void dosio_term(void);
-							// ¥Õ¥¡¥¤¥ëÁàºî
+							// ãƒ•ã‚¡ã‚¤ãƒ«æ“ä½œ
 FILEH file_open(LPSTR filename);
 FILEH file_create(LPSTR filename, int ftype);
 DWORD file_seek(FILEH handle, long pointer, short mode);
@@ -58,7 +58,7 @@ DWORD file_zeroclr(FILEH handle, DWORD length);
 WORD file_lineread(FILEH handle, void *data, WORD length);
 short file_close(FILEH handle);
 short file_attr(LPSTR filename);
-							// ¥«¥ì¥ó¥È¥Õ¥¡¥¤¥ëÁàºî
+							// ã‚«ãƒ¬ãƒ³ãƒˆãƒ•ã‚¡ã‚¤ãƒ«æ“ä½œ
 void file_setcd(LPSTR exename);
 LPSTR file_getcd(LPSTR filename);
 FILEH file_open_c(LPSTR filename);
@@ -67,7 +67,7 @@ short file_attr_c(LPSTR filename);
 
 int file_getftype(LPSTR filename);
 
-							// Æü»ş¤Î¼èÆÀ
+							// æ—¥æ™‚ã®å–å¾—
 void dosdateset(BYTE *dat);
 void dostimeset(BYTE *dat);
 

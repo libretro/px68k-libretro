@@ -40,7 +40,7 @@ int SASI_IsReady(void)
 
 
 // -----------------------------------------------------------------------
-//   ��ꤳ�ߡ�
+//   わりこみ〜
 // -----------------------------------------------------------------------
 DWORD FASTCALL SASI_Int(BYTE irq)
 {
@@ -59,7 +59,7 @@ fclose(fp);
 
 
 // -----------------------------------------------------------------------
-//   �����
+//   初期化
 // -----------------------------------------------------------------------
 void SASI_Init(void)
 {
@@ -78,7 +78,7 @@ void SASI_Init(void)
 
 
 // -----------------------------------------------------------------------
-//   ���ݤ��ʥ꡼�ɻ���
+//   し−く（リード時）
 // -----------------------------------------------------------------------
 short SASI_Seek(void)
 {
@@ -114,7 +114,7 @@ fclose(fp);
 
 
 // -----------------------------------------------------------------------
-//   �������ʥ饤�Ȼ���
+//   しーく（ライト時）
 // -----------------------------------------------------------------------
 short SASI_Flush(void)
 {	FILEH fp;
@@ -161,7 +161,7 @@ BYTE FASTCALL SASI_Read(DWORD adr)
 			ret |= 8;		// C/D
 		if ((SASI_Phase==3)&&(SASI_RW))	// SASI_RW=1:Read
 			ret |= 4;		// I/O
-		if (SASI_Phase==9)		// Phase=9:SenseStatus��
+		if (SASI_Phase==9)		// Phase=9:SenseStatus中
 			ret |= 4;		// I/O
 		if ((SASI_Phase==4)||(SASI_Phase==5))
 			ret |= 0x0c;		// I/O & C/D
@@ -170,25 +170,25 @@ BYTE FASTCALL SASI_Read(DWORD adr)
 	}
 	else if (adr ==0xe96001)
 	{
-		if ((SASI_Phase==3)&&(SASI_RW))	// �ǡ����꡼�����
+		if ((SASI_Phase==3)&&(SASI_RW))	// データリード中〜
 		{
 			ret = SASI_Buf[SASI_BufPtr++];
 			if (SASI_BufPtr==256)
 			{
 				SASI_Blocks--;
-				if (SASI_Blocks)		// �ޤ��ɤ�֥��å������롩
+				if (SASI_Blocks)		// まだ読むブロックがある？
 				{
 					SASI_Sector++;
 					SASI_BufPtr = 0;
-					result = SASI_Seek();	// ���Υ�������Хåե����ɤ�
-					if (!result)		// result=0�����᡼���κǸ�ʡ�̵���ʥ������ˤʤ�
+					result = SASI_Seek();	// 次のセクタをバッファに読む
+					if (!result)		// result=0：イメージの最後（＝無効なセクタ）なら
 					{
 						SASI_Error = 0x0f;
 						SASI_Phase++;
 					}
 				}
 				else
-					SASI_Phase++;		// ����֥��å��Υ꡼�ɴ�λ
+					SASI_Phase++;		// 指定ブロックのリード完了
 			}
 		}
 		else if (SASI_Phase==4)				// Status Phase
@@ -201,15 +201,15 @@ BYTE FASTCALL SASI_Read(DWORD adr)
 		}
 		else if (SASI_Phase==5)				// MessagePhase
 		{
-			SASI_Phase = 0;				// 0���֤���������BusFree�˵���ޤ�
+			SASI_Phase = 0;				// 0を返すだけ〜。BusFreeに帰ります
 		}
-		else if (SASI_Phase==9)				// DataPhase(SenseStat����)
+		else if (SASI_Phase==9)				// DataPhase(SenseStat専用)
 		{
 			ret = SASI_SenseStatBuf[SASI_SenseStatPtr++];
 			if (SASI_SenseStatPtr==4)
 			{
 				SASI_Error = 0;
-				SASI_Phase = 4;				// StatusPhase��
+				SASI_Phase = 4;				// StatusPhaseへ
 			}
 		}
 		if (SASI_Phase==4)
@@ -240,14 +240,14 @@ fclose(fp);
 }
 
 
-// ���ޥ�ɤΥ����å�����ľ��InsideX68k��ε��ҤǤϤ���­��ʤ� ^^;��
-// ̤���ҤΤ�ΤȤ��ơ�
-//   - C2h�ʽ�����ϡ��ˡ�Unit�ʳ��Υѥ�᡼����̵����DataPhase��10�ĤΥǡ�����񤭤��ࡣ
-//   - 06h�ʥե����ޥåȡ��ˡ������֥��å����ꤢ���21h�����˻��ꤷ�Ƥ���ˡ��֥��å����ΤȤ���6�����ꤵ��Ƥ��롣
+// コマンドのチェック。正直、InsideX68k内の記述ではちと足りない ^^;。
+// 未記述のものとして、
+//   - C2h（初期化系？）。Unit以外のパラメータは無し。DataPhaseで10個のデータを書きこむ。
+//   - 06h（フォーマット？）。論理ブロック指定あり（21hおきに指定している）。ブロック数のとこは6が指定されている。
 void SASI_CheckCmd(void)
 {
 	short result;
-	SASI_Unit = (SASI_Cmd[1]>>5)&1;			// X68k�Ǥϡ���˥å��ֹ��0��1�������ʤ�
+	SASI_Unit = (SASI_Cmd[1]>>5)&1;			// X68kでは、ユニット番号は0か1しか取れない
 
 	switch(SASI_Cmd[0])
 	{
@@ -423,38 +423,38 @@ fclose(fp);
 		if (SASI_Phase==2)
 		{
 			SASI_Cmd[SASI_CmdPtr++] = data;
-			if (SASI_CmdPtr==6)			// ���ޥ��ȯ�Խ�λ
+			if (SASI_CmdPtr==6)			// コマンド発行終了
 			{
 //				SASI_Phase++;
 				SASI_CheckCmd();
 			}
 		}
-		else if ((SASI_Phase==3)&&(!SASI_RW))		// �ǡ����饤�����
+		else if ((SASI_Phase==3)&&(!SASI_RW))		// データライト中〜
 		{
 			SASI_Buf[SASI_BufPtr++] = data;
 			if (SASI_BufPtr==256)
 			{
-				result = SASI_Flush();		// ���ߤΥХåե���񤭽Ф�
+				result = SASI_Flush();		// 現在のバッファを書き出す
 				SASI_Blocks--;
-				if (SASI_Blocks)		// �ޤ��񤯥֥��å������롩
+				if (SASI_Blocks)		// まだ書くブロックがある？
 				{
 					SASI_Sector++;
 					SASI_BufPtr = 0;
-					result = SASI_Seek();	// ���Υ�������Хåե����ɤ�
-					if (!result)		// result=0�����᡼���κǸ�ʡ�̵���ʥ������ˤʤ�
+					result = SASI_Seek();	// 次のセクタをバッファに読む
+					if (!result)		// result=0：イメージの最後（＝無効なセクタ）なら
 					{
 						SASI_Error = 0x0f;
 						SASI_Phase++;
 					}
 				}
 				else
-					SASI_Phase++;		// ����֥��å��Υ饤�ȴ�λ
+					SASI_Phase++;		// 指定ブロックのライト完了
 			}
 		}
 		else if (SASI_Phase==10)
 		{
 			SASI_SenseStatPtr++;
-			if (SASI_SenseStatPtr==10)			// ���ޥ��ȯ�Խ�λ
+			if (SASI_SenseStatPtr==10)			// コマンド発行終了
 			{
 				SASI_Phase = 4;
 			}

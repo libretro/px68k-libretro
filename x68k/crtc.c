@@ -22,7 +22,7 @@ static WORD FastClearMask[16] = {
 	WORD	CRTC_VSTART, CRTC_VEND;
 	WORD	CRTC_HSTART, CRTC_HEND;
 	DWORD	TextScrollX = 0, TextScrollY = 0;
-	DWORD	GrphScrollX[4] = {0, 0, 0, 0};		// ÇÛÎó¤Ë¤·¤Á¤ã¤Ã¤¿¡Ä
+	DWORD	GrphScrollX[4] = {0, 0, 0, 0};		// é…åˆ—ã«ã—ã¡ã‚ƒã£ãŸâ€¦
 	DWORD	GrphScrollY[4] = {0, 0, 0, 0};
 
 	BYTE	CRTC_FastClr = 0;
@@ -42,7 +42,7 @@ static WORD FastClearMask[16] = {
 
 
 // -----------------------------------------------------------------------
-//   ¤é¤¹¤¿¡¼¤³¤Ô¡¼
+//   ã‚‰ã™ãŸãƒ¼ã“ã´ãƒ¼
 // -----------------------------------------------------------------------
 void CRTC_RasterCopy(void)
 {
@@ -231,14 +231,14 @@ void CRTC_RasterCopy(void)
 
 
 // -----------------------------------------------------------------------
-//   ¤Ó¤Ç¤ª¤³¤ó¤È¤í¡¼¤ë¤ì¤¸¤¹¤¿
+//   ã³ã§ãŠã“ã‚“ã¨ã‚ãƒ¼ã‚‹ã‚Œã˜ã™ãŸ
 // -----------------------------------------------------------------------
-// Reg0¤Î¿§¥â¡¼¥É¤Ï¡¢¤Ñ¤Ã¤È¸«CRTC¤ÈÆ±¤¸¤À¤±¤ÉÌò³ä°ã¤¦¤Î¤ÇÃí°Õ¡£
-// CRTC¤ÏGVRAM¤Ø¤Î¥¢¥¯¥»¥¹ÊıË¡¡Ê¥á¥â¥ê¥Ş¥Ã¥×¾å¤Ç¤Î¸«¤¨Êı¡Ë¤¬ÊÑ¤ï¤ë¤Î¤ËÂĞ¤·¡¢
-// VCtrl¤Ï¡¢GVRAM¢ª²èÌÌ¤ÎÅ¸³«ÊıË¡¤òÀ©¸æ¤¹¤ë¡£
-// ¤Ä¤Ş¤ê¡¢¥¢¥¯¥»¥¹ÊıË¡¡ÊCRTC¡Ë¤Ï16bit¥â¡¼¥É¤Ç¡¢É½¼¨¤Ï256¿§¥â¡¼¥É¤Ã¤Æ¤Ê»È¤¤
-// Êı¤âµö¤µ¤ì¤ë¤Î¤ì¤¹¡£
-// ¥³¥Ã¥È¥óµ¯Æ°»ş¤äYs¡ÊÅÅÇÈÈÇ¡ËOP¤Ê¤É¤Ç»È¤ï¤ì¤Æ¤Ş¤Õ¡£
+// Reg0ã®è‰²ãƒ¢ãƒ¼ãƒ‰ã¯ã€ã±ã£ã¨è¦‹CRTCã¨åŒã˜ã ã‘ã©å½¹å‰²é•ã†ã®ã§æ³¨æ„ã€‚
+// CRTCã¯GVRAMã¸ã®ã‚¢ã‚¯ã‚»ã‚¹æ–¹æ³•ï¼ˆãƒ¡ãƒ¢ãƒªãƒãƒƒãƒ—ä¸Šã§ã®è¦‹ãˆæ–¹ï¼‰ãŒå¤‰ã‚ã‚‹ã®ã«å¯¾ã—ã€
+// VCtrlã¯ã€GVRAMâ†’ç”»é¢ã®å±•é–‹æ–¹æ³•ã‚’åˆ¶å¾¡ã™ã‚‹ã€‚
+// ã¤ã¾ã‚Šã€ã‚¢ã‚¯ã‚»ã‚¹æ–¹æ³•ï¼ˆCRTCï¼‰ã¯16bitãƒ¢ãƒ¼ãƒ‰ã§ã€è¡¨ç¤ºã¯256è‰²ãƒ¢ãƒ¼ãƒ‰ã£ã¦ãªä½¿ã„
+// æ–¹ã‚‚è¨±ã•ã‚Œã‚‹ã®ã‚Œã™ã€‚
+// ã‚³ãƒƒãƒˆãƒ³èµ·å‹•æ™‚ã‚„Ysï¼ˆé›»æ³¢ç‰ˆï¼‰OPãªã©ã§ä½¿ã‚ã‚Œã¦ã¾ãµã€‚
 
 BYTE FASTCALL VCtrl_Read(DWORD adr)
 {
@@ -296,9 +296,9 @@ void FASTCALL VCtrl_Write(DWORD adr, BYTE data)
 
 
 // -----------------------------------------------------------------------
-//   CRTC¤ì¤¸¤¹¤¿
+//   CRTCã‚Œã˜ã™ãŸ
 // -----------------------------------------------------------------------
-// ¥ì¥¸¥¹¥¿¥¢¥¯¥»¥¹¤Î¥³¡¼¥É¤¬±ø¤¤ ^^;
+// ãƒ¬ã‚¸ã‚¹ã‚¿ã‚¢ã‚¯ã‚»ã‚¹ã®ã‚³ãƒ¼ãƒ‰ãŒæ±šã„ ^^;
 
 void CRTC_Init(void)
 {
@@ -317,10 +317,10 @@ BYTE FASTCALL CRTC_Read(DWORD adr)
 		if ( (reg>=0x28)&&(reg<=0x2b) ) return CRTC_Regs[reg];
 		else return 0;
 	} else if ( adr==0xe80481 ) {
-// FastClear¤ÎÃí°ÕÅÀ¡§
-// FastClr¥Ó¥Ã¥È¤Ë1¤ò½ñ¤­¹ş¤à¤È¡¢¤½¤Î»şÅÀ¤Ç¤ÏReadBack¤·¤Æ¤â1¤Ï¸«¤¨¤Ê¤¤¡£
-// 1½ñ¤­¹ş¤ß¸å¤ÎºÇ½é¤Î¿âÄ¾µ¢Àş´ü´Ö¤Ç1¤¬Î©¤Á¡¢¾Ãµî¤ò³«»Ï¤¹¤ë¡£
-// 1¿âÄ¾Æ±´ü´ü´Ö¤Ç¾Ãµî¤¬¤ª¤ï¤ê¡¢0¤ËÌá¤ë¡Ä¡Ä¤é¤·¤Ò¡ÊPITAPAT¡Ë
+// FastClearã®æ³¨æ„ç‚¹ï¼š
+// FastClrãƒ“ãƒƒãƒˆã«1ã‚’æ›¸ãè¾¼ã‚€ã¨ã€ãã®æ™‚ç‚¹ã§ã¯ReadBackã—ã¦ã‚‚1ã¯è¦‹ãˆãªã„ã€‚
+// 1æ›¸ãè¾¼ã¿å¾Œã®æœ€åˆã®å‚ç›´å¸°ç·šæœŸé–“ã§1ãŒç«‹ã¡ã€æ¶ˆå»ã‚’é–‹å§‹ã™ã‚‹ã€‚
+// 1å‚ç›´åŒæœŸæœŸé–“ã§æ¶ˆå»ãŒãŠã‚ã‚Šã€0ã«æˆ»ã‚‹â€¦â€¦ã‚‰ã—ã²ï¼ˆPITAPATï¼‰
 		if (CRTC_FastClr)
 			ret = CRTC_Mode | 0x02;
 		else
@@ -351,7 +351,7 @@ void FASTCALL CRTC_Write(DWORD adr, BYTE data)
 		case 0x05:
 			CRTC_HSTART = (((WORD)CRTC_Regs[0x4]<<8)+CRTC_Regs[0x5]);
 			TextDotX = (CRTC_HEND-CRTC_HSTART)*8;
-			BG_HAdjust = ((long)BG_Regs[0x0d]-(CRTC_HSTART+4))*8;				// ¿åÊ¿Êı¸ş¤Ï²òÁüÅÙ¤Ë¤è¤ë1/2¤Ï¤¤¤é¤Ê¤¤¡©¡ÊTetris¡Ë
+			BG_HAdjust = ((long)BG_Regs[0x0d]-(CRTC_HSTART+4))*8;				// æ°´å¹³æ–¹å‘ã¯è§£åƒåº¦ã«ã‚ˆã‚‹1/2ã¯ã„ã‚‰ãªã„ï¼Ÿï¼ˆTetrisï¼‰
 			WinDraw_ChangeSize();
 			break;
 		case 0x06:
@@ -368,7 +368,7 @@ void FASTCALL CRTC_Write(DWORD adr, BYTE data)
 		case 0x0c:
 		case 0x0d:
 			CRTC_VSTART = (((WORD)CRTC_Regs[0xc]<<8)+CRTC_Regs[0xd]);
-			BG_VLINE = ((long)BG_Regs[0x0f]-CRTC_VSTART)/((BG_Regs[0x11]&4)?1:2);	// BG¤È¤½¤ÎÂ¾¤¬¤º¤ì¤Æ¤ë»ş¤Îº¹Ê¬
+			BG_VLINE = ((long)BG_Regs[0x0f]-CRTC_VSTART)/((BG_Regs[0x11]&4)?1:2);	// BGã¨ãã®ä»–ãŒãšã‚Œã¦ã‚‹æ™‚ã®å·®åˆ†
 			TextDotY = CRTC_VEND-CRTC_VSTART;
 			if ((CRTC_Regs[0x29]&0x14)==0x10)
 			{
@@ -475,9 +475,9 @@ void FASTCALL CRTC_Write(DWORD adr, BYTE data)
 		case 0x2a:
 		case 0x2b:
 			break;
-		case 0x2c:				// CRTCÆ°ºî¥İ¡¼¥È¤Î¥é¥¹¥¿¥³¥Ô¡¼¤òON¤Ë¤·¤Æ¤ª¤¤¤Æ¡Ê¤·¤Æ¤ª¤¤¤¿¤Ş¤Ş¡Ë¡¢
-		case 0x2d:				// Src/Dst¤À¤±¼¡¡¹ÊÑ¤¨¤Æ¤¤¤¯¤Î¤âµö¤µ¤ì¤ë¤é¤·¤¤¡Ê¥É¥é¥­¥å¥é¤È¤«¡Ë
-			CRTC_RCFlag[reg-0x2c] = 1;	// DstÊÑ¹¹¸å¤Ë¼Â¹Ô¤µ¤ì¤ë¡©
+		case 0x2c:				// CRTCå‹•ä½œãƒãƒ¼ãƒˆã®ãƒ©ã‚¹ã‚¿ã‚³ãƒ”ãƒ¼ã‚’ONã«ã—ã¦ãŠã„ã¦ï¼ˆã—ã¦ãŠã„ãŸã¾ã¾ï¼‰ã€
+		case 0x2d:				// Src/Dstã ã‘æ¬¡ã€…å¤‰ãˆã¦ã„ãã®ã‚‚è¨±ã•ã‚Œã‚‹ã‚‰ã—ã„ï¼ˆãƒ‰ãƒ©ã‚­ãƒ¥ãƒ©ã¨ã‹ï¼‰
+			CRTC_RCFlag[reg-0x2c] = 1;	// Dstå¤‰æ›´å¾Œã«å®Ÿè¡Œã•ã‚Œã‚‹ï¼Ÿ
 			if ((CRTC_Mode&8)&&/*(CRTC_RCFlag[0])&&*/(CRTC_RCFlag[1]))
 			{
 				CRTC_RasterCopy();
@@ -488,7 +488,7 @@ void FASTCALL CRTC_Write(DWORD adr, BYTE data)
 		}
 	}
 	else if (adr==0xe80481)
-	{					// CRTCÆ°ºî¥İ¡¼¥È
+	{					// CRTCå‹•ä½œãƒãƒ¼ãƒˆ
 		CRTC_Mode = (data|(CRTC_Mode&2));
 		if (CRTC_Mode&8)
 		{				// Raster Copy
@@ -496,10 +496,10 @@ void FASTCALL CRTC_Write(DWORD adr, BYTE data)
 			CRTC_RCFlag[0] = 0;
 			CRTC_RCFlag[1] = 0;
 		}
-		if (CRTC_Mode&2)		// ¹âÂ®¥¯¥ê¥¢
+		if (CRTC_Mode&2)		// é«˜é€Ÿã‚¯ãƒªã‚¢
 		{
 			CRTC_FastClrLine = vline;
-						// ¤³¤Î»şÅÀ¤Î¥Ş¥¹¥¯¤¬Í­¸ú¤é¤·¤¤¡Ê¥¯¥©¡¼¥¹¡Ë
+						// ã“ã®æ™‚ç‚¹ã®ãƒã‚¹ã‚¯ãŒæœ‰åŠ¹ã‚‰ã—ã„ï¼ˆã‚¯ã‚©ãƒ¼ã‚¹ï¼‰
 			CRTC_FastClrMask = FastClearMask[CRTC_Regs[0x2b]&15];
 /*{
 FILE *fp;

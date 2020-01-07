@@ -1,7 +1,7 @@
 // ---------------------------------------------------------------------------------------
 //  ADPCM.C - ADPCM (OKI MSM6258V)
-//    �ʡ��󤫡�X68Sound.dll����٤ƥ����㥫���㤷�����ˤʤ�����ʤ��ġ�
-//    DSound�Υ����äƤΤ⤢�뤱�ɡ������������ʤ������ʵ��⤹��
+//    な〜んか、X68Sound.dllに比べてカシャカシャした音になるんだよなぁ……
+//    DSoundのクセってのもあるけど、それだけじゃなさそうな気もする
 // ---------------------------------------------------------------------------------------
 
 #include <math.h>
@@ -61,7 +61,7 @@ int ADPCM_IsReady(void)
 
 
 // -----------------------------------------------------------------------
-//   �ơ��֤�����
+//   てーぶる初期化
 // -----------------------------------------------------------------------
 static void ADPCM_InitTable(void)
 {
@@ -94,13 +94,13 @@ static void ADPCM_InitTable(void)
 }
 
 // -----------------------------------------------------------------------
-//   MPU�����å��в�ʬ�����Хåե��˥ǡ�����ί��Ƥ���
+//   MPUクロック経過分だけバッファにデータを溜めておく
 // -----------------------------------------------------------------------
 void FASTCALL ADPCM_PreUpdate(DWORD clock)
 {
 	/*if (!ADPCM_Playing) return;*/
 	ADPCM_PreCounter += ((ADPCM_ClockRate/24)*clock);
-	while ( ADPCM_PreCounter>=10000000L ) {		// �� �ǡ��������ꤹ���ɻߡ�A-JAX�ˡ�200����ץ�󥰤��餤�ޤǤϵ������ġ�
+	while ( ADPCM_PreCounter>=10000000L ) {		// ↓ データの送りすぎ防止（A-JAX）。200サンプリングくらいまでは許そう…。
 		ADPCM_DifBuf -= ( (ADPCM_SampleRate*400)/ADPCM_ClockRate );
 		if ( ADPCM_DifBuf<=0 ) {
 			ADPCM_DifBuf = 0;
@@ -112,7 +112,7 @@ void FASTCALL ADPCM_PreUpdate(DWORD clock)
 
 
 // -----------------------------------------------------------------------
-//   DSound�����ꤷ�Ƥ���ʬ�����Хåե��˥ǡ�����񤭽Ф�
+//   DSoundが指定してくる分だけバッファにデータを書き出す
 // -----------------------------------------------------------------------
 void FASTCALL ADPCM_Update(signed short *buffer, DWORD length, int rate, BYTE *pbsp, BYTE *pbep)
 {
@@ -177,7 +177,7 @@ void FASTCALL ADPCM_Update(signed short *buffer, DWORD length, int rate, BYTE *p
 		tmpl = INTERPOLATE(OutsIpL, 0);
 		if ( tmpl>32767 ) tmpl = 32767; else if ( tmpl<(-32768) ) tmpl = -32768;
 		*(buffer++) = (short)tmpl;
-		// PSP�ʳ���rate��0
+		// PSP以外はrateは0
 		if (rate == 22050) {
 			if (buffer >= (signed short *)pbep) {
 				buffer = (signed short *)pbsp;
@@ -215,7 +215,7 @@ void FASTCALL ADPCM_Update(signed short *buffer, DWORD length, int rate, BYTE *p
 
 
 // -----------------------------------------------------------------------
-//   1nibble��4bit�ˤ�ǥ�����
+//   1nibble（4bit）をデコード
 // -----------------------------------------------------------------------
 INLINE void ADPCM_WriteOne(int val)
 {
@@ -284,7 +284,7 @@ void FASTCALL ADPCM_Write(DWORD adr, BYTE data)
 
 
 // -----------------------------------------------------------------------
-//   I/O Read�ʥ��ơ����������å���
+//   I/O Read（ステータスチェック）
 // -----------------------------------------------------------------------
 BYTE FASTCALL ADPCM_Read(DWORD adr)
 {
@@ -296,7 +296,7 @@ BYTE FASTCALL ADPCM_Read(DWORD adr)
 
 
 // -----------------------------------------------------------------------
-//   �ܤ�塼��
+//   ぼりゅーむ
 // -----------------------------------------------------------------------
 void ADPCM_SetVolume(BYTE vol)
 {
@@ -338,7 +338,7 @@ void ADPCM_SetClock(int n)
 
 
 // -----------------------------------------------------------------------
-//   �����
+//   初期化
 // -----------------------------------------------------------------------
 void ADPCM_Init(DWORD samplerate)
 {

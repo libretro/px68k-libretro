@@ -8,17 +8,17 @@
 #define FM_GEN_INL_H
 
 // ---------------------------------------------------------------------------
-//	─ъ┐Їд╜д╬г▓
+//	хоЪцХ░уБЭуБоя╝Т
 //	
 #define FM_PI			3.14159265358979323846
 
-#define FM_SINEPRESIS	2			// EGд╚е╡едеє╟╚д╬└║┼┘д╬║╣  0(─у)-2(╣т)
+#define FM_SINEPRESIS	2			// EGуБиуВ╡уВдуГ│ц│вуБоч▓╛х║жуБох╖о  0(ф╜О)-2(щлШ)
 
 
 #define FM_OPSINBITS	10
 #define FM_OPSINENTS	(1 << FM_OPSINBITS)
 
-#define FM_EGCBITS		18			// eg д╬ count д╬е╖е╒е╚├═
+#define FM_EGCBITS		18			// eg уБо count уБоуВ╖уГХуГИхАд
 #define FM_LFOCBITS		14
 
 #ifdef FM_TUNEBUILD
@@ -26,7 +26,7 @@
  #define FM_RATIOBITS	0
 #else
  #define FM_PGBITS		9		
- #define FM_RATIOBITS	7			// 8-12 дпдщддд▐д╟бй
+ #define FM_RATIOBITS	7			// 8-12 уБПуВЙуБДуБ╛уБзя╝Я
 #endif
 
 #define FM_EGBITS		16
@@ -41,13 +41,13 @@ namespace FM
 // ---------------------------------------------------------------------------
 //	Operator
 //
-//	е╒егб╝е╔е╨е├епе╨е├е╒ебдЄепеъев
+//	уГХуВгуГ╝уГЙуГРуГГуВпуГРуГГуГХуВбуВТуВпуГкуВв
 inline void Operator::ResetFB()
 {
 	out_ = out2_ = 0;
 }
 
-//	енб╝екеє
+//	уВнуГ╝уВкуГ│
 inline void Operator::KeyOn()
 {
 	if (!keyon_)
@@ -64,7 +64,7 @@ inline void Operator::KeyOn()
 	}
 }
 
-//	енб╝еке╒
+//	уВнуГ╝уВкуГХ
 inline void	Operator::KeyOff()
 {
 	if (keyon_)
@@ -74,7 +74,7 @@ inline void	Operator::KeyOff()
 	}
 }
 
-//	еке┌еьб╝е┐д╧▓╘╞п├цдлбй
+//	уВкуГЪуГмуГ╝уВ┐уБпчи╝хГНф╕нуБЛя╝Я
 inline int Operator::IsOn()
 {
 	return eg_phase_ - off;
@@ -193,20 +193,20 @@ inline void Operator::SetMS(uint ms)
 // ---------------------------------------------------------------------------
 //	4-op Channel
 
-//	еке┌еьб╝е┐д╬╝я╬р (LFO) дЄ└▀─ъ
+//	уВкуГЪуГмуГ╝уВ┐уБочиощбЮ (LFO) уВТшинхоЪ
 inline void Channel4::SetType(OpType type)
 {
 	for (int i=0; i<4; i++)
 		op[i].type_ = type;
 }
 
-//	е╗еые╒бже╒егб╝е╔е╨е├епеьб╝е╚д╬└▀─ъ (0-7)
+//	уВ╗уГлуГХуГ╗уГХуВгуГ╝уГЙуГРуГГуВпуГмуГ╝уГИуБошинхоЪ (0-7)
 inline void Channel4::SetFB(uint feedback)
 {
 	fb = fbtable[feedback];
 }
 
-//	OPNA ╖╧ LFO д╬└▀─ъ
+//	OPNA ч│╗ LFO уБошинхоЪ
 inline void Channel4::SetMS(uint ms)
 {
 	op[0].SetMS(ms);
@@ -215,14 +215,14 @@ inline void Channel4::SetMS(uint ms)
 	op[3].SetMS(ms);
 }
 
-//	е┴еуеєе═еыбже▐е╣еп
+//	уГБуГгуГ│уГНуГлуГ╗уГЮуВ╣уВп
 inline void Channel4::Mute(bool m)
 {
 	for (int i=0; i<4; i++)
 		op[i].Mute(m);
 }
 
-//	╞т╔Їе╤ещесб╝е┐дЄ║╞╖╫╗╗
+//	хЖЕщГиуГСуГйуГбуГ╝уВ┐уВТхЖНшиИчоЧ
 inline void Channel4::Refresh()
 {
 	for (int i=0; i<4; i++)
@@ -250,13 +250,13 @@ inline void StoreSample(Sample& dest, ISample data)
 
 
 // ---------------------------------------------------------------------------
-//	AM д╬еье┘еыдЄ└▀─ъ
+//	AM уБоуГмуГЩуГлуВТшинхоЪ
 inline void Chip::SetAML(uint l)
 {
 	aml_ = l & (FM_LFOENTS - 1);
 }
 
-//	PM д╬еье┘еыдЄ└▀─ъ
+//	PM уБоуГмуГЩуГлуВТшинхоЪ
 inline void Chip::SetPML(uint l)
 {
 	pml_ = l & (FM_LFOENTS - 1);

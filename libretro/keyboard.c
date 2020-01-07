@@ -57,7 +57,7 @@ Keyboard_Init(void)
 }
 
 // ----------------------------------
-//	§∆°º§÷§ÎŒ‡
+//	„Å¶„Éº„Å∂„ÇãÈ°û
 // ----------------------------------
 
 #define	NC	0
@@ -136,7 +136,7 @@ BYTE KeyTable[KEYTABLE_MAX] = {
 		  NC,  NC,  NC,  NC,  NC,  NC,  NC,  NC,
 	//	  BS, TAB,  LF, CLR,    , RET,    ,   		; 0x08
 		0x0f,0x10,0x1d,  NC,  NC,0x1d,  NC,  NC,
-	//	    ,  ¢¨,  ¢≠,  ¢™,  ¢´,SYSQ,    ,  		; 0x10
+	//	    ,  ‚Üë,  ‚Üì,  ‚Üí,  ‚Üê,SYSQ,    ,  		; 0x10
 		  NC,0x3c,0x3e,0x3d,0x3b,  NC,  NC,  NC,
 	//	    ,    ,    , ESC,    ,    ,    ,   		; 0x18
 		  NC,  NC,0x63,0x01,  NC,  NC,  NC,  NC,
@@ -152,7 +152,7 @@ BYTE KeyTable[KEYTABLE_MAX] = {
 		  NC,  NC,  NC,  NC,  NC,  NC,  NC,  NC,
 	//	    ,    ,    ,    ,    ,    ,    ,   		; 0x48
 		  NC,  NC,  NC,  NC,  NC,  NC,  NC,  NC,
-	//	HOME,  ¢´,  ¢¨,  ¢™,  ¢≠,RLDN,RLUP, END		; 0x50
+	//	HOME,  ‚Üê,  ‚Üë,  ‚Üí,  ‚Üì,RLDN,RLUP, END		; 0x50
 		0x36,0x3b,0x3c,0x3d,0x3e,0x39,0x38,0x3a,
 	//	    ,    ,    ,    ,    ,    ,    ,   		; 0x58
 		  NC,  NC,  NC,  NC,  NC,  NC,  NC,  NC,
@@ -168,9 +168,9 @@ BYTE KeyTable[KEYTABLE_MAX] = {
 		  NC,  NC,  NC,  NC,  NC,  NC,  NC,  NC,
 	//	    ,<TAB,    ,    ,    ,<ENT,    ,  		; 0x88
 		  NC,  NC,  NC,  NC,  NC,  NC,  NC,  NC,
-	//	    ,    ,    ,    ,    ,<HOM,<¢´>,<¢¨>		; 0x90
+	//	    ,    ,    ,    ,    ,<HOM,<‚Üê>,<‚Üë>		; 0x90
 		  NC,  NC,  NC,  NC,  NC,0x36,0x3b,0x3c,
-	//	<¢™>,<¢≠>,<RDN,<RUP,<END,    ,<INS,<DEL		; 0x98
+	//	<‚Üí>,<‚Üì>,<RDN,<RUP,<END,    ,<INS,<DEL		; 0x98
 		0x3d,0x3e,0x39,0x38,0x3a,  NC,0x5e,0x37,
 	//	    ,    ,    ,    ,    ,    ,    ,    		; 0xa0
 		  NC,  NC,  NC,  NC,  NC,  NC,  NC,  NC,
@@ -286,7 +286,7 @@ BYTE KeyTableMaster[KEYTABLE_MAX] = {
 		  NC,  NC,  NC,  NC,  NC,  NC,  NC,  NC,
 	//	    ,    ,    ,    ,    ,    ,    ,   		; 0x48
 		  NC,  NC,  NC,  NC,  NC,  NC,  NC,  NC,
-	//	HOME,  ¢´,  ¢¨,  ¢™,  ¢≠,RLDN,RLUP, END		; 0x50
+	//	HOME,  ‚Üê,  ‚Üë,  ‚Üí,  ‚Üì,RLDN,RLUP, END		; 0x50
 		0x36,  NC,  NC,  NC,  NC,0x39,0x38,0x3a,
 	//	    ,    ,    ,    ,    ,    ,    ,   		; 0x58
 		  NC,  NC,  NC,  NC,  NC,  NC,  NC,  NC,
@@ -302,9 +302,9 @@ BYTE KeyTableMaster[KEYTABLE_MAX] = {
 		  NC,  NC,  NC,  NC,  NC,  NC,  NC,  NC,
 	//	    ,<TAB,    ,    ,    ,<ENT,    ,  		; 0x88
 		  NC,  NC,  NC,  NC,  NC,  NC,  NC,  NC,
-	//	    ,    ,    ,    ,    ,<HOM,<¢´>,<¢¨>		; 0x90
+	//	    ,    ,    ,    ,    ,<HOM,<‚Üê>,<‚Üë>		; 0x90
 		  NC,  NC,  NC,  NC,  NC,0x36,  NC,  NC,
-	//	<¢™>,<¢≠>,<RDN,<RUP,<END,    ,<INS,<DEL		; 0x98
+	//	<‚Üí>,<‚Üì>,<RDN,<RUP,<END,    ,<INS,<DEL		; 0x98
 		  NC,  NC,0x39,0x38,0x3a,  NC,0x5e,0x37,
 	//	    ,    ,    ,    ,    ,    ,    ,    		; 0xa0
 		  NC,  NC,  NC,  NC,  NC,  NC,  NC,  NC,
@@ -459,7 +459,7 @@ static BYTE get_x68k_keycode(DWORD wp)
 }
 
 // ----------------------------------
-//	WM_KEYDOWN°¡
+//	WM_KEYDOWN„Äú
 // ----------------------------------
 void
 Keyboard_KeyDown(DWORD wp)
@@ -630,7 +630,7 @@ Keyboard_KeyUp(DWORD wp)
 
 // ----------------------------------
 //	Key Check
-//	1•’•Ï°º•‡√Ê§À4≤Û° 2400bps/10bit/60fps§»§π§Ï§–°¢§¿§¨°À∏∆§–§Ï§∆°¢MFP§À•«°º•ø§Ú¡˜§Î
+//	1„Éï„É¨„Éº„É†‰∏≠„Å´4ÂõûÔºà2400bps/10bit/60fps„Å®„Åô„Çå„Å∞„ÄÅ„Å†„ÅåÔºâÂëº„Å∞„Çå„Å¶„ÄÅMFP„Å´„Éá„Éº„Çø„ÇíÈÄÅ„Çã
 // ----------------------------------
 
 void
@@ -651,7 +651,7 @@ Keyboard_Int(void)
 	}
 }
 
-/********** •Ω•’•»•¶•ß•¢•≠°º•‹°º•… **********/
+/********** „ÇΩ„Éï„Éà„Ç¶„Çß„Ç¢„Ç≠„Éº„Éú„Éº„Éâ **********/
 
 
 int Keyboard_IsSwKeyboard(void)

@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------------------------
-//  BG.C - BG¤È¥¹¥×¥é¥¤¥È
-//  ToDo¡§Æ©ÌÀ¿§¤Î½èÍý¥Á¥§¥Ã¥¯¡ÊÆÃ¤ËÂÐText´Ö¡Ë
+//  BG.C - BGã¨ã‚¹ãƒ—ãƒ©ã‚¤ãƒˆ
+//  ToDoï¼šé€æ˜Žè‰²ã®å‡¦ç†ãƒã‚§ãƒƒã‚¯ï¼ˆç‰¹ã«å¯¾Texté–“ï¼‰
 // ---------------------------------------------------------------------------------------
 
 #include "common.h"
@@ -42,7 +42,7 @@
 
 
 // -----------------------------------------------------------------------
-//   ½é´ü²½
+//   åˆæœŸåŒ–
 // -----------------------------------------------------------------------
 void BG_Init(void)
 {
@@ -203,7 +203,7 @@ void FASTCALL BG_Write(DWORD adr, BYTE data)
 	else if ((adr>=0xeb0800)&&(adr<0xeb0812))
 	{
 		adr -= 0xeb0800;
-		if (BG_Regs[adr]==data) return;	// ¥Ç¡¼¥¿¤ËÊÑ²½¤¬Ìµ¤±¤ì¤Ðµ¢¤ë
+		if (BG_Regs[adr]==data) return;	// ãƒ‡ãƒ¼ã‚¿ã«å¤‰åŒ–ãŒç„¡ã‘ã‚Œã°å¸°ã‚‹
 		BG_Regs[adr] = data;
 		switch(adr)
 		{
@@ -233,11 +233,11 @@ void FASTCALL BG_Write(DWORD adr, BYTE data)
 			break;
 
 		case 0x0d:
-			BG_HAdjust = ((long)BG_Regs[0x0d]-(CRTC_HSTART+4))*8;				// ¿åÊ¿Êý¸þ¤Ï²òÁüÅÙ¤Ë¤è¤ë1/2¤Ï¤¤¤é¤Ê¤¤¡©¡ÊTetris¡Ë
+			BG_HAdjust = ((long)BG_Regs[0x0d]-(CRTC_HSTART+4))*8;				// æ°´å¹³æ–¹å‘ã¯è§£åƒåº¦ã«ã‚ˆã‚‹1/2ã¯ã„ã‚‰ãªã„ï¼Ÿï¼ˆTetrisï¼‰
 			TVRAM_SetAllDirty();
 			break;
 		case 0x0f:
-			BG_VLINE = ((long)BG_Regs[0x0f]-CRTC_VSTART)/((BG_Regs[0x11]&4)?1:2);	// BG¤È¤½¤ÎÂ¾¤¬¤º¤ì¤Æ¤ë»þ¤Îº¹Ê¬
+			BG_VLINE = ((long)BG_Regs[0x0f]-CRTC_VSTART)/((BG_Regs[0x11]&4)?1:2);	// BGã¨ãã®ä»–ãŒãšã‚Œã¦ã‚‹æ™‚ã®å·®åˆ†
 			TVRAM_SetAllDirty();
 			break;
 
@@ -255,8 +255,8 @@ void FASTCALL BG_Write(DWORD adr, BYTE data)
 				BG_CHREND = 0x2000;
 			BG_CHRSIZE = ((data&3)?16:8);
 			BG_AdrMask = ((data&3)?1023:511);
-			BG_HAdjust = ((long)BG_Regs[0x0d]-(CRTC_HSTART+4))*8;				// ¿åÊ¿Êý¸þ¤Ï²òÁüÅÙ¤Ë¤è¤ë1/2¤Ï¤¤¤é¤Ê¤¤¡©¡ÊTetris¡Ë
-			BG_VLINE = ((long)BG_Regs[0x0f]-CRTC_VSTART)/((BG_Regs[0x11]&4)?1:2);	// BG¤È¤½¤ÎÂ¾¤¬¤º¤ì¤Æ¤ë»þ¤Îº¹Ê¬
+			BG_HAdjust = ((long)BG_Regs[0x0d]-(CRTC_HSTART+4))*8;				// æ°´å¹³æ–¹å‘ã¯è§£åƒåº¦ã«ã‚ˆã‚‹1/2ã¯ã„ã‚‰ãªã„ï¼Ÿï¼ˆTetrisï¼‰
+			BG_VLINE = ((long)BG_Regs[0x0f]-CRTC_VSTART)/((BG_Regs[0x11]&4)?1:2);	// BGã¨ãã®ä»–ãŒãšã‚Œã¦ã‚‹æ™‚ã®å·®åˆ†
 			break;
 		case 0x09:		// BG Plane Cfg Changed
 			TVRAM_SetAllDirty();
@@ -309,7 +309,7 @@ void FASTCALL BG_Write(DWORD adr, BYTE data)
 	else if ((adr>=0xeb8000)&&(adr<0xec0000))
 	{
 		adr -= 0xeb8000;
-		if (BG[adr]==data) return;			// ¥Ç¡¼¥¿¤ËÊÑ²½¤¬Ìµ¤±¤ì¤Ðµ¢¤ë
+		if (BG[adr]==data) return;			// ãƒ‡ãƒ¼ã‚¿ã«å¤‰åŒ–ãŒç„¡ã‘ã‚Œã°å¸°ã‚‹
 		BG[adr] = data;
 		if (adr<0x2000)
 		{
@@ -320,15 +320,15 @@ void FASTCALL BG_Write(DWORD adr, BYTE data)
 		BGCHR16[bg16chr]   = data>>4;
 		BGCHR16[bg16chr+1] = data&15;
 
-		if (adr<BG_CHREND)				// ¥Ñ¥¿¡¼¥ó¥¨¥ê¥¢
+		if (adr<BG_CHREND)				// ãƒ‘ã‚¿ãƒ¼ãƒ³ã‚¨ãƒªã‚¢
 		{
 			TVRAM_SetAllDirty();
 		}
-		if ((adr>=BG_BG1TOP)&&(adr<BG_BG1END))	// BG1 MAP¥¨¥ê¥¢
+		if ((adr>=BG_BG1TOP)&&(adr<BG_BG1END))	// BG1 MAPã‚¨ãƒªã‚¢
 		{
 			TVRAM_SetAllDirty();
 		}
-		if ((adr>=BG_BG0TOP)&&(adr<BG_BG0END))	// BG0 MAP¥¨¥ê¥¢
+		if ((adr>=BG_BG0TOP)&&(adr<BG_BG0END))	// BG0 MAPã‚¨ãƒªã‚¢
 		{
 			TVRAM_SetAllDirty();
 		}
@@ -340,7 +340,7 @@ void FASTCALL BG_Write(DWORD adr, BYTE data)
 #endif
 
 // -----------------------------------------------------------------------
-//   1¥é¥¤¥óÊ¬¤ÎÉÁ²è
+//   1ãƒ©ã‚¤ãƒ³åˆ†ã®æç”»
 // -----------------------------------------------------------------------
 #ifdef USE_ASM
 #include	"bg.x86"
@@ -365,7 +365,7 @@ LABEL void FASTCALL BG_DrawLine(int opaq, int gd) {
 			shr	ecx, 1
 		BGLineClr_lp:
 			mov	dword ptr BG_LineBuf[edi], eax
-			mov	dword ptr BG_PriBuf[edi], ebx	// SP´Ö¤Î¥×¥é¥¤¥ª¥ê¥Æ¥£¾ðÊó½é´ü²½
+			mov	dword ptr BG_PriBuf[edi], ebx	// SPé–“ã®ãƒ—ãƒ©ã‚¤ã‚ªãƒªãƒ†ã‚£æƒ…å ±åˆæœŸåŒ–
 			add	edi, 4
 			loop	BGLineClr_lp
 			jmp	bgclrloopend
@@ -374,7 +374,7 @@ LABEL void FASTCALL BG_DrawLine(int opaq, int gd) {
 			mov	ecx, TextDotX
 			shr	ecx, 1
 		BGLineClr_lp2:
-			mov	dword ptr BG_PriBuf[edi], ebx	// SP´Ö¤Î¥×¥é¥¤¥ª¥ê¥Æ¥£¾ðÊó½é´ü²½
+			mov	dword ptr BG_PriBuf[edi], ebx	// SPé–“ã®ãƒ—ãƒ©ã‚¤ã‚ªãƒªãƒ†ã‚£æƒ…å ±åˆæœŸåŒ–
 			add	edi, 4
 			loop	BGLineClr_lp2
 

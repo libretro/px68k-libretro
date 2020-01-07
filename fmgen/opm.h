@@ -12,63 +12,63 @@
 
 // ---------------------------------------------------------------------------
 //	class OPM
-//	OPM ���ɤ�����(?)�����������벻����˥å�
+//	OPM に良く似た(?)音を生成する音源ユニット
 //	
 //	interface:
 //	bool Init(uint clock, uint rate, bool);
-//		����������Υ��饹����Ѥ������ˤ��ʤ餺�Ƥ�Ǥ������ȡ�
-//		����: �����䴰�⡼�ɤ��ѻߤ���ޤ���
+//		初期化．このクラスを使用する前にかならず呼んでおくこと．
+//		注意: 線形補完モードは廃止されました
 //
-//		clock:	OPM �Υ����å����ȿ�(Hz)
+//		clock:	OPM のクロック周波数(Hz)
 //
-//		rate:	�������� PCM ��ɸ�ܼ��ȿ�(Hz)
+//		rate:	生成する PCM の標本周波数(Hz)
 //
 //				
-//		����	���������������� true
+//		返値	初期化に成功すれば true
 //
 //	bool SetRate(uint clock, uint rate, bool)
-//		�����å��� PCM �졼�Ȥ��ѹ�����
-//		�������� Init ��Ʊ�͡�
+//		クロックや PCM レートを変更する
+//		引数等は Init と同様．
 //	
 //	void Mix(Sample* dest, int nsamples)
-//		Stereo PCM �ǡ����� nsamples ʬ�������� dest �ǻϤޤ������
-//		�ä���(�û�����)
-//		��dest �ˤ� sample*2 ��ʬ���ΰ褬ɬ��
-//		����Ǽ������ L, R, L, R... �Ȥʤ롥
-//		�������ޤǲû��ʤΤǡ����餫��������򥼥����ꥢ����ɬ�פ�����
-//		��FM_SAMPLETYPE �� short ���ξ�祯��åԥ󥰤��Ԥ���.
-//		�����δؿ��ϲ��������Υ����ޡ��Ȥ���Ω���Ƥ��롥
-//		  Timer �� Count �� GetNextEvent ������ɬ�פ����롥
+//		Stereo PCM データを nsamples 分合成し， dest で始まる配列に
+//		加える(加算する)
+//		・dest には sample*2 個分の領域が必要
+//		・格納形式は L, R, L, R... となる．
+//		・あくまで加算なので，あらかじめ配列をゼロクリアする必要がある
+//		・FM_SAMPLETYPE が short 型の場合クリッピングが行われる.
+//		・この関数は音源内部のタイマーとは独立している．
+//		  Timer は Count と GetNextEvent で操作する必要がある．
 //	
 //	void Reset()
-//		������ꥻ�å�(�����)����
+//		音源をリセット(初期化)する
 //
 //	void SetReg(uint reg, uint data)
-//		�����Υ쥸���� reg �� data ��񤭹���
+//		音源のレジスタ reg に data を書き込む
 //	
 //	uint ReadStatus()
-//		�����Υ��ơ������쥸�������ɤ߽Ф�
-//		busy �ե饰�Ͼ�� 0
+//		音源のステータスレジスタを読み出す
+//		busy フラグは常に 0
 //	
 //	bool Count(uint32 t)
-//		�����Υ����ޡ��� t [10^(-6) ��] �ʤ�롥
-//		�������������֤��Ѳ������ä���(timer �����С��ե���)
-//		true ���֤�
+//		音源のタイマーを t [10^(-6) 秒] 進める．
+//		音源の内部状態に変化があった時(timer オーバーフロー)
+//		true を返す
 //
 //	uint32 GetNextEvent()
-//		�����Υ����ޡ��Τɤ��餫�������С��ե�������ޤǤ�ɬ�פ�
-//		����[����]���֤�
-//		�����ޡ�����ߤ��Ƥ������ 0 ���֤���
+//		音源のタイマーのどちらかがオーバーフローするまでに必要な
+//		時間[μ秒]を返す
+//		タイマーが停止している場合は 0 を返す．
 //	
 //	void SetVolume(int db)
-//		�Ʋ����β��̤�ܡ�������Ĵ�᤹�롥ɸ���ͤ� 0.
-//		ñ�̤��� 1/2 dB��ͭ���ϰϤξ�¤� 20 (10dB)
+//		各音源の音量を＋−方向に調節する．標準値は 0.
+//		単位は約 1/2 dB，有効範囲の上限は 20 (10dB)
 //
-//	���۴ؿ�:
+//	仮想関数:
 //	virtual void Intr(bool irq)
-//		IRQ ���Ϥ��Ѳ������ä����ƤФ�롥
-//		irq = true:  IRQ �׵᤬ȯ��
-//		irq = false: IRQ �׵᤬�ä���
+//		IRQ 出力に変化があった場合呼ばれる．
+//		irq = true:  IRQ 要求が発生
+//		irq = false: IRQ 要求が消える
 //
 namespace FM
 {
