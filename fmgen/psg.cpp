@@ -12,7 +12,7 @@
 #include "psg.h"
 
 // ---------------------------------------------------------------------------
-//	•≥•Û•π•»•È•Ø•ø°¶•«•π•»•È•Ø•ø
+//	コンストラクタ・デストラクタ
 //
 PSG::PSG()
 {
@@ -28,7 +28,7 @@ PSG::~PSG()
 }
 
 // ---------------------------------------------------------------------------
-//	PSG §ÚΩÈ¥¸≤Ω§π§Î(RESET) 
+//	PSG を初期化する(RESET) 
 //
 void PSG::Reset()
 {
@@ -40,7 +40,7 @@ void PSG::Reset()
 }
 
 // ---------------------------------------------------------------------------
-//	•Ø•Ì•√•Øº˛«»øÙ§Œ¿ﬂƒÍ
+//	クロック周波数の設定
 //
 void PSG::SetClock(int clock, int rate)
 {
@@ -48,7 +48,7 @@ void PSG::SetClock(int clock, int rate)
 	eperiodbase = int((1 << envshift  ) / 4.0 * clock / rate);
 	nperiodbase = int((1 << noiseshift) / 4.0 * clock / rate);
 	
-	// ≥∆•«°º•ø§Œππø∑
+	// 各データの更新
 	int tmp;
 	tmp = ((reg[0] + reg[1] * 256) & 0xfff);
 	speriod[0] = tmp ? tperiodbase / tmp : tperiodbase;
@@ -63,7 +63,7 @@ void PSG::SetClock(int clock, int rate)
 }
 
 // ---------------------------------------------------------------------------
-//	•Œ•§•∫•∆°º•÷•Î§Ú∫Ó¿Æ§π§Î
+//	ノイズテーブルを作成する
 //
 void PSG::MakeNoiseTable()
 {
@@ -84,8 +84,8 @@ void PSG::MakeNoiseTable()
 }
 
 // ---------------------------------------------------------------------------
-//	Ω–Œœ•∆°º•÷•Î§Ú∫Ó¿Æ
-//	¡«ƒæ§À•∆°º•÷•Î§«ª˝§√§ø§€§¶§¨æ •π•⁄°º•π°£
+//	出力テーブルを作成
+//	素直にテーブルで持ったほうが省スペース。
 //
 void PSG::SetVolume(int volume)
 {
@@ -110,7 +110,7 @@ void PSG::SetChannelMask(int c)
 }
 
 // ---------------------------------------------------------------------------
-//	•®•Û•Ÿ•Ì°º•◊«»∑¡•∆°º•÷•Î
+//	エンベロープ波形テーブル
 //
 void PSG::MakeEnvelopTable()
 {
@@ -138,9 +138,9 @@ void PSG::MakeEnvelopTable()
 }
 
 // ---------------------------------------------------------------------------
-//	PSG §Œ•Ï•∏•π•ø§À√Õ§Ú•ª•√•»§π§Î
-//	regnum		•Ï•∏•π•ø§Œ»÷πÊ (0 - 15)
-//	data		•ª•√•»§π§Î√Õ
+//	PSG のレジスタに値をセットする
+//	regnum		レジスタの番号 (0 - 15)
+//	data		セットする値
 //
 void PSG::SetReg(uint regnum, uint8 data)
 {
@@ -212,9 +212,9 @@ inline void PSG::StoreSample(Sample& dest, int32 data)
 }
 
 // ---------------------------------------------------------------------------
-//	PCM •«°º•ø§Ú≈«§≠Ω–§π(2ch)
-//	dest		PCM •«°º•ø§Ú≈∏≥´§π§Î•›•§•Û•ø
-//	nsamples	≈∏≥´§π§Î PCM §Œ•µ•Û•◊•ÎøÙ
+//	PCM データを吐き出す(2ch)
+//	dest		PCM データを展開するポインタ
+//	nsamples	展開する PCM のサンプル数
 //
 void PSG::Mix(Sample* dest, int nsamples)
 {
@@ -240,10 +240,10 @@ void PSG::Mix(Sample* dest, int nsamples)
 		
 		if (p1 != &env && p2 != &env && p3 != &env)
 		{
-			// •®•Û•Ÿ•Ì°º•◊Ãµ§∑
+			// エンベロープ無し
 			if ((r7 & 0x38) == 0)
 			{
-				// •Œ•§•∫Ãµ§∑
+				// ノイズ無し
 				for (int i=0; i<nsamples; i++)
 				{
 					sample = 0;
@@ -268,7 +268,7 @@ void PSG::Mix(Sample* dest, int nsamples)
 			}
 			else
 			{
-				// •Œ•§•∫Õ≠§Í
+				// ノイズ有り
 				for (int i=0; i<nsamples; i++)
 				{
 					sample = 0;
@@ -301,7 +301,7 @@ void PSG::Mix(Sample* dest, int nsamples)
 				}
 			}
 
-			// •®•Û•Ÿ•Ì°º•◊§Œ∑◊ªª§Ú§µ§‹§√§øƒ¢ø¨§¢§Ô§ª
+			// エンベロープの計算をさぼった帳尻あわせ
 			ecount = (ecount >> 8) + (eperiod >> (8-oversampling)) * nsamples;
 			if (ecount >= (1 << (envshift+6+oversampling-8)))
 			{
@@ -313,7 +313,7 @@ void PSG::Mix(Sample* dest, int nsamples)
 		}
 		else
 		{
-			// •®•Û•Ÿ•Ì°º•◊§¢§Í
+			// エンベロープあり
 			for (int i=0; i<nsamples; i++)
 			{
 				sample = 0;
@@ -357,7 +357,7 @@ void PSG::Mix(Sample* dest, int nsamples)
 }
 
 // ---------------------------------------------------------------------------
-//	•∆°º•÷•Î
+//	テーブル
 //
 uint	PSG::noisetable[noisetablesize] = { 0, };
 int		PSG::EmitTable[0x20] = { -1, };
