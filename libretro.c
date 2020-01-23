@@ -5,8 +5,10 @@
 #include <string.h>
 #include <math.h>
 
-#include "libretro.h"
-#include "libretro_core_options.h"
+#include <libretro.h>
+#include <libretro_core_options.h>
+#include <string/stdstring.h>
+
 #include "libretro/winx68k.h"
 #include "libretro/dswin.h"
 #include "libretro/keyboard.h"
@@ -68,15 +70,62 @@ static retro_environment_t environ_cb;
 static retro_input_poll_t input_poll_cb;
 static unsigned no_content;
 
+/* .dsk swap support */
+struct disk_control_interface_t
+{
+   unsigned dci_version;  /* disk control interface version, 0 = use old interface */
+   unsigned total_images; /* total number if disk images */
+   unsigned index;        /* currect disk index */
+   unsigned drive;        /* current active drive */
+   bool inserted[2];      /* tray state for FDD0/FDD1, 0 = disk ejected, 1 = disk inserted */
+
+   unsigned char path[10][MAX_PATH];   /* disk image paths */
+   unsigned char label[10][MAX_PATH];  /* disk image base name w/o extension */
+   unsigned char g_initial_disc_path[MAX_PATH]; /* initial disk path */
+   unsigned g_initial_disc;            /* initial disk index */   
+};
+
+static struct disk_control_interface_t disk;
+static struct retro_disk_control_callback dskcb;
+static struct retro_disk_control_ext_callback dskcb_ext;
+
 static void update_variables(void);
 
-/* .dsk swap support */
-struct retro_disk_control_callback dskcb;
-static unsigned disk_index = 0;
-static unsigned disk_images = 0;
-static char disk_paths[10][MAX_PATH];
-static bool disk_inserted[2] = { false, false };
-static unsigned disk_drive = 1;
+void extract_basename(char *buf, const char *path, size_t size)
+{
+   const char *base = strrchr(path, '/');
+   if (!base)
+      base = strrchr(path, '\\');
+   if (!base)
+      base = path;
+
+   if (*base == '\\' || *base == '/')
+      base++;
+
+   strncpy(buf, base, size - 1);
+   buf[size - 1] = '\0';
+
+   char *ext = strrchr(buf, '.');
+   if (ext)
+      *ext = '\0';
+}
+
+static void extract_directory(char *buf, const char *path, size_t size)
+{
+   char *base = NULL;
+
+   strncpy(buf, path, size - 1);
+   buf[size - 1] = '\0';
+
+   base = strrchr(buf, '/');
+   if (!base)
+      base = strrchr(buf, '\\');
+
+   if (base)
+      *base = '\0';
+   else
+      buf[0] = '\0';
+}
 
 static void update_disk_drive_swap(void)
 {
@@ -89,15 +138,34 @@ static void update_disk_drive_swap(void)
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
       if (strcmp(var.value, "FDD0") == 0)
-         disk_drive = 0;
+         disk.drive = 0;
       else
-         disk_drive = 1;
+         disk.drive = 1;
+   }
+}
+
+static void disk_interface_init(void)
+{
+   unsigned i;
+   disk.dci_version = 1; /* use new disk control interface */
+   disk.total_images = 0;
+   disk.index = 0;
+   disk.drive = 1;
+   disk.inserted[0] = false;
+   disk.inserted[1] = false;
+
+   disk.g_initial_disc = 0;
+   disk.g_initial_disc_path[0] = '\0';
+   for (i = 0; i < 10; i++)
+   {
+      disk.path[i][0] = '\0';
+      disk.label[i][0] = '\0';
    }
 }
 
 bool set_eject_state(bool ejected)
 {
-   if(disk_index == disk_images)
+   if(disk.index == disk.total_images)
    {
       //retroarch is trying to set "no disk in tray"
       return true;
@@ -105,53 +173,101 @@ bool set_eject_state(bool ejected)
 
    if (ejected)
    {
-      FDD_EjectFD(disk_drive);
-      Config.FDDImage[disk_drive][0] = '\0';
+      FDD_EjectFD(disk.drive);
+      Config.FDDImage[disk.drive][0] = '\0';
    }
    else
    {
-      strcpy(Config.FDDImage[disk_drive], disk_paths[disk_index]);
-      FDD_SetFD(disk_drive, Config.FDDImage[disk_drive], 0);
+      strcpy(Config.FDDImage[disk.drive], disk.path[disk.index]);
+      FDD_SetFD(disk.drive, Config.FDDImage[disk.drive], 0);
    }
-   disk_inserted[disk_drive] = !ejected;
+   disk.inserted[disk.drive] = !ejected;
    return true;
 }
 
 bool get_eject_state(void)
 {
    update_disk_drive_swap();
-   return !disk_inserted[disk_drive];
+   return !disk.inserted[disk.drive];
 }
 
 unsigned get_image_index(void)
 {
-   return disk_index;
+   return disk.index;
 }
 
 bool set_image_index(unsigned index)
 {
-   disk_index = index;
+   disk.index = index;
    return true;
 }
 
 unsigned get_num_images(void)
 {
-   return disk_images;
+   return disk.total_images;
 }
 
 bool add_image_index(void)
 {
-   if (disk_images >= 10)
+   if (disk.total_images >= 10)
       return false;
 
-   disk_images++;
+   disk.total_images++;
    return true;
 }
 
 bool replace_image_index(unsigned index, const struct retro_game_info *info)
 {
-   strcpy(disk_paths[index], info->path);
+   unsigned char image[MAX_PATH];
+   strcpy(disk.path[index], info->path);
+   extract_basename(image, info->path, sizeof(image));
+   snprintf(disk.label[index], sizeof(disk.label), "%s", image);
    return true;
+}
+
+static bool disk_set_initial_image(unsigned index, const char *path)
+{
+	if (string_is_empty(path))
+		return false;
+
+	disk.g_initial_disc = index;
+   strncpy(disk.g_initial_disc_path, path, sizeof(disk.g_initial_disc_path));
+
+	return true;
+}
+
+static bool disk_get_image_path(unsigned index, char *path, size_t len)
+{
+	if (len < 1)
+		return false;
+
+	if (index < disk.total_images)
+	{
+		if (!string_is_empty(disk.path[index]))
+		{
+         strncpy(path, disk.path[index], len);
+			return true;
+		}
+	}
+
+	return false;
+}
+
+static bool disk_get_image_label(unsigned index, char *label, size_t len)
+{
+	if (len < 1)
+		return false;
+
+	if (index < disk.total_images)
+	{
+		if (!string_is_empty(disk.label[index]))
+		{
+			strncpy(label, disk.label[index], len);
+			return true;
+		}
+	}
+
+	return false;
 }
 
 void attach_disk_swap_interface(void)
@@ -165,6 +281,22 @@ void attach_disk_swap_interface(void)
    dskcb.replace_image_index = replace_image_index;
 
    environ_cb(RETRO_ENVIRONMENT_SET_DISK_CONTROL_INTERFACE, &dskcb);
+}
+
+void attach_disk_swap_interface_ext(void)
+{
+   dskcb_ext.set_eject_state = set_eject_state;
+   dskcb_ext.get_eject_state = get_eject_state;
+   dskcb_ext.set_image_index = set_image_index;
+   dskcb_ext.get_image_index = get_image_index;
+   dskcb_ext.get_num_images  = get_num_images;
+   dskcb_ext.add_image_index = add_image_index;
+   dskcb_ext.replace_image_index = replace_image_index;
+   dskcb_ext.set_initial_image = disk_set_initial_image;
+   dskcb_ext.get_image_path = disk_get_image_path;
+   dskcb_ext.get_image_label = disk_get_image_label;
+
+   environ_cb(RETRO_ENVIRONMENT_SET_DISK_CONTROL_EXT_INTERFACE, &dskcb_ext);
 }
 /* end .dsk swap support */
 
@@ -225,23 +357,6 @@ extern int cmain(int argc, char *argv[]);
 
 static void parse_cmdline(const char *argv);
 
-static void extract_directory(char *buf, const char *path, size_t size)
-{
-   char *base = NULL;
-
-   strncpy(buf, path, size - 1);
-   buf[size - 1] = '\0';
-
-   base = strrchr(buf, '/');
-   if (!base)
-      base = strrchr(buf, '\\');
-
-   if (base)
-      *base = '\0';
-   else
-      buf[0] = '\0';
-}
-
 static bool read_m3u(const char *file)
 {
    char line[MAX_PATH];
@@ -251,7 +366,7 @@ static bool read_m3u(const char *file)
    if (!f)
       return false;
 
-   while (fgets(line, sizeof(line), f) && disk_images < sizeof(disk_paths) / sizeof(disk_paths[0]))
+   while (fgets(line, sizeof(line), f) && disk.total_images < sizeof(disk.path) / sizeof(disk.path[0]))
    {
       if (line[0] == '#')
          continue;
@@ -273,14 +388,22 @@ static bool read_m3u(const char *file)
 
       if (line[0] != '\0')
       {
+         char image_label[4096];
+
+         /* write disk image path */
          snprintf(name, sizeof(name), "%s%c%s", base_dir, slash, line);
-         strcpy(disk_paths[disk_images], name);
-         disk_images++;
+         strcpy(disk.path[disk.total_images], name);
+
+         /* extract and write disk image base name */
+         extract_basename(image_label, name, sizeof(image_label));
+         snprintf(disk.label[disk.total_images], sizeof(disk.label[disk.total_images]), "%s", image_label);
+
+         disk.total_images++;
       }
    }
 
    fclose(f);
-   return (disk_images != 0);
+   return (disk.total_images != 0);
 }
 
 static void Add_Option(const char* option)
@@ -317,6 +440,8 @@ static int pre_main(const char *argv)
          i = loadcmdfile((char*)argv);
       else if (HandleExtension((char*)argv, "m3u") || HandleExtension((char*)argv, "M3U"))
       {
+         disk_interface_init();
+
          if (!read_m3u((char*)argv))
          {
             if (log_cb)
@@ -324,15 +449,20 @@ static int pre_main(const char *argv)
             return false;
          }
 
-         sprintf((char*)argv, "px68k \"%s\"", disk_paths[0]);
-         if(disk_images > 1)
+         sprintf((char*)argv, "px68k \"%s\"", disk.path[0]);
+         if(disk.total_images > 1)
          {
-            sprintf((char*)argv, "%s \"%s\"", argv, disk_paths[1]);
-            disk_inserted[1] = true;
+            sprintf((char*)argv, "%s \"%s\"", argv, disk.path[1]);
+            disk.inserted[1] = true;
          }
-         disk_inserted[0] = true;
+
+         disk.inserted[0] = true;
          isM3U = 1;
-         attach_disk_swap_interface();
+
+         if (disk.dci_version >= 1)
+            attach_disk_swap_interface_ext();
+         else
+            attach_disk_swap_interface();
       }
    }
 
@@ -382,8 +512,8 @@ static int pre_main(const char *argv)
    if (isM3U)
    {
       p6logd("%s\n", "Loading from an m3u file ...");
-      for (i = 0; i < disk_images; i++)
-         p6logd("index %d: %s\n", i + 1, disk_paths[i]);
+      for (i = 0; i < disk.total_images; i++)
+         p6logd("index %d: %s\n", i + 1, disk.path[i]);
    }
 
    /* List arguments to be passed to core */
@@ -1103,7 +1233,7 @@ void retro_run(void)
    input_poll_cb();
 
    exec_app_retro();
-   
+
    raudio_callback(soundbuf, NULL, soundbuf_size << 2);
    audio_batch_cb((const int16_t*)soundbuf, soundbuf_size);
 
