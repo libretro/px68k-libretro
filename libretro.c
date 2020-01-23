@@ -81,8 +81,9 @@ struct disk_control_interface_t
 
    unsigned char path[10][MAX_PATH];   /* disk image paths */
    unsigned char label[10][MAX_PATH];  /* disk image base name w/o extension */
+
+   unsigned g_initial_disc;                     /* initial disk index */
    unsigned char g_initial_disc_path[MAX_PATH]; /* initial disk path */
-   unsigned g_initial_disc;            /* initial disk index */   
 };
 
 static struct disk_control_interface_t disk;
@@ -359,6 +360,7 @@ static void parse_cmdline(const char *argv);
 
 static bool read_m3u(const char *file)
 {
+   unsigned index = 0;
    char line[MAX_PATH];
    char name[MAX_PATH];
    FILE *f = fopen(file, "r");
@@ -366,7 +368,7 @@ static bool read_m3u(const char *file)
    if (!f)
       return false;
 
-   while (fgets(line, sizeof(line), f) && disk.total_images < sizeof(disk.path) / sizeof(disk.path[0]))
+   while (fgets(line, sizeof(line), f) && index < sizeof(disk.path) / sizeof(disk.path[0]))
    {
       if (line[0] == '#')
          continue;
@@ -389,20 +391,39 @@ static bool read_m3u(const char *file)
       if (line[0] != '\0')
       {
          char image_label[4096];
+         char *custom_label;
+         size_t len = 0;
 
-         /* write disk image path */
          snprintf(name, sizeof(name), "%s%c%s", base_dir, slash, line);
-         strcpy(disk.path[disk.total_images], name);
 
-         /* extract and write disk image base name */
-         extract_basename(image_label, name, sizeof(image_label));
-         snprintf(disk.label[disk.total_images], sizeof(disk.label[disk.total_images]), "%s", image_label);
+         custom_label = strchr(name, '|');
+         if (custom_label)
+         {
+            /* get disk path */
+            len = custom_label + 1 - name;
+            strncpy(disk.path[index], name, len - 1);
 
-         disk.total_images++;
+            /* get custom label */
+            custom_label++;
+            strncpy(disk.label[index], custom_label, sizeof(disk.label[index]));
+         }
+         else
+         {
+            /* copy path */
+            strncpy(disk.path[index], name, sizeof(disk.path[index]));
+
+            /* extract base name from path for labels */
+            extract_basename(image_label, name, sizeof(image_label));
+            strncpy(disk.label[index], image_label, sizeof(disk.label[index]));
+         }
+
+         index++;
       }
    }
 
+   disk.total_images = index;
    fclose(f);
+
    return (disk.total_images != 0);
 }
 
