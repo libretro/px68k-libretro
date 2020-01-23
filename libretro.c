@@ -92,7 +92,7 @@ static struct retro_disk_control_ext_callback dskcb_ext;
 
 static void update_variables(void);
 
-void extract_basename(char *buf, const char *path, size_t size)
+static void extract_basename(char *buf, const char *path, size_t size)
 {
    const char *base = strrchr(path, '/');
    if (!base)
@@ -145,26 +145,7 @@ static void update_disk_drive_swap(void)
    }
 }
 
-static void disk_interface_init(void)
-{
-   unsigned i;
-   disk.dci_version = 1; /* use new disk control interface */
-   disk.total_images = 0;
-   disk.index = 0;
-   disk.drive = 1;
-   disk.inserted[0] = false;
-   disk.inserted[1] = false;
-
-   disk.g_initial_disc = 0;
-   disk.g_initial_disc_path[0] = '\0';
-   for (i = 0; i < 10; i++)
-   {
-      disk.path[i][0] = '\0';
-      disk.label[i][0] = '\0';
-   }
-}
-
-bool set_eject_state(bool ejected)
+static bool set_eject_state(bool ejected)
 {
    if(disk.index == disk.total_images)
    {
@@ -186,29 +167,29 @@ bool set_eject_state(bool ejected)
    return true;
 }
 
-bool get_eject_state(void)
+static bool get_eject_state(void)
 {
    update_disk_drive_swap();
    return !disk.inserted[disk.drive];
 }
 
-unsigned get_image_index(void)
+static unsigned get_image_index(void)
 {
    return disk.index;
 }
 
-bool set_image_index(unsigned index)
+static bool set_image_index(unsigned index)
 {
    disk.index = index;
    return true;
 }
 
-unsigned get_num_images(void)
+static unsigned get_num_images(void)
 {
    return disk.total_images;
 }
 
-bool add_image_index(void)
+static bool add_image_index(void)
 {
    if (disk.total_images >= 10)
       return false;
@@ -217,7 +198,7 @@ bool add_image_index(void)
    return true;
 }
 
-bool replace_image_index(unsigned index, const struct retro_game_info *info)
+static bool replace_image_index(unsigned index, const struct retro_game_info *info)
 {
    unsigned char image[MAX_PATH];
    strcpy(disk.path[index], info->path);
@@ -228,47 +209,47 @@ bool replace_image_index(unsigned index, const struct retro_game_info *info)
 
 static bool disk_set_initial_image(unsigned index, const char *path)
 {
-	if (string_is_empty(path))
-		return false;
+   if (string_is_empty(path))
+      return false;
 
-	disk.g_initial_disc = index;
+   disk.g_initial_disc = index;
    strncpy(disk.g_initial_disc_path, path, sizeof(disk.g_initial_disc_path));
 
-	return true;
+   return true;
 }
 
 static bool disk_get_image_path(unsigned index, char *path, size_t len)
 {
-	if (len < 1)
-		return false;
+   if (len < 1)
+      return false;
 
-	if (index < disk.total_images)
-	{
-		if (!string_is_empty(disk.path[index]))
-		{
+   if (index < disk.total_images)
+   {
+      if (!string_is_empty(disk.path[index]))
+      {
          strncpy(path, disk.path[index], len);
-			return true;
-		}
-	}
+         return true;
+      }
+   }
 
-	return false;
+   return false;
 }
 
 static bool disk_get_image_label(unsigned index, char *label, size_t len)
 {
-	if (len < 1)
-		return false;
+   if (len < 1)
+      return false;
 
-	if (index < disk.total_images)
-	{
-		if (!string_is_empty(disk.label[index]))
-		{
-			strncpy(label, disk.label[index], len);
-			return true;
-		}
-	}
+   if (index < disk.total_images)
+   {
+      if (!string_is_empty(disk.label[index]))
+      {
+         strncpy(label, disk.label[index], len);
+         return true;
+      }
+   }
 
-	return false;
+   return false;
 }
 
 void attach_disk_swap_interface(void)
@@ -298,6 +279,31 @@ void attach_disk_swap_interface_ext(void)
    dskcb_ext.get_image_label = disk_get_image_label;
 
    environ_cb(RETRO_ENVIRONMENT_SET_DISK_CONTROL_EXT_INTERFACE, &dskcb_ext);
+}
+
+static void disk_swap_interface_init(void)
+{
+   unsigned i;
+   disk.dci_version  = 0;
+   disk.total_images = 0;
+   disk.index        = 0;
+   disk.drive        = 1;
+   disk.inserted[0]  = false;
+   disk.inserted[1]  = false;
+
+   disk.g_initial_disc         = 0;
+   disk.g_initial_disc_path[0] = '\0';
+
+   for (i = 0; i < 10; i++)
+   {
+      disk.path[i][0]  = '\0';
+      disk.label[i][0] = '\0';
+   }
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_DISK_CONTROL_INTERFACE_VERSION, &disk.dci_version) && (disk.dci_version >= 1))
+      attach_disk_swap_interface_ext();
+   else
+      attach_disk_swap_interface();
 }
 /* end .dsk swap support */
 
@@ -461,8 +467,6 @@ static int pre_main(const char *argv)
          i = loadcmdfile((char*)argv);
       else if (HandleExtension((char*)argv, "m3u") || HandleExtension((char*)argv, "M3U"))
       {
-         disk_interface_init();
-
          if (!read_m3u((char*)argv))
          {
             if (log_cb)
@@ -479,11 +483,6 @@ static int pre_main(const char *argv)
 
          disk.inserted[0] = true;
          isM3U = 1;
-
-         if (disk.dci_version >= 1)
-            attach_disk_swap_interface_ext();
-         else
-            attach_disk_swap_interface();
       }
    }
 
@@ -1181,7 +1180,7 @@ void retro_init(void)
    if (environ_cb(RETRO_ENVIRONMENT_GET_INPUT_BITMASKS, NULL))
       libretro_supports_input_bitmasks = 1;
 
-   attach_disk_swap_interface();
+   disk_swap_interface_init();
 /*
     struct retro_keyboard_callback cbk = { keyboard_cb };
     environ_cb(RETRO_ENVIRONMENT_SET_KEYBOARD_CALLBACK, &cbk);
