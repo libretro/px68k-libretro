@@ -92,6 +92,22 @@ static struct retro_disk_control_ext_callback dskcb_ext;
 
 static void update_variables(void);
 
+static bool is_path_absolute(const char* path)
+{
+   if (path[0] == slash)
+      return true;
+
+#ifdef _WIN32
+   if ((path[0] >= 'a' && path[0] <= 'z') ||
+      (path[0] >= 'A' && path[0] <= 'Z'))
+   {
+      if (path[1] == ':')
+         return true;
+   }
+#endif
+   return false;
+}
+
 static void extract_basename(char *buf, const char *path, size_t size)
 {
    const char *base = strrchr(path, '/');
@@ -400,7 +416,10 @@ static bool read_m3u(const char *file)
          char *custom_label;
          size_t len = 0;
 
-         snprintf(name, sizeof(name), "%s%c%s", base_dir, slash, line);
+         if (is_path_absolute(line))
+            strncpy(name, line, sizeof(name));
+         else
+            snprintf(name, sizeof(name), "%s%c%s", base_dir, slash, line);
 
          custom_label = strchr(name, '|');
          if (custom_label)
