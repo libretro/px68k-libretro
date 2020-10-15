@@ -68,7 +68,10 @@ uint16_t *videoBuffer;
 static retro_video_refresh_t video_cb;
 static retro_environment_t environ_cb;
 static retro_input_poll_t input_poll_cb;
+static retro_set_rumble_state_t rumble_cb;
 static unsigned no_content;
+
+static int opt_rumble_enabled = 1;
 
 /* .dsk swap support */
 struct disk_control_interface_t
@@ -946,6 +949,17 @@ static void update_variables(void)
          Config.disk_path = 1;
    }
 
+   var.key = "px68k_rumble_on_disk_read";
+   var.value = NULL;
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (!strcmp(var.value, "disabled"))
+         opt_rumble_enabled = 0;
+      if (!strcmp(var.value, "enabled"))
+         opt_rumble_enabled = 1;
+   }
+
    /* PX68K Menu */
 
    var.key = "px68k_joy_mouse";
@@ -1148,6 +1162,7 @@ size_t retro_get_memory_size(unsigned id)
 void retro_init(void)
 {
    struct retro_log_callback log;
+   struct retro_rumble_interface rumble;
    const char *system_dir = NULL;
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_LOG_INTERFACE, &log))
@@ -1195,6 +1210,9 @@ void retro_init(void)
       exit(0);
    }
 
+   if (environ_cb(RETRO_ENVIRONMENT_GET_RUMBLE_INTERFACE, &rumble) && rumble.set_rumble_state)
+      rumble_cb = rumble.set_rumble_state;
+
    libretro_supports_input_bitmasks = 0;
    if (environ_cb(RETRO_ENVIRONMENT_GET_INPUT_BITMASKS, NULL))
       libretro_supports_input_bitmasks = 1;
@@ -1231,6 +1249,30 @@ void retro_reset(void)
 }
 
 static int firstcall = 1;
+
+static void rumbleFrames(void)
+{
+   static int last_read_state;
+
+   if (!rumble_cb)
+      return;
+
+   if (last_read_state != FDD_IsReading)
+   {
+      if (opt_rumble_enabled && FDD_IsReading)
+      {
+         rumble_cb(0, RETRO_RUMBLE_STRONG, 0x8000);
+         rumble_cb(0, RETRO_RUMBLE_WEAK, 0x800);
+      }
+      else
+      {
+         rumble_cb(0, RETRO_RUMBLE_STRONG, 0);
+         rumble_cb(0, RETRO_RUMBLE_WEAK, 0);
+      }
+   }
+
+   last_read_state = FDD_IsReading;
+}
 
 void retro_run(void)
 {
@@ -1270,6 +1312,10 @@ void retro_run(void)
    }
 
    input_poll_cb();
+
+   rumbleFrames();
+
+   FDD_IsReading = 0;
 
    exec_app_retro();
 

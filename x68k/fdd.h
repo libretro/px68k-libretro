@@ -38,6 +38,10 @@ void FDD_SetEMask(int drive, int emask);
 void FDD_SetAccess(int drive);
 void FDD_SetBlink(int drive, int blink);
 
+/* Misc: Used to trigger rumble when FDD is reading data.
+ * Reset at every frame */
+extern int FDD_IsReading;
+
 #endif
 
 

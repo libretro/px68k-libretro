@@ -257,6 +257,18 @@ struct retro_core_option_definition option_defs_us[] = {
       "enabled"
    },
 
+   {
+      "px68k_rumble_on_disk_read",
+      "Rumble on FDD Reads",
+      "Produces rumble effect on supported devices when reading from floppy disks.",
+      {
+         { "enabled",  NULL },
+         { "disabled", NULL },
+         { NULL,       NULL },
+      },
+      "enabled"
+   },
+
    /* from PX68K Menu */
    {
       "px68k_joy_mouse",
