@@ -1,7 +1,9 @@
 #ifndef	__NP2_WIN32EMUL_H__
 #define	__NP2_WIN32EMUL_H__
 
+#ifndef __CELLOS_LV2__
 #include <sys/param.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>

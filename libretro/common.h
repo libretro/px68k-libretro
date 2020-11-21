@@ -33,6 +33,16 @@
 #define MAX_PATH 256
 #endif
 
+#ifdef __CELLOS_LV2__
+#include <sys/fs_external.h>
+#ifdef MAX_PATH
+#undef MAX_PATH
+#endif
+#define MAX_PATH CELL_FS_MAX_FS_PATH_LENGTH
+#define PATH_MAX CELL_FS_MAX_FS_PATH_LENGTH
+#define S_ISDIR(mode)  (((mode) & S_IFMT) == S_IFDIR)
+#endif
+
 typedef unsigned char	UINT8;
 typedef unsigned short	UINT16;
 typedef unsigned int	UINT32;
