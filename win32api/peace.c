@@ -69,7 +69,7 @@ enum {
 	HTYPE_CONSOLE,
 	HTYPE_KEY,
 };
-#if defined (_WIN32) || defined (__CELLOS_LV2__)
+#ifdef _WIN32
 typedef unsigned int u_int;
 #define bzero(s,d) memset(s,0,d)
 #endif
@@ -110,21 +110,6 @@ struct internal_file {
 #define	DPRF(arg)
 #endif	/* DEBUG */
 
-#ifdef __CELLOS_LV2__
-#include <sys/time.h>
-#define S_IREAD S_IRUSR
-#define S_IWRITE S_IWUSR
-#define F_OK  0  /* test for existence of file */
-#define S_ISDIR(mode)  (((mode) & S_IFMT) == S_IFDIR)
-int gettimeofday(struct timeval* tv, void* unused)
-{
-	int64_t time = sys_time_get_system_time();
-
-	tv->tv_sec = time / 1000000;
-	tv->tv_usec = time - (tv->tv_sec * 1000000);  // implicit rounding will take care of this for us
-	return 0;
-}
-#endif
 
 DWORD WINAPI
 FAKE_GetTickCount(void)

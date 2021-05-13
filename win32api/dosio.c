@@ -30,9 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __CELLOS_LV2__
 #include <sys/param.h>
-#endif
 #include <time.h>
 
 #include "dosio.h"

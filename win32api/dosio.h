@@ -160,12 +160,6 @@ void fname_mix(LPSTR str, LPSTR mix, int size);
 #ifdef _WIN32
 typedef unsigned int u_int;
 #endif
-#ifdef __CELLOS_LV2__
-#ifdef dos2unixtime
-#undef dos2unixtime
-#endif
-typedef unsigned int u_int;
-#endif
 void unix2dostime(time_t t, unsigned short *ddp, unsigned short *dtp, unsigned char *dhp);
 void dos2unixtime(u_int dd, u_int dt, u_int dh, time_t *tp);
 

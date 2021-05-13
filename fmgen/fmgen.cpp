@@ -25,9 +25,6 @@
 #include "misc.h"
 #include "fmgen.h"
 #include "fmgeninl.h"
-#ifdef __CELLOS_LV2__
-using namespace std;
-#endif
 
 #define LOGNAME "fmgen"
 

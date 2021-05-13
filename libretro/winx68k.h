@@ -56,10 +56,7 @@ void exec_app_retro();
 #else
 #include <unistd.h>
 #endif
-
-#ifndef __CELLOS_LV2__
 #include <signal.h>
-#endif
 
 BOOL is_installed_idle_process(void);
 void install_idle_process(void);

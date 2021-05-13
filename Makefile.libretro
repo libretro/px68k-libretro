@@ -163,17 +163,6 @@ else ifeq ($(platform), vita)
 	FLAGS += -DVITA=1
 	CXXFLAGS += -Wl,-q -Wall -O2
 	STATIC_LINKING = 1
-# PS3
-else ifeq ($(platform), ps3)
-	TARGET := $(TARGET_NAME)_libretro_ps3.a
-	CC = $(CELL_SDK)/host-win32/ppu/bin/ppu-lv2-gcc.exe
-	CXX = $(CELL_SDK)/host-win32/ppu/bin/ppu-lv2-g++.exe
-	AR = $(CELL_SDK)/host-win32/ppu/bin/ppu-lv2-ar.exe
-	CXXFLAGS += -std=gnu++98 -Wall -O3 -D_NO_CPP_INLINES 
-	FLAGS += -D__CELLOS_LV2__
-	STATIC_LINKING = 1
-	ENDIANNESS_DEFINES := -DMSB_FIRST -DBYTE_ORDER=BIG_ENDIAN
-    OLD_GCC := 1
 # Nintendo Switch (libnx)
 else ifeq ($(platform), libnx)
 	include $(DEVKITPRO)/libnx/switch_rules
