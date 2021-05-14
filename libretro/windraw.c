@@ -1138,7 +1138,7 @@ int WinDraw_MenuInit(void)
 }
 
 #include "menu_str_sjis.txt"
-const char menu_item_desc[][60] = {
+char menu_item_desc[][60] = {
 	"Reset / NMI reset / Quit",
 	"Change / Eject floppy 0",
 	"Change / Eject floppy 1",
