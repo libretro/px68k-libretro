@@ -183,13 +183,13 @@ dma_writemem24_dword(DWORD addr, DWORD val)
 }
 
 void 
-cpu_writemem24(DWORD addr, BYTE val)
+cpu_writemem24(DWORD addr, DWORD val)
 {
 
 	MemByteAccess = 0;
 	BusErrFlag = 0;
 
-	wm_cnt(addr, val);
+	wm_cnt(addr, val & 0xff);
 	if (BusErrFlag & 2) {
 		Memory_ErrTrace();
 		BusError(addr, val);
@@ -197,7 +197,7 @@ cpu_writemem24(DWORD addr, BYTE val)
 }
 
 void 
-cpu_writemem24_word(DWORD addr, WORD val)
+cpu_writemem24_word(DWORD addr, DWORD val)
 {
 
 	MemByteAccess = 0;
@@ -356,7 +356,7 @@ dma_readmem24_dword(DWORD addr)
 	return v;
 }
 
-BYTE 
+DWORD 
 cpu_readmem24(DWORD addr)
 {
 	BYTE v;
@@ -367,10 +367,10 @@ cpu_readmem24(DWORD addr)
 		Memory_ErrTrace();
 		BusError(addr, 0);
 	}
-	return v;
+	return (DWORD) v;
 }
 
-WORD 
+DWORD 
 cpu_readmem24_word(DWORD addr)
 {
 	WORD v;
@@ -389,7 +389,7 @@ cpu_readmem24_word(DWORD addr)
 		Memory_ErrTrace();
 		BusError(addr, 0);
 	}
-	return v;
+	return (DWORD) v;
 }
 
 DWORD 

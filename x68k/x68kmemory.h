@@ -28,16 +28,16 @@ void Memory_ErrTrace(void);
 void Memory_IntErr(int i);
 
 void Memory_Init(void);
-BYTE Memory_ReadB(DWORD adr);
-WORD Memory_ReadW(DWORD adr);
+DWORD Memory_ReadB(DWORD adr);
+DWORD Memory_ReadW(DWORD adr);
 DWORD Memory_ReadD(DWORD adr);
 
 BYTE dma_readmem24(DWORD adr);
 WORD dma_readmem24_word(DWORD adr);
 DWORD dma_readmem24_dword(DWORD adr);
 
-void Memory_WriteB(DWORD adr, BYTE data);
-void Memory_WriteW(DWORD adr, WORD data);
+void Memory_WriteB(DWORD adr, DWORD data);
+void Memory_WriteW(DWORD adr, DWORD data);
 void Memory_WriteD(DWORD adr, DWORD data);
 
 void dma_writemem24(DWORD adr, BYTE data);
