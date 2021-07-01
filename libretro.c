@@ -472,25 +472,25 @@ static void Add_Option(const char* option)
    sprintf(XARGV[PARAMCOUNT++], "%s\0", option);
 }
 
-static int pre_main(const char *argv)
+static int isM3U = 0;
+
+static int load(const char *argv)
 {
-   int i = 0;
-   int Only1Arg;
-   int isM3U = 0;
-
-   for (i = 0; i < 64; i++)
-      xargv_cmd[i] = NULL;
-
-   if (no_content) {
-      p6logd("PARAMCOUNT = %d\n", PARAMCOUNT);
-      PARAMCOUNT = 0;
-      goto run_pmain;
-   }
-
    if (strlen(argv) > strlen("cmd"))
    {
+      int res = 0;
       if (HandleExtension((char*)argv, "cmd") || HandleExtension((char*)argv, "CMD"))
-         i = loadcmdfile((char*)argv);
+      {
+         res = loadcmdfile((char*)argv);
+         if (!res)
+         {
+            if (log_cb)
+               log_cb(RETRO_LOG_ERROR, "%s\n", "[libretro]: failed to read cmd file ...");
+            return false;
+         }
+
+         parse_cmdline(CMDFILE);
+      }
       else if (HandleExtension((char*)argv, "m3u") || HandleExtension((char*)argv, "M3U"))
       {
          if (!read_m3u((char*)argv))
@@ -506,19 +506,31 @@ static int pre_main(const char *argv)
             disk.inserted[1] = true;
          }
          else
-         {
             sprintf((char*)argv, "%s \"%s\"", "px68k", disk.path[0]);
-         }
 
          disk.inserted[0] = true;
          isM3U = 1;
+
+         parse_cmdline(argv);
       }
    }
 
-   if (i == 1)
-      parse_cmdline(CMDFILE);
-   else
-      parse_cmdline(argv);
+   return 1;
+}
+
+static int pre_main(void)
+{
+   int i = 0;
+   int Only1Arg;
+
+   for (i = 0; i < 64; i++)
+      xargv_cmd[i] = NULL;
+
+   if (no_content) {
+      p6logd("PARAMCOUNT = %d\n", PARAMCOUNT);
+      PARAMCOUNT = 0;
+      goto run_pmain;
+   }
 
    Only1Arg = (strcmp(ARGUV[0], "px68k") == 0) ? 0 : 1;
 
@@ -1126,16 +1138,18 @@ void retro_cheat_set(unsigned index, bool enabled, const char *code)
 
 bool retro_load_game(const struct retro_game_info *info)
 {
-   const char *full_path = 0;
-
    no_content = 1;
    RPATH[0] = '\0';
 
    if (info && info->path) {
+      const char *full_path = 0;
       no_content = 0;
       full_path = info->path;
       strcpy(RPATH, full_path);
       extract_directory(base_dir, info->path, sizeof(base_dir));
+
+      if (!load(RPATH))
+         return false;
    }
 
    p6logd("LOAD EMU\n");
@@ -1300,7 +1314,7 @@ void retro_run(void)
 
    if(firstcall)
    {
-      pre_main(RPATH);
+      pre_main();
       firstcall = 0;
       p6logd("INIT done\n");
       update_variables();
