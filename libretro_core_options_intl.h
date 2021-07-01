@@ -235,7 +235,7 @@ struct retro_core_option_definition option_def_fr[] = {
       "FDD1"
    },
    {
-      "px68k_disk_path",
+      "px68k_save_fdd_path",
       "Enregistrer les chemins d'accès aux disques",
       "Lorsqu'elle est activée, les chemins d'accès aux disques précédemment chargés seront enregistrés pour chaque lecteur, puis chargés automatiquement au démarrage. Lorsqu'elle est désactivé, FDD et HDD commencent à vide.",
       {
