@@ -245,10 +245,10 @@ static void LoadDefaults(void)
 	if (Config.disk_path)
 	{
 		for (i = 0; i < 2; i++)
-			Config.FDDImage[i][0] = "";
+			Config.FDDImage[i][0] = '\0';
 
 		for (i = 0; i < 16; i++)
-			Config.HDImage[i][0] = "";
+			Config.HDImage[i][0] = '\0';
 	}
 
 	initialized = 1;
