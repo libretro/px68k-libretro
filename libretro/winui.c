@@ -88,8 +88,6 @@ extern	short		timertrace;
 	char		filepath[MAX_PATH] = ".";
 	int		fddblink = 0;
 	int		fddblinkcount = 0;
-	int		hddtrace = 0;
-extern  int		dmatrace;
 
 	DWORD		LastClock[4] = {0, 0, 0, 0};
 

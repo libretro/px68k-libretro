@@ -15,7 +15,6 @@
 #include "dmac.h"
 
 dmac_ch	DMA[4];
-int dmatrace = 0;
 
 static int DMA_IntCH = 0;
 static int DMA_LastInt = 0;

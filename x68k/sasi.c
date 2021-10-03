@@ -27,15 +27,11 @@ BYTE SASI_Error = 0;
 BYTE SASI_SenseStatBuf[4];
 BYTE SASI_SenseStatPtr = 0;
 
-extern int hddtrace;
-
-
 int SASI_IsReady(void)
 {
 	if ( (SASI_Phase==2)||(SASI_Phase==3)||(SASI_Phase==9) )
 		return 1;
-	else
-		return 0;
+	return 0;
 }
 
 
@@ -45,16 +41,9 @@ int SASI_IsReady(void)
 DWORD FASTCALL SASI_Int(BYTE irq)
 {
 	IRQH_IRQCallBack(irq);
-if (hddtrace) {
-FILE *fp;
-fp=fopen("_trace68.txt", "a");
-fprintf(fp, "Int (IRQ:%d)\n", irq);
-fclose(fp);
-}
 	if (irq==1)
 		return ((DWORD)IOC_IntVect+2);
-	else
-		return -1;
+	return -1;
 }
 
 
@@ -83,13 +72,6 @@ void SASI_Init(void)
 short SASI_Seek(void)
 {
 	FILEH fp;
-
-if (hddtrace) {
-FILE *fp;
-fp=fopen("_trace68.txt", "a");
-fprintf(fp, "Seek  - Sector:%d  (Time:%08X)\n", SASI_Sector, timeGetTime());
-fclose(fp);
-}
 	ZeroMemory(SASI_Buf, 256);
 	fp = File_Open(Config.HDImage[SASI_Device*2+SASI_Unit]);
 	if (!fp)
@@ -133,12 +115,6 @@ short SASI_Flush(void)
 	}
 	File_Close(fp);
 
-if (hddtrace) {
-FILE *fp;
-fp=fopen("_trace68.txt", "a");
-fprintf(fp, "Sec Write  - Sector:%d  (Time:%08X)\n", SASI_Sector, timeGetTime());
-fclose(fp);
-}
 	return 1;
 }
 
@@ -217,20 +193,6 @@ BYTE FASTCALL SASI_Read(DWORD adr)
 			IOC_IntStat|=0x10;
 			if (IOC_IntStat&8) IRQH_Int(1, &SASI_Int);
 		}
-	}
-
-	if (hddtrace&&((SASI_Phase!=3)||(adr!=0xe96001)))
-	{
-		FILE *fp;
-		fp=fopen("_trace68.txt", "a");
-		//fprintf(fp, "Read  - Adr:%08X  Ret:%02X  Phase:%d BufPtr:%d  (Time:%08X)  @ $%08X\n", adr, ret, SASI_Phase, SASI_BufPtr, timeGetTime(), C68k_Get_Reg(&C68K, C68K_PC));
-
-#if defined (HAVE_CYCLONE)	
-		fprintf(fp, "Read  - Adr:%08X  Ret:%02X  Phase:%d BufPtr:%d  (Time:%08X)  @ $%08X\n", adr, ret, SASI_Phase, SASI_BufPtr, timeGetTime(), m68000_get_reg(M68K_PC));
-#elif defined (HAVE_C68K)
-		fprintf(fp, "Read  - Adr:%08X  Ret:%02X  Phase:%d BufPtr:%d  (Time:%08X)  @ $%08X\n", adr, ret, SASI_Phase, SASI_BufPtr, timeGetTime(), C68k_Get_PC(&C68K));
-#endif /* HAVE_C68K */
-		fclose(fp);
 	}
 
 	StatBar_HDD((SASI_Phase)?2:0);
@@ -343,12 +305,6 @@ void SASI_CheckCmd(void)
 	default:
 		SASI_Phase += 2;
 	}
-if (hddtrace) {
-FILE *fp;
-fp=fopen("_trace68.txt", "a");
-fprintf(fp, "Com.  - %02X  Dev:%d Unit:%d\n", SASI_Cmd[0], SASI_Device, SASI_Unit);
-fclose(fp);
-}
 }
 
 
@@ -361,19 +317,6 @@ void FASTCALL SASI_Write(DWORD adr, BYTE data)
 	int i;
 	BYTE bit;
 
-	if (hddtrace&&((SASI_Phase!=3)||(adr!=0xe96001)))
-	{
-		FILE *fp;
-		fp=fopen("_trace68.txt", "a");
-		//fprintf(fp, "Write - Adr:%08X Data:%02X  Phase:%d  (Time:%08X)  @ $%08X\n", adr, data, SASI_Phase, timeGetTime(), C68k_Get_Reg(&C68K, C68K_PC));
-
-#if defined (HAVE_CYCLONE)
-		fprintf(fp, "Write - Adr:%08X Data:%02X  Phase:%d  (Time:%08X)  @ $%08X\n", adr, data, SASI_Phase, timeGetTime(), m68000_get_reg(M68K_PC));
-#elif defined (HAVE_C68K)
-		fprintf(fp, "Write - Adr:%08X Data:%02X  Phase:%d  (Time:%08X)  @ $%08X\n", adr, data, SASI_Phase, timeGetTime(), C68k_Get_PC(&C68K));
-#endif
-		fclose(fp);
-	}
 	if ( (adr==0xe96007)&&(SASI_Phase==0) )
 	{
 		SASI_Device = 0x7f;
