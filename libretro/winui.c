@@ -237,63 +237,6 @@ else	strcpy(cur_dir_str, CUR_DIR_STR);
 	}
 }
 
-#if 0
-/*
- * item function
- */
-static void
-reset(gpointer data, guint action, GtkWidget *w)
-{
-	WinX68k_Reset();
-	if (Config.MIDI_SW && Config.MIDI_Reset)
-		MIDI_Reset();
-}
-
-static void
-stretch(gpointer data, guint action, GtkWidget *w)
-{
-	UNUSED(data);
-	UNUSED(w);
-
-	if (Config.WinStrech != (int)action)
-		Config.WinStrech = action;
-}
-
-static void
-xvimode(gpointer data, guint action, GtkWidget *w)
-{
-	UNUSED(data);
-	UNUSED(w);
-
-	if (Config.XVIMode != (int)action)
-		Config.XVIMode = action;
-}
-
-static void
-videoreg_save(gpointer data, guint action, GtkWidget *w)
-{
-	char buf[256];
-
-	UNUSED(data);
-	UNUSED(action);
-	UNUSED(w);
-
-	DSound_Stop();
-	g_snprintf(buf, sizeof(buf),
-	             "VCReg 0:$%02X%02X 1:$%02x%02X 2:$%02X%02X  "
-	             "CRTC00/02/05/06=%02X/%02X/%02X/%02X%02X  "
-		     "BGHT/HD/VD=%02X/%02X/%02X   $%02X/$%02X",
-	    VCReg0[0], VCReg0[1], VCReg1[0], VCReg1[1], VCReg2[0], VCReg2[1],
-	    CRTC_Regs[0x01], CRTC_Regs[0x05], CRTC_Regs[0x0b], CRTC_Regs[0x0c],
-	      CRTC_Regs[0x0d],
-	    BG_Regs[0x0b], BG_Regs[0x0d], BG_Regs[0x0f],
-	    CRTC_Regs[0x29], BG_Regs[0x11]);
-	Error(buf);
-	DSound_Play();
-}
-
-#endif
-
 float VKey_scale[] = {3.0, 2.5, 2.0, 1.5, 1.25, 1.0};
 
 float WinUI_get_vkscale(void)
