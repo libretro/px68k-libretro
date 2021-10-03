@@ -554,32 +554,11 @@ Memory_SetSCSIMode(void)
 
 void Memory_ErrTrace(void)
 {
-#ifdef WIN68DEBUG
-	FILE *fp;
-	fp=fopen("_buserr.txt", "a");
-	if (BusErrFlag==3)
-		fprintf(fp, "BusErr - SetOP to $%08X  @ $%08X\n", BusErrAdr, regs.pc);
-	else if (BusErrFlag==2)
-		fprintf(fp, "BusErr - Write to $%08X  @ $%08X\n", BusErrAdr, regs.pc);
-	else
-		fprintf(fp, "BusErr - Read from $%08X  @ $%08X\n", BusErrAdr, regs.pc);
-	fclose(fp);
-//	traceflag ++;
-//	m68000_ICount = 0;
-#endif
 }
 
 void 
 Memory_IntErr(int i)
 {
-#ifdef WIN68DEBUG
-	FILE *fp;
-	fp=fopen("_interr.txt", "a");
-	fprintf(fp, "IntErr - Int.No%d  @ $%08X\n", i, regs.pc);
-	fclose(fp);
-#else
-	(void)i;
-#endif
 }
 
 void

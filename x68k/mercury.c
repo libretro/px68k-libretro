@@ -192,11 +192,6 @@ void FASTCALL Mcry_Write(DWORD adr, BYTE data)
 	}
 	else if ((adr == 0xecc091)||(adr == 0xecc011))
 	{
-/*{
-FILE* fp = fopen("_mercury.txt", "a");
-fprintf(fp, "StW $%08X $%02X\n", adr, data);
-fclose(fp);
-}*/
 		if (Mcry_Status != data)
 		{
 			Mcry_Status = data;
@@ -209,11 +204,6 @@ fclose(fp);
 	}
 	else if ( (adr>=0xecc0c0)&&(adr<=0xecc0c7)&&(adr&1) )	// 満開版まーきゅりー OPN
 	{
-/*{
-FILE* fp = fopen("_mercury.txt", "a");
-fprintf(fp, "W $%08X $%02X\n", adr, data);
-fclose(fp);
-}*/
 		M288_Write((BYTE)((adr>>1)&3), data);
 	}
 }
@@ -247,11 +237,6 @@ BYTE FASTCALL Mcry_Read(DWORD adr)
 	else if ( (adr>=0xecc0c0)&&(adr<=0xecc0c7)&&(adr&1) )	// 満開版まーきゅりー OPN
 	{
 		ret = M288_Read((BYTE)((adr>>1)&3));
-/*{
-FILE* fp = fopen("_mercury.txt", "a");
-fprintf(fp, "R $%08X $%02X\n", adr, ret);
-fclose(fp);
-}*/
 	}
 	else if ( adr>=0xecc100 )
 	{				// Bus Error?

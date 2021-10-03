@@ -50,14 +50,6 @@ extern "C" {
 int rfd_sock;
 #endif
 
-  //#define WIN68DEBUG
-
-#ifdef WIN68DEBUG
-#include "d68k.h"
-#endif
-
-//#include "../icons/keropi_mono.xbm"
-
 #define	APPNAME	"Keropi"
 
 extern	WORD	BG_CHREND;
@@ -411,49 +403,6 @@ void WinX68k_Exec(void)
 			}
 		}
 
-#ifdef WIN68DEBUG
-		if (traceflag/*&&fdctrace*/)
-		{
-			FILE *fp;
-			static DWORD oldpc;
-			int i;
-			char buf[200];
-			fp=fopen("_trace68.txt", "a");
-			for (i=0; i<HSYNC_CLK; i++)
-			{
-				m68k_disassemble(buf, C68k_Get_Reg(&C68K, C68K_PC));
-//				if (MEM[0xa84c0]) /**test=1; */tracing=1000;
-//				if (regs.pc==0x9d2a) tracing=5000;
-//				if ((regs.pc>=0x2000)&&((regs.pc<=0x8e0e0))) tracing=50000;
-//				if (regs.pc<0x10000) tracing=1;
-//				if ( (regs.pc&1) )
-//				fp=fopen("_trace68.txt", "a");
-//				if ( (regs.pc==0x7176) /*&& (Memory_ReadW(oldpc)==0xff1a)*/ ) tracing=100;
-//				if ( (/*((regs.pc>=0x27000) && (regs.pc<=0x29000))||*/((regs.pc>=0x27000) && (regs.pc<=0x29000))) && (oldpc!=regs.pc))
-				if (/*fdctrace&&*/(oldpc != C68k_Get_Reg(&C68K, C68K_PC)))
-				{
-//					//tracing--;
-				  fprintf(fp, "D0:%08X D1:%08X D2:%08X D3:%08X D4:%08X D5:%08X D6:%08X D7:%08X CR:%04X\n", C68K.D[0], C68K.D[1], C68K.D[2], C68K.D[3], C68K.D[4], C68K.D[5], C68K.D[6], C68K.D[7], 0/* xxx for now 0 C68K.ccr */);
-				  fprintf(fp, "A0:%08X A1:%08X A2:%08X A3:%08X A4:%08X A5:%08X A6:%08X A7:%08X SR:%04X\n", C68K.A[0], C68K.A[1], C68K.A[2], C68K.A[3], C68K.A[4], C68K.A[5], C68K.A[6], C68K.A[7], C68k_Get_Reg(&C68K, C68K_SR) >> 8/* regs.sr_high*/);
-					fprintf(fp, "<%04X> (%08X ->) %08X : %s\n", Memory_ReadW(C68k_Get_Reg(&C68K, C68K_PC)), oldpc, C68k_Get_Reg(&C68K, C68K_PC), buf);
-				}
-#if defined (HAVE_CYCLONE)
-				oldpc = m68000_get_reg(M68K_PC);
-				//* C68KICount = 1;
-				m68000_execute(1);
-#elif defined (HAVE_C68K)
-				oldpc = C68k_Get_Reg(&C68K, C68K_PC);
-//				C68K.ICount = 1;
-//				C68k_Exec(&C68K, C68K.ICount);
-				C68k_Exec(&C68K, 1);
-#endif /* HAVE_C68K */
-			}
-			fclose(fp);
-			usedclk = clk_line = HSYNC_CLK;
-			clk_count = clk_next;
-		}
-		else
-#endif /* WIN68DEBUG */
 		{
 //			C68K.ICount = n;
 //			C68k_Exec(&C68K, C68K.ICount);
@@ -744,14 +693,6 @@ extern "C" void handle_retrok(){
 			menu_mode = menu_out;
 		}
 	}
-
-#ifdef WIN68DEBUG
-	if(Core_Key_State[RETROK_F11] && Core_Key_State[RETROK_F11]!=Core_old_Key_State[RETROK_F11]  )
-		if (i == RETROK_F11) {
-			traceflag ^= 1;
-			printf("trace %s\n", (traceflag)?"on":"off");
-		}
-#endif
 
 	KEYP(RETROK_ESCAPE,0x1);
         int i;

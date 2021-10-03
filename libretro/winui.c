@@ -31,7 +31,6 @@
 #include <errno.h>
 
 #include "common.h"
-#include "about.h"
 #include "keyboard.h"
 #include "windraw.h"
 #include "dswin.h"

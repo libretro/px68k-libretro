@@ -501,12 +501,6 @@ void FASTCALL CRTC_Write(DWORD adr, BYTE data)
 			CRTC_FastClrLine = vline;
 						// この時点のマスクが有効らしい（クォース）
 			CRTC_FastClrMask = FastClearMask[CRTC_Regs[0x2b]&15];
-/*{
-FILE *fp;
-fp=fopen("_crtc.txt", "a");
-fprintf(fp, "FastClr\n");
-fclose(fp);
-}*/
 		}
 	}
 }

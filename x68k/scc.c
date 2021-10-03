@@ -105,12 +105,6 @@ void FASTCALL SCC_Write(DWORD adr, BYTE data)
 			else if (SCC_RegNumB == 2) SCC_Vector = data;
 			SCC_RegSetB = 0;
 			SCC_RegsB[SCC_RegNumB] = data;
-/*{
-FILE *fp;
-fp=fopen("_scc.txt", "a");
-fprintf(fp, "SCC  Reg[%d] = $%02X  @ $%08X\n", SCC_RegNumB, data, regs.pc);
-fclose(fp);
-}*/
 			SCC_RegNumB = 0;
 		}
 		else

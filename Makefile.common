@@ -6,69 +6,68 @@ INCFLAGS		:= -I$(CORE_DIR) -I$(CORE_DIR)/libretro-common/include -I$(CORE_DIR)/l
 INCFLAGS 		+= -I$(CORE_DIR)/x68k -I$(CORE_DIR)/fmgen -I$(CORE_DIR)/win32api
 
 SOURCES_C 		+= \
-				$(CORE_DIR)/x68k/d68k.c \
-				$(CORE_DIR)/m68000/m68000.c
+			   $(CORE_DIR)/x68k/d68k.c \
+			   $(CORE_DIR)/m68000/m68000.c
 
 ifeq ($(CYCLONE),1)
 FLAGS 			+= -DHAVE_CYCLONE
 SOURCES_S 		+= \
-				$(CORE_DIR)/m68000/cyclone.s
+			   $(CORE_DIR)/m68000/cyclone.s
 else
 FLAGS 			+= -DHAVE_C68K
 SOURCES_C 		+= \
-				$(CORE_DIR)/m68000/c68k/c68k.c \
-				$(CORE_DIR)/m68000/c68k/c68kexec.c
+			   $(CORE_DIR)/m68000/c68k/c68k.c \
+			   $(CORE_DIR)/m68000/c68k/c68kexec.c
 endif
 
 SOURCES_C 		+= \
-				$(CORE_DIR)/x68k/adpcm.c \
-				$(CORE_DIR)/x68k/bg.c \
-				$(CORE_DIR)/x68k/crtc.c \
-				$(CORE_DIR)/x68k/dmac.c \
-				$(CORE_DIR)/x68k/fdc.c \
-				$(CORE_DIR)/x68k/fdd.c \
-				$(CORE_DIR)/x68k/disk_d88.c \
-				$(CORE_DIR)/x68k/disk_dim.c \
-				$(CORE_DIR)/x68k/disk_xdf.c \
-				$(CORE_DIR)/x68k/gvram.c \
-				$(CORE_DIR)/x68k/ioc.c \
-				$(CORE_DIR)/x68k/irqh.c \
-				$(CORE_DIR)/x68k/mem_wrap.c \
-				$(CORE_DIR)/x68k/mercury.c \
-				$(CORE_DIR)/x68k/mfp.c \
-				$(CORE_DIR)/x68k/palette.c \
-				$(CORE_DIR)/x68k/midi.c \
-				$(CORE_DIR)/x68k/pia.c \
-				$(CORE_DIR)/x68k/rtc.c \
-				$(CORE_DIR)/x68k/sasi.c \
-				$(CORE_DIR)/x68k/scc.c \
-				$(CORE_DIR)/x68k/scsi.c \
-				$(CORE_DIR)/x68k/sram.c \
-				$(CORE_DIR)/x68k/sysport.c \
-				$(CORE_DIR)/x68k/tvram.c \
-				$(CORE_DIR)/libretro/joystick.c \
-				$(CORE_DIR)/libretro/juliet.c \
-				$(CORE_DIR)/libretro/keyboard.c \
-				$(CORE_DIR)/libretro/mouse.c \
-				$(CORE_DIR)/libretro/prop.c \
-				$(CORE_DIR)/libretro/status.c \
-				$(CORE_DIR)/libretro/timer.c \
-				$(CORE_DIR)/libretro/dswin.c \
-				$(CORE_DIR)/libretro/windraw.c \
-				$(CORE_DIR)/libretro/winui.c \
-				$(CORE_DIR)/libretro/about.c \
-				$(CORE_DIR)/libretro/common.c \
-				$(CORE_DIR)/win32api/dosio.c \
-				$(CORE_DIR)/win32api/fake.c \
-				$(CORE_DIR)/win32api/peace.c \
-				$(CORE_DIR)/libretro.c
+			   $(CORE_DIR)/x68k/adpcm.c \
+			   $(CORE_DIR)/x68k/bg.c \
+			   $(CORE_DIR)/x68k/crtc.c \
+			   $(CORE_DIR)/x68k/dmac.c \
+			   $(CORE_DIR)/x68k/fdc.c \
+			   $(CORE_DIR)/x68k/fdd.c \
+			   $(CORE_DIR)/x68k/disk_d88.c \
+			   $(CORE_DIR)/x68k/disk_dim.c \
+			   $(CORE_DIR)/x68k/disk_xdf.c \
+			   $(CORE_DIR)/x68k/gvram.c \
+			   $(CORE_DIR)/x68k/ioc.c \
+			   $(CORE_DIR)/x68k/irqh.c \
+			   $(CORE_DIR)/x68k/mem_wrap.c \
+			   $(CORE_DIR)/x68k/mercury.c \
+			   $(CORE_DIR)/x68k/mfp.c \
+			   $(CORE_DIR)/x68k/palette.c \
+			   $(CORE_DIR)/x68k/midi.c \
+			   $(CORE_DIR)/x68k/pia.c \
+			   $(CORE_DIR)/x68k/rtc.c \
+			   $(CORE_DIR)/x68k/sasi.c \
+			   $(CORE_DIR)/x68k/scc.c \
+			   $(CORE_DIR)/x68k/scsi.c \
+			   $(CORE_DIR)/x68k/sram.c \
+			   $(CORE_DIR)/x68k/sysport.c \
+			   $(CORE_DIR)/x68k/tvram.c \
+			   $(CORE_DIR)/libretro/joystick.c \
+			   $(CORE_DIR)/libretro/juliet.c \
+			   $(CORE_DIR)/libretro/keyboard.c \
+			   $(CORE_DIR)/libretro/mouse.c \
+			   $(CORE_DIR)/libretro/prop.c \
+			   $(CORE_DIR)/libretro/status.c \
+			   $(CORE_DIR)/libretro/timer.c \
+			   $(CORE_DIR)/libretro/dswin.c \
+			   $(CORE_DIR)/libretro/windraw.c \
+			   $(CORE_DIR)/libretro/winui.c \
+			   $(CORE_DIR)/libretro/common.c \
+			   $(CORE_DIR)/win32api/dosio.c \
+			   $(CORE_DIR)/win32api/fake.c \
+			   $(CORE_DIR)/win32api/peace.c \
+			   $(CORE_DIR)/libretro.c
 
 SOURCES_CXX 	+= \
-				$(CORE_DIR)/fmgen/file.cpp \
-				$(CORE_DIR)/fmgen/fmg_wrap.cpp \
-				$(CORE_DIR)/fmgen/fmgen.cpp \
-				$(CORE_DIR)/fmgen/fmtimer.cpp \
-				$(CORE_DIR)/fmgen/opm.cpp \
-				$(CORE_DIR)/fmgen/opna.cpp \
-				$(CORE_DIR)/fmgen/psg.cpp \
-				$(CORE_DIR)/libretro/winx68k.cpp
+		   $(CORE_DIR)/fmgen/file.cpp \
+		   $(CORE_DIR)/fmgen/fmg_wrap.cpp \
+		   $(CORE_DIR)/fmgen/fmgen.cpp \
+		   $(CORE_DIR)/fmgen/fmtimer.cpp \
+		   $(CORE_DIR)/fmgen/opm.cpp \
+		   $(CORE_DIR)/fmgen/opna.cpp \
+		   $(CORE_DIR)/fmgen/psg.cpp \
+		   $(CORE_DIR)/libretro/winx68k.cpp

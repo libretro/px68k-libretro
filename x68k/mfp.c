@@ -199,11 +199,6 @@ void FASTCALL MFP_Write(DWORD adr, BYTE data)
 {
 	BYTE reg;
 	if (adr>0xe8802f) return;
-/*if(adr==0xe88009){
-FILE* fp = fopen("_mfp.txt", "a");
-fprintf(fp, "Write   Adr=$%08X  Data=$%02X   PC=$%08X\n", adr, data, regs.pc);
-fclose(fp);
-}*/
 	if (adr&1)
 	{
 		reg=(BYTE)((adr&0x3f)>>1);
@@ -259,13 +254,6 @@ fclose(fp);
 			MFP[reg] = data;
 		}
 	}
-/*{
-FILE* fp = fopen("_mfp.txt", "a");
-fprintf(fp, "MFP Timer - A:$%08X TACR:$%02X TADR:$%02X\n", Timer_Count[0], MFP[MFP_TACR], MFP[MFP_TADR]);
-fprintf(fp, "MFP Timer - B:$%08X TBCR:$%02X TBDR:$%02X\n", Timer_Count[1], MFP[MFP_TBCR], MFP[MFP_TBDR]);
-fprintf(fp, "MFP Timer - C/D:$%08X $%08X TCDCR:$%02X TCDR:$%02X TDDR:$%02X\n", Timer_Count[2], Timer_Count[3], MFP[MFP_TCDCR], MFP[MFP_TCDR], MFP[MFP_TDDR]);
-fclose(fp);
-}*/
 }
 
 

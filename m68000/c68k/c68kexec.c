@@ -24,16 +24,6 @@
 #include "core.h"
 #include "c68k.h"
 
-// #define TRACE_WITH_Q68  // Define to use Q68 tracing code to trace insns
-                           // (requires Q68 built in, of course)
-
-#ifdef NEOCD_HLE
-void    cdrom_load_files(void);
-void    neogeo_cdda_control(void);
-void    neogeo_prio_switch(void);
-void    neogeo_upload(void);
-#endif
-
 // exception cycle table (taken from musashi core)
 static const s32 c68k_exception_cycle_table[256] =
 {
@@ -113,8 +103,6 @@ static const s32 c68k_exception_cycle_table[256] =
 // global variable
 ///////////////////
 
-#ifndef C68K_GEN
-
 #ifndef C68K_NO_JUMP_TABLE
 #ifndef C68K_CONST_JUMP_TABLE
 static void *JumpTable[0x10000];
@@ -123,76 +111,22 @@ static void *JumpTable[0x10000];
 
 static u32 C68k_Initialised = 0;
 
-#endif  // C68K_GEN
-
-#ifdef NEOCD_HLE
-extern int img_display;
-#endif
-
 // include macro file
 //////////////////////
 
 #include "c68kmac.inc"
-
-#ifndef C68K_GEN
-# ifdef TRACE_WITH_Q68
-#include "../q68/q68.h"
-static c68k_struc *TRACE_CPU;
-static uint32_t readw(uint32_t address) {
-    return TRACE_CPU->Read_Word(address);
-}
-/* Make our own version of the structure to avoid the overhead of dozens of
- * function calls every instruction */
-static struct {
-    u32 D[8], A[8], PC, SR, USP, SSP, dummy[7];
-    void *readb, *readw, *writeb, *writew;
-} state = {.readw = readw};
-void TRACE(int PC,c68k_struc *CPU,int Opcode,int CCnt) {
-    static FILE *f;
-    if (!f) f = fopen("c68k.log", "w");
-    TRACE_CPU = CPU;
-    memcpy(state.D, CPU->D, 16*4);
-    state.PC = PC - 2 - CPU->BasePC;
-    state.SR = GET_SR;
-    if (f) q68_trace((Q68State *)&state, f,
-                     CPU->CycleToDo - CCnt, CPU->CycleToDo);
-}
-# endif  // TRACE_WITH_Q68
-#endif  // !C68K_GEN
 
 // main exec function
 //////////////////////
 
 s32 FASTCALL C68k_Exec(c68k_struc *cpu, s32 cycle)
 {
-#ifndef C68K_GEN
-#if 0
-    register c68k_struc *CPU asm ("ebx");
-    register pointer PC asm ("esi");
-    register s32 CCnt asm ("edi");
-//    register u32 Opcode asm ("edi");
-//    c68k_struc *CPU;
-//    u32 PC;
-//    s32 CCnt;
-    u32 Opcode;
-#else
-//    register c68k_struc *CPU asm ("r10");
-//    register u32 PC asm ("r11");
-//    register s32 CCnt asm ("r12");
-//    register u32 Opcode asm ("r13");
     c68k_struc *CPU;
     pointer PC;
     s32 CCnt;
     u32 Opcode;
-#endif
-#endif
-
-#ifndef C68K_GEN
 
 #ifndef C68K_NO_JUMP_TABLE
-#ifdef C68K_CONST_JUMP_TABLE
-    #include "c68k_ini.inc"
-#endif
 #else
     C68k_Initialised = 1;
 #endif
@@ -323,17 +257,11 @@ C68k_Exec_Really_End:
 C68k_Init:
     {
         u32 i, j;
-
-        #include "c68k_ini.inc"
-        
         C68k_Initialised = 1;
     }
     
     return 0;
 #endif
-#endif
-#else
-    return 0;
 #endif
 }
 

@@ -166,11 +166,6 @@ static void FDC_ExecCmd(void)
 	FDCID id;
 	int ret;
 
-/*{
-FILE* fp = fopen("_fdc.txt", "a");
-fprintf(fp, "Cmd:%d  CurCy:%d  \n", fdc.cmd, fdc.cyl);
-fclose(fp);
-}*/
 
 	switch ( fdc.cmd ) {
 	case 2:		// ReadDiagnostic
@@ -212,11 +207,6 @@ fclose(fp);
 		if ( !fdc.cyl )                            rsp->st0 |= 0x10;
 		if ( (FDD_IsReady(fdc.drv))||(fdc.ready) ) rsp->st0 |= 0x20;
 		if ( FDD_IsReadOnly(fdc.drv) )             rsp->st0 |= 0x40;
-/*{
-FILE* fp = fopen("_fdc.txt", "a");
-fprintf(fp, "  ### SDS  Ret=$%02X\n", rsp->st0);
-fclose(fp);
-}*/
 		break;
 	case 5:		// WriteData
 	case 9:		// WriteDeletedData
@@ -273,11 +263,6 @@ fclose(fp);
 			fdc.st0 |= 0x48;
 		}
 		if ( fdc.st0&0x40 ) FDC_EPhaseEnd();
-/*{
-FILE* fp = fopen("_fdc.txt", "a");
-fprintf(fp, "  ### Read  C:$%02X H:$%02X R:$%02X N:$%02X  EOT=$%02X  ret=$%02X/$%02X/$%02X\n", id.c, id.h, id.r, id.n, prm0->eot, fdc.st0, fdc.st1, fdc.st2);
-fclose(fp);
-}*/
 		break;
 	case 7:		// Recalibrate
 		fdc.st0 = prm1->us&7;
@@ -474,11 +459,6 @@ BYTE FASTCALL FDC_Read(DWORD adr)
 		if ( (fdc.ctrl&1)&&(FDD_IsReady(0)) ) ret = 0x80;
 		if ( (fdc.ctrl&2)&&(FDD_IsReady(1)) ) ret = 0x80;
 	}
-/*{
-FILE* fp = fopen("_fdc.txt", "a");
-fprintf(fp, "Adr:$%08X  ret=$%02X\n", adr, ret);
-fclose(fp);
-}*/
 	return ret;
 }
 
@@ -531,10 +511,5 @@ void FASTCALL FDC_Write(DWORD adr, BYTE data)
 	} else if ( adr==0xe94007 ) {
 		fdc.drv = (data&0x80)?(data&3):(-1);
 		FDD_SetAccess(fdc.drv);
-/*{
-FILE* fp = fopen("_fdc.txt", "a");
-fprintf(fp, "ActiveDrive=%d\n", fdc.drv);
-fclose(fp);
-}*/
 	}
 }

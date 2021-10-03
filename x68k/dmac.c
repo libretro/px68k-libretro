@@ -119,11 +119,6 @@ void FASTCALL DMA_Write(DWORD adr, BYTE data)
 
 	p = (unsigned char*)&DMA[ch];
 
-/*if (ch==3) {
-FILE* fp = fopen("_dma.txt", "a");
-fprintf(fp, "W $%02X $%02X\n", off, data);
-fclose(fp);
-}*/
 
 	switch ( off ) {
 	case 0x0a: case 0x0b: case 0x1a: case 0x1b:
