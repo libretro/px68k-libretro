@@ -998,7 +998,5 @@ extern "C" void end_loop_retro(void)
    WinX68k_Cleanup();
    WinDraw_Cleanup();
    WinDraw_CleanupScreen();
-
-   SaveConfig();
 }
 

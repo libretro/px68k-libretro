@@ -28,10 +28,6 @@ LPVOID	WINAPI GlobalLock(HGLOBAL);
 BOOL	WINAPI GlobalUnlock(HGLOBAL);
 HGLOBAL	WINAPI GlobalHandle(PCVOID);
 
-DWORD	WINAPI GetPrivateProfileString(LPCSTR, LPCSTR, LPCSTR, LPSTR,
-		DWORD, LPCSTR);
-UINT	WINAPI GetPrivateProfileInt(LPCSTR, LPCSTR, INT, LPCSTR);
-
 #ifdef __cplusplus
 };
 #endif
