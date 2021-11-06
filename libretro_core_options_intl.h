@@ -48,8 +48,8 @@ struct retro_core_option_definition option_def_fr[] = {
       "Taille de la police du menu",
       NULL,
       {
-         { "normal",  "normale" },
-         { "large",   "grande" },
+         { "normal",  "Normale" },
+         { "large",   "Grande" },
          { NULL,     NULL },
       },
       "normale"
@@ -97,8 +97,8 @@ struct retro_core_option_definition option_def_fr[] = {
       "Utiliser l'analogique",
       NULL,
       {
-         { "disabled", "désactivé" },
-         { "enabled",  "activé" },
+         { "disabled", "Désactivé" },
+         { "enabled",  "Activé" },
          { NULL,       NULL },
       },
       "désactivé"
@@ -236,14 +236,38 @@ struct retro_core_option_definition option_def_fr[] = {
    },
    {
       "px68k_save_fdd_path",
-      "Enregistrer les chemins d'accès aux disques",
-      "Lorsqu'elle est activée, les chemins d'accès aux disques précédemment chargés seront enregistrés pour chaque lecteur, puis chargés automatiquement au démarrage. Lorsqu'elle est désactivé, FDD et HDD commencent à vide.",
+      "Enregistrer les chemins d'accès aux disquettes",
+      "Lorsqu'elle est activée, les chemins d'accès aux disquettes précédemment chargés seront enregistrés pour chaque lecteur, puis chargés automatiquement au démarrage. Lorsqu'elle est désactivée, FDD démarre à vide.",
       {
-         { "enabled",  "activé" },
-         { "disabled", "désactivé" },
+         { "enabled",  "Activé" },
+         { "disabled", "Désactivé" },
          { NULL,       NULL },
       },
       "enabled"
+   },
+
+   {
+      "px68k_save_hdd_path",
+      "Enregistrer les chemis d'accès aux disques durs",
+      "Lorsqu'elle est activée, les chemins d'accès aux disques durs précédemment chargés seront enregistrés pour chaque disque dur puis chargés automatiquement au démarrage. Lorsque'elle est désactivée, HDD démarre à vide.",
+      {
+         { "enabled",  "Activé" },
+         { "disabled", "Désactivé" },
+         { NULL,       NULL },
+      },
+      "enabled"
+   },
+
+   {
+      "px68k_rumble_on_disk_read",
+      "Vibrer la manette pendant le lecture des disquettes",
+      "Produit un effet de vibration par les manettes supportées pendant la lecture des disquettes.",
+      {
+         { "enabled",  "Activé" },
+         { "disabled", "Désactivé" },
+         { NULL,       NULL },
+      },
+      "disabled"
    },
 
    /* from PX68K Menu */
@@ -299,6 +323,39 @@ struct retro_core_option_definition option_def_fr[] = {
          { NULL,   NULL },
       },
       "Full Frame"
+   },
+   {
+      "px68k_push_video_before_audio",
+      "Pousser la vidéo avant l'audio",
+      "Privilégie la réduction de la latence vidéo à la latence audio.",
+      {
+         { "disabled", "Désactivé" },
+         { "enabled",  "Activé" },
+         { NULL,       NULL },
+      },
+      "disabled"
+   },
+   {
+      "px68k_adjust_frame_rates",
+      "Ajuster les fréquences d'images",
+      "Pour la compatibilité avec les écrans modernes, ajuste légèrement les fréquences d'images signalées à l'interface afin de réduire les risques de latence audio. Désactivez pour utiliser les fréquences d'images actuelles.",
+      {
+         { "disabled", "Désactivé" },
+         { "enabled",  "Activé" },
+         { NULL,       NULL },
+      },
+      "enabled"
+   },
+   {
+      "px68k_audio_desync_hack",
+      "Hack de désynchronisation de l'audio",
+      "Empêche la désynchronisation de l'audio en rejetant simplement tous les échantillons audio générés au-delà de la quantité demandée par tranche d'image. Forcez l'option 'Mode sans attente' sur [Activé], utilisez les options appropriées pour réguler correctement le contenu.",
+      {
+         { "disabled", "Désactivé" },
+         { "enabled",  "Activé" },
+         { NULL,       NULL },
+      },
+      "disabled"
    },
 
    { NULL, NULL, NULL, {{0}}, NULL }
