@@ -105,7 +105,7 @@ struct retro_core_option_definition option_def_fr[] = {
    },
    {
       "px68k_joytype1",
-      "Type de Manette du J1",
+      "Type de manette du joueur 1",
       "Définit le type de manette du joueur 1.",
       {
          { "Default (2 Buttons)",  "Défaut (2 Boutons)" },
@@ -117,7 +117,7 @@ struct retro_core_option_definition option_def_fr[] = {
    },
    {
       "px68k_joytype2",
-      "Type de Joypad du J2",
+      "Type de manette du joueur 2",
       "Définit le type de manette du joueur 2.",
       {
          { "Default (2 Buttons)",  "Défaut (2 Boutons)" },
