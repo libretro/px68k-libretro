@@ -48,8 +48,8 @@ struct retro_core_option_definition option_def_fr[] = {
       "Taille de la police du menu",
       NULL,
       {
-         { "normale", NULL },
-         { "grande",  NULL },
+         { "normal",  "Normale" },
+         { "large",   "Grande" },
          { NULL,     NULL },
       },
       "normale"
@@ -73,7 +73,7 @@ struct retro_core_option_definition option_def_fr[] = {
    },
    {
       "px68k_ramsize",
-      "Taille de la RAM (Redémare)",
+      "Taille de la RAM (Redémarrage)",
       "Définit la quantité de RAM à utiliser par le système.",
       {
          { "1MB",  NULL },
@@ -94,57 +94,57 @@ struct retro_core_option_definition option_def_fr[] = {
    },
    {
       "px68k_analog",
-      "Utiliser l'Analogique",
+      "Utiliser l'analogique",
       NULL,
       {
-         { "désactivé", NULL },
-         { "activé",  NULL },
+         { "disabled", "Désactivé" },
+         { "enabled",  "Activé" },
          { NULL,       NULL },
       },
       "désactivé"
    },
    {
       "px68k_joytype1",
-      "Type de Manette du J1",
-      "Défini le type de manette du joueur 1.",
+      "Type de manette du joueur 1",
+      "Définit le type de manette du joueur 1.",
       {
-         { "Défaut (2 Boutons)",  NULL },
-         { "CPSF-MD (8 Boutons)",  NULL },
-         { "CPSF-SFC (8 Boutons)", NULL },
+         { "Default (2 Buttons)",  "Défaut (2 Boutons)" },
+         { "CPSF-MD (8 Buttons)",  "CPSF-MD (8 Boutons)" },
+         { "CPSF-SFC (8 Buttons)", "CPSF-SFC (8 Boutons)" },
          { NULL,                   NULL },
       },
       "Default (2 Buttons)"
    },
    {
       "px68k_joytype2",
-      "Type de Joypad du J2",
-      "Défini le type de manette du joueur 2.",
+      "Type de manette du joueur 2",
+      "Définit le type de manette du joueur 2.",
       {
-         { "Défaut (2 Boutons)",  NULL },
-         { "CPSF-MD (8 Boutons)",  NULL },
-         { "CPSF-SFC (8 Boutons)", NULL },
+         { "Default (2 Buttons)",  "Défaut (2 Boutons)" },
+         { "CPSF-MD (8 Buttons)",  "CPSF-MD (8 Boutons)" },
+         { "CPSF-SFC (8 Buttons)", "CPSF-SFC (8 Boutons)" },
          { NULL,                   NULL },
       },
-      "Défaut (2 Boutons)"
+      "Default (2 Buttons)"
    },
    {
       "px68k_joy1_select",
       "Mappage de la manette du J1",
-      "Attribue une touche du clavier au bouton SELECT de la manette, car certains jeux utilisent ces touches comme boutons Démarrer ou Insérer une pièce.",
+      "Attribue une touche du clavier au bouton SELECT de la manette, car certains jeux utilisent ces touches comme bouton Démarrer ou Insérer une pièce.",
       {
-         { "Défaut", NULL },
-         { "XF1",     NULL },
-         { "XF2",     NULL },
-         { "XF3",     NULL },
-         { "XF4",     NULL },
-         { "XF5",     NULL },
-         { "OPT1",    NULL },
-         { "OPT2",    NULL },
-         { "F1",      NULL },
-         { "F2",      NULL },
+         { "Default", "Défaut" },
+         { "XF1",     "XF1" },
+         { "XF2",     "XF2" },
+         { "XF3",     "XF3" },
+         { "XF4",     "XF4" },
+         { "XF5",     "XF5" },
+         { "OPT1",    "OPT1" },
+         { "OPT2",    "OPT2" },
+         { "F1",      "F1" },
+         { "F2",      "F2" },
          { NULL,      NULL },
       },
-      "Défaut"
+      "Default"
    },
    {
       "px68k_adpcm_vol",
@@ -236,69 +236,126 @@ struct retro_core_option_definition option_def_fr[] = {
    },
    {
       "px68k_save_fdd_path",
-      "Enregistrer les chemins d'accès aux disques",
-      "Lorsqu'elle est activée, les chemins d'accès aux disques précédemment chargés seront enregistrés pour chaque lecteur, puis chargés automatiquement au démarrage. Lorsqu'elle est désactivé, FDD et HDD commencent à vide.",
+      "Enregistrer les chemins d'accès aux disquettes",
+      "Lorsqu'elle est activée, les chemins d'accès aux disquettes précédemment chargés seront enregistrés pour chaque lecteur, puis chargés automatiquement au démarrage. Lorsqu'elle est désactivée, FDD démarre à vide.",
       {
-         { "activé",  NULL },
-         { "désactivé", NULL },
+         { "enabled",  "Activé" },
+         { "disabled", "Désactivé" },
          { NULL,       NULL },
       },
-      "activé"
+      "enabled"
+   },
+
+   {
+      "px68k_save_hdd_path",
+      "Enregistrer les chemis d'accès aux disques durs",
+      "Lorsqu'elle est activée, les chemins d'accès aux disques durs précédemment chargés seront enregistrés pour chaque disque dur puis chargés automatiquement au démarrage. Lorsque'elle est désactivée, HDD démarre à vide.",
+      {
+         { "enabled",  "Activé" },
+         { "disabled", "Désactivé" },
+         { NULL,       NULL },
+      },
+      "enabled"
+   },
+
+   {
+      "px68k_rumble_on_disk_read",
+      "Vibrer la manette pendant le lecture des disquettes",
+      "Produit un effet de vibration par les manettes supportées pendant la lecture des disquettes.",
+      {
+         { "enabled",  "Activé" },
+         { "disabled", "Désactivé" },
+         { NULL,       NULL },
+      },
+      "disabled"
    },
 
    /* from PX68K Menu */
    {
       "px68k_joy_mouse",
-      "Manette /sourie",
-      "Sélectionner la [sourie] ou la [manette] pour contrôler le pointeur de sourie dans les jeux..",
+      "Manette/souris",
+      "Sélectionner la [souris] ou la [manette] pour contrôler le pointeur de souris dans les jeux.",
       {
-         { "Sourie",    NULL},
-         { "Manette", NULL}, /* unimplemented yet */
+         { "Mouse",    "Souris" },
+         { "Joystick", "Manette" }, /* unimplemented yet */
          { NULL,       NULL },
       },
-      "Manette"
+      "Mouse"
    },
    {
       "px68k_vbtn_swap",
       "Echange des boutons",
       "Echange le BOUTON1 et le BOUTON2 quand une manette 2 boutons est sélectionné.",
       {
-         { "BOUTON1 BOUTON2", NULL},
-         { "BOUTON2 BOUTON1", NULL},
+         { "TRIG1 TRIG2", "BOUTON1 BOUTON2" },
+         { "TRIG2 TRIG1", "BOUTON2 BOUTON1" },
          { NULL,          NULL },
       },
-      "BOUTON1 BOUTON2"
+      "TRIG1 TRIG2"
    },
    {
       "px68k_no_wait_mode",
       "Mode sans attente",
       "Lorsque ce mode est [activé], le cœur s'exécute aussi vite que possible. Cela peut provoquer une désynchronisation audio mais permet une avance rapide. Il est recommandé de définir ce paramètre à [désactivé].",
       {
-         { "désactivé", NULL},
-         { "activé",  NULL},
+         { "disabled", "Désactivé" },
+         { "enabled",  "Activé" },
          { NULL,       NULL },
       },
-      "désactivé"
+      "disabled"
    },
    {
       "px68k_frameskip",
       "Saut d'images",
       "Choisissez le nombre d'images à ignorer pour améliorer les performances au détriment de la fluidité visuelle.",
       {
-         { "Toutes les images",      NULL },
-         { "1/2 image",       NULL },
-         { "1/3 image",       NULL },
-         { "1/4 image",       NULL },
-         { "1/5 image",       NULL },
-         { "1/6 image",       NULL },
-         { "1/8 image",       NULL },
-         { "1/16 image",      NULL },
-         { "1/32 image",      NULL },
-         { "1/60 image",      NULL },
-         { "Auto image Skip", NULL },
+         { "Full Frame",      "Toutes les images" },
+         { "1/2 Frame",       "1/2 image" },
+         { "1/3 Frame",       "1/3 image" },
+         { "1/4 Frame",       "1/4 image" },
+         { "1/5 Frame",       "1/5 image" },
+         { "1/6 Frame",       "1/6 image" },
+         { "1/8 Frame",       "1/8 image" },
+         { "1/16 Frame",      "1/16 image" },
+         { "1/32 Frame",      "1/32 image" },
+         { "1/60 Frame",      "1/60 image" },
+         { "Auto Frame Skip", "Saut d'image automatique" },
          { NULL,   NULL },
       },
-      "Toutes les images"
+      "Full Frame"
+   },
+   {
+      "px68k_push_video_before_audio",
+      "Pousser la vidéo avant l'audio",
+      "Privilégie la réduction de la latence vidéo à la latence audio.",
+      {
+         { "disabled", "Désactivé" },
+         { "enabled",  "Activé" },
+         { NULL,       NULL },
+      },
+      "disabled"
+   },
+   {
+      "px68k_adjust_frame_rates",
+      "Ajuster les fréquences d'images",
+      "Pour la compatibilité avec les écrans modernes, ajuste légèrement les fréquences d'images signalées à l'interface afin de réduire les risques de latence audio. Désactivez pour utiliser les fréquences d'images actuelles.",
+      {
+         { "disabled", "Désactivé" },
+         { "enabled",  "Activé" },
+         { NULL,       NULL },
+      },
+      "enabled"
+   },
+   {
+      "px68k_audio_desync_hack",
+      "Hack de désynchronisation de l'audio",
+      "Empêche la désynchronisation de l'audio en rejetant simplement tous les échantillons audio générés au-delà de la quantité demandée par tranche d'image. Forcez l'option 'Mode sans attente' sur [Activé], utilisez les options appropriées pour réguler correctement le contenu.",
+      {
+         { "disabled", "Désactivé" },
+         { "enabled",  "Activé" },
+         { NULL,       NULL },
+      },
+      "disabled"
    },
 
    { NULL, NULL, NULL, {{0}}, NULL }
