@@ -298,8 +298,8 @@ struct retro_core_option_definition option_def_fr[] = {
       "Mode sans attente",
       "Lorsque ce mode est [activé], le cœur s'exécute aussi vite que possible. Cela peut provoquer une désynchronisation audio mais permet une avance rapide. Il est recommandé de définir ce paramètre à [désactivé].",
       {
-         { "disabled", "désactivé" },
-         { "enabled",  "activé" },
+         { "disabled", "Désactivé" },
+         { "enabled",  "Activé" },
          { NULL,       NULL },
       },
       "disabled"
