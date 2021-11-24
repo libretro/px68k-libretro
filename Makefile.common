@@ -1,18 +1,19 @@
 SOURCES_S 		:=
 SOURCES_C 		:=
-SOURCES_CXX 	:=
+SOURCES_CXX 		:=
 
-INCFLAGS		:= -I$(CORE_DIR) -I$(CORE_DIR)/libretro-common/include -I$(CORE_DIR)/libretro
-INCFLAGS 		+= -I$(CORE_DIR)/x68k -I$(CORE_DIR)/fmgen -I$(CORE_DIR)/win32api
+INCFLAGS		:= -I$(CORE_DIR) \
+			   -I$(CORE_DIR)/libretro-common/include \
+			   -I$(CORE_DIR)/libretro \
+			   -I$(CORE_DIR)/x68k \
+			   -I$(CORE_DIR)/fmgen \
+			   -I$(CORE_DIR)/win32api
 
-SOURCES_C 		+= \
-			   $(CORE_DIR)/x68k/d68k.c \
-			   $(CORE_DIR)/m68000/m68000.c
+SOURCES_C 		+= $(CORE_DIR)/m68000/m68000.c
 
 ifeq ($(CYCLONE),1)
 FLAGS 			+= -DHAVE_CYCLONE
-SOURCES_S 		+= \
-			   $(CORE_DIR)/m68000/cyclone.s
+SOURCES_S 		+= $(CORE_DIR)/m68000/cyclone.s
 else
 FLAGS 			+= -DHAVE_C68K
 SOURCES_C 		+= \
