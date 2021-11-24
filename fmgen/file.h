@@ -39,7 +39,6 @@ public:
 	bool CreateNew(const char* filename);
 	bool Reopen(uint flg = 0);
 	void Close();
-	Error GetError() { return error; }
 
 	int32 Read(void* dest, int32 len);
 	int32 Write(const void* src, int32 len);

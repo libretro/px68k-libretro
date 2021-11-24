@@ -589,11 +589,7 @@ extern "C" int pmain(int argc, char *argv[])
 	MIDI_SetMimpiMap(Config.ToneMapFile);	// ToneMap file usage
 	MIDI_EnableMimpiDef(Config.ToneMap);
 
-	if (/*raudio == 0 &&*/ !DSound_Init(Config.SampleRate, Config.BufferSize)) {
-
-		if (Config.DSAlert)
-			fprintf(stderr, "Can't init sound.\n");
-	}
+	if (!DSound_Init(Config.SampleRate, Config.BufferSize)) { }
 
 	ADPCM_SetVolume((BYTE)Config.PCM_VOL);
 	OPM_SetVolume((BYTE)Config.OPM_VOL);
