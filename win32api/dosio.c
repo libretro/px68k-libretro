@@ -640,11 +640,8 @@ dos2unixtime(unsigned int dd, unsigned int dt, unsigned int dh, time_t *tp)
 		 * loop.
 		 */
 		month = (dd & DD_MONTH_MASK) >> DD_MONTH_SHIFT;
-		if (month == 0) {
-			printf("dos2unixtime(): month value out of range (%ld)\n",
-			    month);
+		if (month == 0)
 			month = 1;
-		}
 		for (m = 0; m < month - 1; m++)
 			days += months[m];
 		days += ((dd & DD_DAY_MASK) >> DD_DAY_SHIFT) - 1;

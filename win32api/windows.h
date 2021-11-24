@@ -208,9 +208,6 @@ typedef struct {
 #ifdef __cplusplus
 extern "C" {
 #endif
-int	WINAPI MessageBox(HWND, LPCSTR, LPCSTR, UINT);
-void	WINAPI PostQuitMessage(int);
-
 DWORD	WINAPI FAKE_GetLastError(void);
 BOOL	WINAPI SetEndOfFile(HANDLE hFile);
 #ifdef __cplusplus

@@ -187,30 +187,8 @@ WinX68k_LoadROMs(void)
 	if (fp == 0) {
 		// cgrom.tmp present?
 		fp = File_OpenCurDir((char *)FONTFILETMP);
-		if (fp == 0) {
-#if 1
-			// font creation XXX
-			printf("Font ROM image can't be found.\n");
+		if (fp == 0)
 			return FALSE;
-#else
-			MessageBox(hWndMain,
-				"Font ROM image can't be found.\nNew one will be generated from Windows font.",
-				"Message from Keropi.", MB_ICONWARNING | MB_OK);
-			SSTP_SendMes(SSTPMES_MAKEFONT);
-			make_cgromdat(FONT, FALSE, "MS GOTHIC", "MS MINCHO");
-			//WinX68k_MakeFont();
-			//DialogBox(hInst, MAKEINTRESOURCE(IDD_PROGBAR),
-			//		hWndMain, (DLGPROC)MakeFontProc);
-			fp = File_CreateCurDir(FONTFILETMP);
-			if (fp)
-			{
-				File_Write(fp, FONT, 0xc0000);
-				File_Close(fp);
-				return TRUE;
-			}
-			return TRUE;
-#endif
-		}
 	}
 	File_Read(fp, FONT, 0xc0000);
 	File_Close(fp);

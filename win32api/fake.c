@@ -40,27 +40,6 @@
 #include "windows.h"
 #include "mmsystem.h"
 
-int WINAPI
-MessageBox(HWND hWnd, LPCSTR str, LPCSTR title, UINT flags)
-{
-
-	(void)hWnd;
-	(void)flags;
-
-	printf("----- %s\n", title);
-	printf("%s\n", str);
-	printf("-----\n\n");
-
-	return 0;
-}
-
-void WINAPI
-PostQuitMessage(int m)
-{
-
-	exit(m);
-}
-
 DWORD WINAPI
 FAKE_GetLastError(VOID)
 {

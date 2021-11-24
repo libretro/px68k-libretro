@@ -491,22 +491,14 @@ static int load(const char *argv)
       {
          res = loadcmdfile((char*)argv);
          if (!res)
-         {
-            if (log_cb)
-               log_cb(RETRO_LOG_ERROR, "%s\n", "[libretro]: failed to read cmd file ...");
             return false;
-         }
 
          parse_cmdline(CMDFILE);
       }
       else if (HandleExtension((char*)argv, "m3u") || HandleExtension((char*)argv, "M3U"))
       {
          if (!read_m3u((char*)argv))
-         {
-            if (log_cb)
-               log_cb(RETRO_LOG_ERROR, "%s\n", "[libretro]: failed to read m3u file ...");
             return false;
-         }
 
          if(disk.total_images > 1)
          {
@@ -534,8 +526,8 @@ static int pre_main(void)
    for (i = 0; i < 64; i++)
       xargv_cmd[i] = NULL;
 
-   if (no_content) {
-      p6logd("PARAMCOUNT = %d\n", PARAMCOUNT);
+   if (no_content)
+   {
       PARAMCOUNT = 0;
       goto run_pmain;
    }
@@ -573,22 +565,7 @@ static int pre_main(void)
    }
 
    for (i = 0; i < PARAMCOUNT; i++)
-   {
       xargv_cmd[i] = (char*)(XARGV[i]);
-   }
-
-   /* Log successfully loaded paths when loading from m3u */
-   if (isM3U)
-   {
-      p6logd("%s\n", "Loading from an m3u file ...");
-      for (i = 0; i < disk.total_images; i++)
-         p6logd("index %d: %s\n", i + 1, disk.path[i]);
-   }
-
-   /* List arguments to be passed to core */
-   p6logd("%s\n", "Parsing arguments ...");
-   for (i = 0; i < PARAMCOUNT; i++)
-      p6logd("%d : %s\n", i, xargv_cmd[i]);
 
 run_pmain:
    pmain(PARAMCOUNT, (char **)xargv_cmd);
@@ -763,10 +740,8 @@ void retro_set_controller_port_device(unsigned port, unsigned device)
             joypad2 = false;
          break;
       default:
-         if (log_cb)
-            log_cb(RETRO_LOG_ERROR, "[libretro]: Invalid device, setting type to RETRO_DEVICE_JOYPAD ...\n");
+	 break;
    }
-   log_cb(RETRO_LOG_INFO, "Set Controller Device: %d, Port: %d %d %d\n", device, port, joypad1, joypad2);
    retro_set_controller_descriptors();
 }
 
@@ -1216,8 +1191,6 @@ bool retro_load_game(const struct retro_game_info *info)
          return false;
    }
 
-   p6logd("LOAD EMU\n");
-
    return true;
 }
 
@@ -1340,7 +1313,6 @@ void retro_init(void)
 void retro_deinit(void)
 {
    end_loop_retro();
-   p6logd("Retro DeInit\n");
    libretro_supports_input_bitmasks = 0;
 }
 
@@ -1383,7 +1355,6 @@ void retro_run(void)
    {
       pre_main();
       firstcall = 0;
-      p6logd("INIT done\n");
       update_variables();
       soundbuf_size = SNDSZ;
       return;
@@ -1408,8 +1379,6 @@ void retro_run(void)
          CHANGEAV = 0;
       }
       soundbuf_size = SNDSZ;
-      p6logd("w:%d h:%d a:%.3f\n", retrow, retroh, (float)(4.0/3.0));
-      p6logd("fps:%.2f soundrate:%d\n", FRAMERATE, (int)SOUNDRATE);
    }
 
    input_poll_cb();
