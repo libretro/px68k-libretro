@@ -70,7 +70,6 @@
 #include "fmg_wrap.h"
 
 extern	BYTE		fdctrace;
-extern	BYTE		traceflag;
 extern	WORD		FrameCount;
 extern	DWORD		TimerICount;
 extern	unsigned int	hTimerID;
@@ -227,7 +226,6 @@ else	strcpy(cur_dir_str, CUR_DIR_STR);
 	strcat(cur_dir_str, "/");
 #endif
 	cur_dir_slen = strlen(cur_dir_str);
-	p6logd("cur_dir_str %s %d\n", cur_dir_str, cur_dir_slen);
 
 	for (i = 0; i < 4; i++) {
 		strcpy(mfl.dir[i], cur_dir_str);
@@ -344,14 +342,11 @@ static void menu_create_flist(int v)
 		char tmp[PATH_MAX];
 		/* failed to open StartDir, use rom folder as default */
 		/* TODO: check for path more early */
-		p6logd("Error opening StartDir, using rom path instead...\n");
 		snprintf(tmp, sizeof(tmp), "%s%c", base_dir, slash);
 		strcpy(mfl.dir[drv], tmp);
 		/* re-open folder */
 		dp = opendir(mfl.dir[drv]);
 	}
-
-	p6logd("*** drv:%d ***** %s \n", drv, mfl.dir[drv]);
 
 	// xxx You can get only MFL_MAX files.
 	for (i = 0 ; i < MFL_MAX; i++) {
@@ -395,9 +390,6 @@ static void menu_create_flist(int v)
 		strcpy(mfl.name[i], n);
 		// set 1 if this is directory
 		mfl.type[i] = S_ISDIR(buf.st_mode)? 1 : 0;
-#ifdef DEBUG
-		p6logd("%s 0x%x\n", n, buf.st_mode);
-#endif
 	}
 
 	closedir(dp);
@@ -608,9 +600,6 @@ int WinUI_Menu(int first)
 				}
 			} else if (mfl.y + 1 < mfl.num) {
 				mfl.y++;
-#ifdef DEBUG
-				p6logd("mfl.y %d\n", mfl.y);
-#endif
 			}
 			mfile_redraw = 1;
 			break;
@@ -714,11 +703,9 @@ int WinUI_Menu(int first)
 			menu_redraw = 1;
 
 			drv = WinUI_get_drv_num(mkey_y);
-			p6logd("**** drv:%d *****\n", drv);
 			if (drv >= 0) {
 				if (mval_y[mkey_y] == 0) {
 					// go file_mode
-					p6logd("hoge:%d\n", mval_y[mkey_y]);
 					menu_state = ms_file;
 					menu_redraw = 0; //reset
 					mfile_redraw = 1;
@@ -726,13 +713,6 @@ int WinUI_Menu(int first)
 					// FDD_EjectFD() is done, so set 0.
 					mval_y[mkey_y] = 0;
 					// 11-19-17 added for libretro logging
-					switch (drv)
-					{
-						case 0: p6logd("fdd0 ejected...\n", drv); break;
-						case 1: p6logd("fdd1 ejected...\n", drv); break;
-						case 2: p6logd("hdd0 ejected...\n", drv); break;
-						case 3: p6logd("hdd1 ejected...\n", drv); break;
-					}
 				}
 			} else if (!strcmp("SYSTEM", menu_item_key[mkey_y])) {
 				if (mval_y[mkey_y] == 2) {
@@ -743,13 +723,10 @@ int WinUI_Menu(int first)
 			break;
 		case ms_file:
 			drv = WinUI_get_drv_num(mkey_y);
-			p6logd("***** drv:%d *****\n", drv);
-			if (drv < 0) {
+			if (drv < 0)
 				break;
-			}
 			y = mfl.ptr + mfl.y;
 			// file loaded
-			// p6logd("file selected: %s\n", mfl.name[y]);
 			if (mfl.type[y]) {
 				// directory operation
 				if (!strcmp(mfl.name[y], "..")) {
@@ -771,12 +748,10 @@ int WinUI_Menu(int first)
 					mfl.ptr = 0;
 					mfl.y = 0;
 				}
-				p6logd("directory selected: %s\n", mfl.name[y]);
 				menu_func[mkey_y].func(0);
 				mfile_redraw = 1;
 			} else {
 				// file operation
-				p6logd("file selected: %s\n", mfl.name[y]);
 				if (strlen(mfl.name[y]) != 0) {
 					char tmpstr[MAX_PATH];
 					strcpy(tmpstr, mfl.dir[drv]);

@@ -202,8 +202,6 @@ int WinDraw_Init(void)
 	WinDraw_Pal16G = 0x07e0;
 	WinDraw_Pal16B = 0x001f;
 
-	p6logd("R: %x, G: %x, B: %x\n", WinDraw_Pal16R, WinDraw_Pal16G, WinDraw_Pal16B);
-
 	ScrBuf = malloc(800 * 600 * 2);
 
 	return TRUE;
@@ -232,12 +230,10 @@ WinDraw_Draw(void)
 
 	if (oldtextx != TextDotX) {
 		oldtextx = TextDotX;
-		p6logd("TextDotX: %d\n", TextDotX);
 		CHANGEAV=1;
 	}
 	if (oldtexty != TextDotY) {
 		oldtexty = TextDotY;
-		p6logd("TextDotY: %d\n", TextDotY);
 		CHANGEAV=1;
 	}
 
@@ -475,11 +471,10 @@ void WinDraw_DrawLine(void)
 {
 	int opaq, ton=0, gon=0, bgon=0, tron=0, pron=0, tdrawed=0;
 
-if(VLINE==-1){
-	p6logd("%d %d\n",VLINE,VLINE);
-	return;
-}
-	if (!TextDirtyLine[VLINE]) return;
+   if(VLINE==-1)
+      return;
+	if (!TextDirtyLine[VLINE])
+      return;
 	TextDirtyLine[VLINE] = 0;
 	Draw_DrawFlag = 1;
 
@@ -693,36 +688,6 @@ if(VLINE==-1){
 	opaq = 1;
 
 
-#if 0
-					// Pri = 3（違反）に設定されている画面を表示
-		if ( ((VCReg1[0]&0x30)==0x30)&&(bgon) )
-		{
-			if ( ((VCReg2[0]&0x5d)==0x1d)&&((VCReg1[0]&0x03)!=0x03)&&(tron) )
-			{
-				if ( (VCReg1[0]&3)<((VCReg1[0]>>2)&3) )
-				{
-					WinDraw_DrawBGLineTR(opaq);
-					tdrawed = 1;
-					opaq = 0;
-				}
-			}
-			else
-			{
-				WinDraw_DrawBGLine(opaq, /*tdrawed*/0);
-				tdrawed = 1;
-				opaq = 0;
-			}
-		}
-		if ( ((VCReg1[0]&0x0c)==0x0c)&&(ton) )
-		{
-			if ( ((VCReg2[0]&0x5d)==0x1d)&&((VCReg1[0]&0x03)!=0x0c)&&(tron) )
-				WinDraw_DrawTextLineTR(opaq);
-			else
-				WinDraw_DrawTextLine(opaq, /*tdrawed*/((VCReg1[0]&0x30)==0x30));
-			opaq = 0;
-			tdrawed = 1;
-		}
-#endif
 					// Pri = 2 or 3（最下位）に設定されている画面を表示
 					// プライオリティが同じ場合は、GRP<SP<TEXT？（ドラスピ、桃伝、YsIII等）
 

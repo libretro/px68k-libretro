@@ -35,11 +35,6 @@ unsigned int MyCheckPc(unsigned int pc)
 
 
   pc-= m68k.membase; // Get the real program counter
-/*
-  if (!tracing) {
-  	//p6logd("CheckPC 0x%08X\n", pc);
-  }
-*/
   if (pc <= 0xbfffff) 			       					{ m68k.membase=(int) MEM; return m68k.membase+pc; }
   if ((pc >= 0xfc0000) && (pc <= 0xffffff))	{ m68k.membase=(int) IPL - 0xfc0000; return m68k.membase+pc; }
   if ((pc >= 0xc00000) && (pc <= 0xc7ffff)) m68k.membase=(int) GVRAM - 0xc00000;

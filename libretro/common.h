@@ -53,7 +53,6 @@ extern "C" {
 #endif
 
 void Error(const char* s);
-void p6logd(const char *fmt, ...);
 
 #ifdef __cplusplus
 }

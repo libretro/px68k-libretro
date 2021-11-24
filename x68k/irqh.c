@@ -158,7 +158,6 @@ signed int  my_irqh_callback(signed int  level)
     int i;
     C68K_INT_CALLBACK *func = IRQH_CallBack[level&7];
     int vect = (func)(level&7);
-    //p6logd("irq vect = %x line = %d\n", vect, level);
 
     for (i=7; i>0; i--)
     {

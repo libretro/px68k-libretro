@@ -42,8 +42,6 @@ struct keyboard_key kbd_key[] = {
 #include "keytbl.inc"
 };
 
-extern BYTE traceflag;
-
 void
 Keyboard_Init(void)
 {
@@ -62,7 +60,6 @@ Keyboard_Init(void)
 
 #define	NC	0
 #define KEYTABLE_MAX 512
-
 
 BYTE KeyTable[KEYTABLE_MAX] = {
 	//	    ,    ,    ,    ,    ,    ,    ,    		; 0x00
@@ -345,32 +342,26 @@ void send_keycode(BYTE code, int flag)
 		newwp = ((KeyBufWP + 1) & (KeyBufSize - 1));
 		if (newwp != KeyBufRP) {
 			KeyBuf[KeyBufWP] = code | ((flag == P6K_UP)? 0x80 : 0);
-#ifdef DEBUG
-			p6logd("KeyBuf: %x\n", KeyBuf[KeyBufWP]);
-#endif
 			KeyBufWP = newwp;
-#ifdef DEBUG
-			p6logd("KeyBufWP: %d\n", KeyBufWP);
-#endif
 		}
 	}
 }
 
 static BYTE get_x68k_keycode(DWORD wp)
 {
-	if (wp < KEYTABLE_MAX/2) {
-		return KeyTable[wp];
-	}
+   if (wp < KEYTABLE_MAX/2)
+      return KeyTable[wp];
 
-	switch (wp) {
-	case RETROK_UP:
-		return 0x3c;
-	case RETROK_DOWN:
-		return 0x3e;
-	case RETROK_LEFT:
-		return 0x3b;
-	case RETROK_RIGHT:
-		return 0x3d;
+   switch (wp)
+   {
+      case RETROK_UP:
+         return 0x3c;
+      case RETROK_DOWN:
+         return 0x3e;
+      case RETROK_LEFT:
+         return 0x3b;
+      case RETROK_RIGHT:
+         return 0x3d;
 
 #define RETROK_KP_0 RETROK_KP0
 #define RETROK_KP_1 RETROK_KP1
@@ -384,78 +375,80 @@ static BYTE get_x68k_keycode(DWORD wp)
 #define RETROK_KP_9 RETROK_KP9
 #define RETROK_NUMLOCKCLEAR RETROK_NUMLOCK
 
-	case RETROK_KP_0:
-		return 0x4f;
-	case RETROK_KP_1:
-		return 0x4b;
-	case RETROK_KP_2:
-		return 0x4c;
-	case RETROK_KP_3:
-		return 0x4d;
-	case RETROK_KP_4:
-		return 0x47;
-	case RETROK_KP_5:
-		return 0x48;
-	case RETROK_KP_6:
-		return 0x49;
-	case RETROK_KP_7:
-		return 0x43;
-	case RETROK_KP_8:
-		return 0x44;
-	case RETROK_KP_9:
-		return 0x45;
-	case RETROK_NUMLOCKCLEAR:
-		return 0x3f;
+      case RETROK_KP_0:
+         return 0x4f;
+      case RETROK_KP_1:
+         return 0x4b;
+      case RETROK_KP_2:
+         return 0x4c;
+      case RETROK_KP_3:
+         return 0x4d;
+      case RETROK_KP_4:
+         return 0x47;
+      case RETROK_KP_5:
+         return 0x48;
+      case RETROK_KP_6:
+         return 0x49;
+      case RETROK_KP_7:
+         return 0x43;
+      case RETROK_KP_8:
+         return 0x44;
+      case RETROK_KP_9:
+         return 0x45;
+      case RETROK_NUMLOCKCLEAR:
+         return 0x3f;
 
-	case RETROK_F1:
-		return 0x63;
-	case RETROK_F2:
-		return 0x64;
-	case RETROK_F3:
-		return 0x65;
-	case RETROK_F4:
-		return 0x66;
-	case RETROK_F5:
-		return 0x67;
-	case RETROK_F6:
-		return 0x68;
-	case RETROK_F7:
-		return 0x69;
-	case RETROK_F8:
-		return 0x6a;
-	case RETROK_F9:
-		return 0x6b;
-	case RETROK_F10:
-		return 0x6c;
-	case RETROK_LSHIFT:
-	case RETROK_RSHIFT:
-		return 0x70;
-	case RETROK_LCTRL:
-	case RETROK_RCTRL:
-		return 0x71;
-	case RETROK_KP_DIVIDE:
-		return 0x40;
-	case RETROK_KP_MULTIPLY:
-		return 0x41;
-	case RETROK_KP_MINUS:
-		return 0x42;
-	case RETROK_KP_PLUS:
-		return 0x46;
-	case RETROK_KP_ENTER:
-		return 0x4e;
-	case RETROK_INSERT:
-		return 0x5e;
-	case RETROK_HOME:
-		return 0x36;
-	case RETROK_END:
-		return 0x3a;
-	case RETROK_PAGEUP:
-		return 0x38;
-	case RETROK_PAGEDOWN:
-		return 0x39;
-	default:
-		return -1;
-	}
+      case RETROK_F1:
+         return 0x63;
+      case RETROK_F2:
+         return 0x64;
+      case RETROK_F3:
+         return 0x65;
+      case RETROK_F4:
+         return 0x66;
+      case RETROK_F5:
+         return 0x67;
+      case RETROK_F6:
+         return 0x68;
+      case RETROK_F7:
+         return 0x69;
+      case RETROK_F8:
+         return 0x6a;
+      case RETROK_F9:
+         return 0x6b;
+      case RETROK_F10:
+         return 0x6c;
+      case RETROK_LSHIFT:
+      case RETROK_RSHIFT:
+         return 0x70;
+      case RETROK_LCTRL:
+      case RETROK_RCTRL:
+         return 0x71;
+      case RETROK_KP_DIVIDE:
+         return 0x40;
+      case RETROK_KP_MULTIPLY:
+         return 0x41;
+      case RETROK_KP_MINUS:
+         return 0x42;
+      case RETROK_KP_PLUS:
+         return 0x46;
+      case RETROK_KP_ENTER:
+         return 0x4e;
+      case RETROK_INSERT:
+         return 0x5e;
+      case RETROK_HOME:
+         return 0x36;
+      case RETROK_END:
+         return 0x3a;
+      case RETROK_PAGEUP:
+         return 0x38;
+      case RETROK_PAGEDOWN:
+         return 0x39;
+      default:
+         break;
+   }
+
+   return -1;
 }
 
 // ----------------------------------
@@ -464,43 +457,12 @@ static BYTE get_x68k_keycode(DWORD wp)
 void
 Keyboard_KeyDown(DWORD wp)
 {
-
-	BYTE code;
 	BYTE newwp;
-#if 0
-	if (wp & ~0xff) {
-		if (wp == GDK_VoidSymbol)
-			code = NC;
-		else if ((wp & 0xff00) == 0xff00)
-			code = KeyTable[(wp & 0xff) | 0x100];
-		else
-			code = NC;
-	} else
-		code = KeyTable[wp & 0xff];
-#endif
-	code = get_x68k_keycode(wp);
-	if (code < 0) {
+	BYTE code = get_x68k_keycode(wp);
+	if (code < 0)
 		return;
-	}
 
-	p6logd("Keyboard_KeyDown: ");
-	p6logd("wp=0x%x, code=0x%x\n", wp, code);
-//	p6logd("RETROK_UP: 0x%x", RETROK_UP);
-
-#if 0
-	if (code != NC) {
-		newwp = ((KeyBufWP + 1) & (KeyBufSize - 1));
-		if (newwp != KeyBufRP) {
-			KeyBuf[KeyBufWP] = code;
-			KeyBufWP = newwp;
-			p6logd("KeyBufWP: %d\n", KeyBufWP);
-		}
-	}
-#else
 	send_keycode(code, P6K_DOWN);
-#endif
-//return;
-	p6logd("JoyKeyState: 0x%x\n", JoyKeyState);
 
 	switch (wp) {
 	case RETROK_UP:
@@ -552,36 +514,11 @@ Keyboard_KeyDown(DWORD wp)
 void
 Keyboard_KeyUp(DWORD wp)
 {
-	BYTE code;
 	BYTE newwp;
-#if 0
-	if (wp & ~0xff) {
-		if (wp == GDK_VoidSymbol)
-			code = NC;
-		else if ((wp & 0xff00) == 0xff00)
-			code = KeyTable[(wp & 0xff) | 0x100];
-		else
-			code = NC;
-	} else
-		code = KeyTable[wp & 0xff];
-#endif
-	code = get_x68k_keycode(wp);
-	if (code < 0) {
+	BYTE code = get_x68k_keycode(wp);
+	if (code < 0)
 		return;
-	}
-#if 0
-	if (code != NC) {
-		newwp = ((KeyBufWP + 1) & (KeyBufSize - 1));
-		if (newwp != KeyBufRP) {
-			KeyBuf[KeyBufWP] = code | 0x80;
-			KeyBufWP = newwp;
-		}
-	}
-#else
 	send_keycode(code, P6K_UP);
-#endif
-//return;
-	p6logd("JoyKeyState: 0x%x\n", JoyKeyState);
 
 	switch(wp) {
 	case RETROK_UP:
@@ -633,19 +570,18 @@ Keyboard_KeyUp(DWORD wp)
 void
 Keyboard_Int(void)
 {
-	if (KeyBufRP != KeyBufWP) {
-#ifdef DEBUG
-		p6logd("KeyBufRP:%d, KeyBufWP:%d\n", KeyBufRP, KeyBufWP);
-#endif
-		if (!KeyIntFlag) {
-			LastKey = KeyBuf[KeyBufRP];
-			KeyBufRP = ((KeyBufRP+1)&(KeyBufSize-1));
-			KeyIntFlag = 1;
-			MFP_Int(3);
-		}
-	} else if (!KeyIntFlag) {
-		LastKey = 0;
-	}
+   if (KeyBufRP != KeyBufWP)
+   {
+      if (!KeyIntFlag)
+      {
+         LastKey = KeyBuf[KeyBufRP];
+         KeyBufRP = ((KeyBufRP+1)&(KeyBufSize-1));
+         KeyIntFlag = 1;
+         MFP_Int(3);
+      }
+   }
+   else if (!KeyIntFlag)
+      LastKey = 0;
 }
 
 /********** ソフトウェアキーボード **********/
