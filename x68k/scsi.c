@@ -39,7 +39,7 @@ void SCSI_Init(void)
 {
 	int i;
 	BYTE tmp;
-	ZeroMemory(SCSIIPL, 0x2000);
+	memset(SCSIIPL, 0, 0x2000);
 	memcpy(&SCSIIPL[0x20], SCSIIMG, sizeof(SCSIIMG));
 	for (i=0; i<0x2000; i+=2)
 	{

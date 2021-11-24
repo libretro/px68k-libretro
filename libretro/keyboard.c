@@ -48,7 +48,7 @@ Keyboard_Init(void)
 
 	KeyBufWP = 0;
 	KeyBufRP = 0;
-	ZeroMemory(KeyBuf, KeyBufSize);
+	memset(KeyBuf, 0, KeyBufSize);
 	KeyEnable = 1;
 	KeyIntFlag = 0;
 

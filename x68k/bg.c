@@ -47,11 +47,11 @@
 void BG_Init(void)
 {
 	DWORD i;
-	ZeroMemory(Sprite_Regs, 0x800);
-	ZeroMemory(BG, 0x8000);
-	ZeroMemory(BGCHR8, 8*8*256);
-	ZeroMemory(BGCHR16, 16*16*256);
-	ZeroMemory(BG_LineBuf, 1600*2);
+	memset(Sprite_Regs, 0, 0x800);
+	memset(BG, 0, 0x8000);
+	memset(BGCHR8, 0, 8*8*256);
+	memset(BGCHR16, 0, 16*16*256);
+	memset(BG_LineBuf, 0, 1600*2);
 	for (i=0; i<0x12; i++)
 		BG_Write(0xeb0800+i, 0);
 	BG_CHREND = 0x8000;

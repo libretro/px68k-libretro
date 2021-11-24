@@ -302,10 +302,10 @@ void FASTCALL VCtrl_Write(DWORD adr, BYTE data)
 
 void CRTC_Init(void)
 {
-	ZeroMemory(CRTC_Regs, 48);
+	memset(CRTC_Regs, 0, 48);
 	TextScrollX = 0, TextScrollY = 0;
-	ZeroMemory(GrphScrollX, sizeof(GrphScrollX));
-	ZeroMemory(GrphScrollY, sizeof(GrphScrollY));
+	memset(GrphScrollX, 0, sizeof(GrphScrollX));
+	memset(GrphScrollY, 0, sizeof(GrphScrollY));
 }
 
 

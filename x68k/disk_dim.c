@@ -40,7 +40,7 @@ void DIM_Init(void)
 	for (drv=0; drv<4; drv++) {
 		DIMCur[drv] = 0;
 		DIMImg[drv] = 0;
-		ZeroMemory(DIMFile[drv], MAX_PATH);
+		memset(DIMFile[drv], 0, MAX_PATH);
 	}
 }
 
@@ -67,7 +67,7 @@ int DIM_SetFD(int drv, char* filename)
 	memset(DIMImg[drv], 0xe5, 1024*9*170+sizeof(DIM_HEADER));
 	fp = File_Open(DIMFile[drv]);
 	if ( !fp ) {
-		ZeroMemory(DIMFile[drv], MAX_PATH);
+		memset(DIMFile[drv], 0, MAX_PATH);
 		FDD_SetReadOnly(drv);
 		return FALSE;
 	}
@@ -104,7 +104,7 @@ int DIM_Eject(int drv)
 	unsigned char* p;
 
 	if ( !DIMImg[drv] ) {
-		ZeroMemory(DIMFile[drv], MAX_PATH);
+		memset(DIMFile[drv], 0, MAX_PATH);
 		return FALSE;
 	}
 	dh = (DIM_HEADER*)DIMImg[drv];
@@ -125,13 +125,13 @@ int DIM_Eject(int drv)
 	}
 	free(DIMImg[drv]);
 	DIMImg[drv] = 0;
-	ZeroMemory(DIMFile[drv], MAX_PATH);
+	memset(DIMFile[drv], 0, MAX_PATH);
 	return TRUE;
 
 dim_eject_error:
 	free(DIMImg[drv]);
 	DIMImg[drv] = 0;
-	ZeroMemory(DIMFile[drv], MAX_PATH);
+	memset(DIMFile[drv], 0, MAX_PATH);
 	return FALSE;
 }
 

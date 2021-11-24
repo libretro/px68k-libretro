@@ -226,7 +226,7 @@ void MIDI_SetModule(void)
 void MIDI_Sendexclusive(BYTE *excv, int length)
 {
 	// エクスクルーシヴを送ります
-	CopyMemory(MIDI_EXCVBUF, excv, length);
+	memcpy(MIDI_EXCVBUF, excv, length);
 	hHdr.lpData = MIDI_EXCVBUF;
 	hHdr.dwFlags = 0;
 	hHdr.dwBufferLength = length;
@@ -971,8 +971,8 @@ int MIDI_SetMimpiMap(char *filename) {
 	char		buf[128];
 
 	LOADED_TONEMAP = 0;
-	ZeroMemory(TONE_CH, sizeof(TONE_CH));
-	ZeroMemory(TONEBANK[0], sizeof(TONEBANK));
+	memset(TONE_CH, 0, sizeof(TONE_CH));
+	memset(TONEBANK[0], 0, sizeof(TONEBANK));
 	for (b=0; b<128; b++) {
 		TONEMAP[0][b] = b;
 		TONEMAP[1][b] = b;

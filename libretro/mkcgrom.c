@@ -839,7 +839,7 @@ static void setmonobmphead(BITMAPINFO *bi, int x, int y) {
 
 	BYTE	i;
 
-	ZeroMemory(&bi->bmiHeader, sizeof(BITMAPINFOHEADER));
+	memset(&bi->bmiHeader, 0, sizeof(BITMAPINFOHEADER));
 	bi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
 	bi->bmiHeader.biWidth = x;
 	bi->bmiHeader.biHeight = y;
@@ -894,7 +894,7 @@ static int getfont_sub(BYTE *dest, char *str, char *fontname,
 
 	FillRect(hdcimage, &rect, GetStockObject(BLACK_BRUSH));
 	TextOut(hdcimage, 0, 0, str, strlen(str));
-	CopyMemory(dest, image, (((bmpx + 31) / 8) & ~3) * bmpy);
+	memcpy(dest, image, (((bmpx + 31) / 8) & ~3) * bmpy);
 
 	SelectObject(hdcimage, hBitmapbak);
 	DeleteObject(hBitmap);
@@ -1031,28 +1031,28 @@ int make_cgromdat(BYTE *buf, int x68030, LPSTR primaryface, LPSTR secondaryface)
 	BYTE	fnt[24*256*24/8];
 	int		i;
 
-	ZeroMemory(buf, 0xc0000);
+	memset(buf, 0, 0xc0000);
 
 	// 8x8
-	CopyMemory(buf + 0x3a000 + 0x01*8, x68c8, 0xfd*8);
+	memcpy(buf + 0x3a000 + 0x01*8, x68c8, 0xfd*8);
 
 	// 8x16
 	getfont(fnt, primaryface, 0, 8);
 	cpyank2cgrom(buf + 0x3a800 + 0x21*16, fnt + 0x01, 0x5e);	// 21-7e
 	cpyank2cgrom(buf + 0x3a800 + 0xa1*16, fnt + 0x61, 0x3f);	// a1-df
-	CopyMemory(buf + 0x3a800 + 0x01*16, &x68c16[0x00*8], 0x1f*16);
-	CopyMemory(buf + 0x3a800 + 0x80*16, &x68c16[0x1f*8], 0x03*16);
-	CopyMemory(buf + 0x3a800 + 0x86*16, &x68c16[0x22*8], 0x0a*16);
-	CopyMemory(buf + 0x3a800 + 0x91*16, &x68c16[0x2c*8], 0x0f*16);
-	CopyMemory(buf + 0x3a800 + 0xe0*16, &x68c16[0x3b*8], 0x1e*16);
+	memcpy(buf + 0x3a800 + 0x01*16, &x68c16[0x00*8], 0x1f*16);
+	memcpy(buf + 0x3a800 + 0x80*16, &x68c16[0x1f*8], 0x03*16);
+	memcpy(buf + 0x3a800 + 0x86*16, &x68c16[0x22*8], 0x0a*16);
+	memcpy(buf + 0x3a800 + 0x91*16, &x68c16[0x2c*8], 0x0f*16);
+	memcpy(buf + 0x3a800 + 0xe0*16, &x68c16[0x3b*8], 0x1e*16);
 
 	// 12x12
 	for (i=0; i<0x0e; i++) {
 		getfont_sub(fnt, str_x68k[i], secondaryface, 6, 12, 256, 12);
 		cpy12fnt2cgrom(buf + 0x3b800 + (i+2)*24*16, fnt, 256, 12);
 	}
-	CopyMemory(buf + 0x3b800 + 0x01*24, &x68c12[0x00*12], 0x1f*24);
-	CopyMemory(buf + 0x3b800 + 0x80*24, &x68c12[0x1f*12], 0x03*24);
+	memcpy(buf + 0x3b800 + 0x01*24, &x68c12[0x00*12], 0x1f*24);
+	memcpy(buf + 0x3b800 + 0x80*24, &x68c12[0x1f*12], 0x03*24);
 
 	// 12x24
 	getfont(fnt, secondaryface, 0, 12);
@@ -1073,8 +1073,8 @@ int make_cgromdat(BYTE *buf, int x68030, LPSTR primaryface, LPSTR secondaryface)
 		getfont_sub(fnt, str_x68k[i+12], secondaryface, 6, 24, 256, 24);
 		cpy12fnt2cgrom(buf + 0x3d000 + (i+14)*16*2*24, fnt, 256, 24);
 	}
-	CopyMemory(buf + 0x3d000 + 0x01*48, &x68c24[0x00*24], 0x1f*48);
-	CopyMemory(buf + 0x3d000 + 0x80*48, &x68c24[0x1f*24], 0x03*48);
+	memcpy(buf + 0x3d000 + 0x01*48, &x68c24[0x00*24], 0x1f*48);
+	memcpy(buf + 0x3d000 + 0x80*48, &x68c24[0x1f*24], 0x03*48);
 
 	// 16x16
 	for (i=0; i<7; i++) {
@@ -1085,7 +1085,7 @@ int make_cgromdat(BYTE *buf, int x68030, LPSTR primaryface, LPSTR secondaryface)
 		getfont(fnt, primaryface, i+0x30, 8);
 		cpysmall2cgrom(buf, fnt, i+8);
 	}
-	CopyMemory(buf + 0x5e*7*32, x68k16, 32*32);
+	memcpy(buf + 0x5e*7*32, x68k16, 32*32);
 
 	// 24x24
 	for (i=0; i<7; i++) {
@@ -1096,7 +1096,7 @@ int make_cgromdat(BYTE *buf, int x68030, LPSTR primaryface, LPSTR secondaryface)
 		getfont(fnt, secondaryface, i+0x30, 12);
 		cpybig2cgrom(buf + 0x40000, fnt, i+8);
 	}
-	CopyMemory(buf + 0x40000 + 0x5e*7*72, x68k24, 32*72);
+	memcpy(buf + 0x40000 + 0x5e*7*72, x68k24, 32*72);
 
 	return(TRUE);
 }

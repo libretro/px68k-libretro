@@ -139,7 +139,7 @@ WinX68k_SCSICheck(void)
 
 	// SCSI model time
 	if (scsi) {
-		ZeroMemory(IPL, 0x2000);				// main is 8kb
+		memset(IPL, 0, 0x2000);				// main is 8kb
 		memset(&IPL[0x2000], 0xff, 0x1e000);	// remaining is 0xff
 		memcpy(IPL, SCSIIMG, sizeof(SCSIIMG));	// fake­SCSI BIOS
 //		Memory_SetSCSIMode();
@@ -256,7 +256,7 @@ WinX68k_Init(void)
 	FONT = (BYTE*)malloc(0xc0000);
 
 	if (MEM)
-		ZeroMemory(MEM, MEM_SIZE);
+		memset(MEM, 0, MEM_SIZE);
 
 	if (MEM && FONT && IPL) {
 	  	m68000_init();

@@ -30,7 +30,7 @@ void GVRAM_Init(void)
 {
 	int i;
 
-	ZeroMemory(GVRAM, 0x80000);
+	memset(GVRAM, 0, 0x80000);
 	for (i=0; i<128; i++)			// 16bit color パレットアドレス計算用
 	{
 		Pal16Adr[i*2] = i*4;

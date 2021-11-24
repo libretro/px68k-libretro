@@ -170,7 +170,7 @@ file_lineread(FILEH handle, void *data, WORD length)
 	if ((length == 0) || ((pos = file_seek(handle, 0, 1)) == (DWORD)-1))
 		return 0;
 
-	ZeroMemory(data, length);
+	memset(data, 0, length);
 	if (ReadFile(handle, data, length-1, &readsize, NULL) == 0)
 		return 0;
 

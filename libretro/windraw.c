@@ -633,7 +633,7 @@ void WinDraw_DrawLine(void)
 			ton = 1;
 		}
 		else
-			ZeroMemory(Text_TrFlag, TextDotX+16);
+			memset(Text_TrFlag, 0, TextDotX+16);
 
 		if ((VCReg2[1]&0x40)&&(BG_Regs[8]&2)&&(!(BG_Regs[0x11]&2))&&(Debug_Sp))
 		{
@@ -659,7 +659,7 @@ void WinDraw_DrawLine(void)
 			VLINEBG <<= s1;
 			VLINEBG >>= s2;
 			if ( !(BG_Regs[0x11]&16) ) VLINEBG -= ((BG_Regs[0x0f]>>s1)-(CRTC_Regs[0x0d]>>s2));
-			ZeroMemory(Text_TrFlag, TextDotX+16);
+			memset(Text_TrFlag, 0, TextDotX+16);
 			BG_DrawLine(1, 1);
 			bgon = 1;
 		}
@@ -673,7 +673,7 @@ void WinDraw_DrawLine(void)
 			} else {		// 20010120 ° ‡Ë‡·øß°À
 				bzero(&BG_LineBuf[16], TextDotX * 2);
 			}
-			ZeroMemory(Text_TrFlag, TextDotX+16);
+			memset(Text_TrFlag, 0, TextDotX+16);
 			bgon = 1;
 		}
 

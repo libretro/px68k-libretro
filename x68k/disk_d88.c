@@ -37,8 +37,8 @@ void D88_Init(void)
 
 	for (drv=0; drv<4; drv++) {
 		for (trk=0; trk<164; trk++) D88Trks[drv][trk] = 0;
-		ZeroMemory(&D88Head[drv], sizeof(D88_HEADER));
-		ZeroMemory(D88File[drv], MAX_PATH);
+		memset(&D88Head[drv], 0, sizeof(D88_HEADER));
+		memset(D88File[drv], 0, MAX_PATH);
 	}
 }
 
@@ -61,7 +61,7 @@ int D88_SetFD(int drv, char* filename)
 
 	fp = File_Open(D88File[drv]);
 	if ( !fp ) {
-		ZeroMemory(D88File[drv], MAX_PATH);
+		memset(D88File[drv], 0, MAX_PATH);
 		return FALSE;
 	}
 	File_Seek(fp, 0, FSEEK_SET);
@@ -149,8 +149,8 @@ int D88_Eject(int drv)
 		}
 		D88Trks[drv][trk] = 0;
 	}
-	ZeroMemory(&D88Head[drv], sizeof(D88_HEADER));
-	ZeroMemory(D88File[drv], MAX_PATH);
+	memset(&D88Head[drv], 0, sizeof(D88_HEADER));
+	memset(D88File[drv], 0, MAX_PATH);
 
 	return TRUE;
 }
@@ -228,7 +228,7 @@ int D88_WriteID(int drv, int trk, unsigned char* buf, int num)
 		} else {
 			D88Trks[drv][trk] = si;
 		}
-		ZeroMemory(&si->sect, sizeof(D88_SECTOR));
+		memset(&si->sect, 0, sizeof(D88_SECTOR));
 		si->sect.c = buf[0];
 		si->sect.h = buf[1];
 		si->sect.r = buf[2];

@@ -16,7 +16,7 @@ void XDF_Init(void)
 	for (drv=0; drv<4; drv++) {
 		XDFCur[drv] = 0;
 		XDFImg[drv] = 0;
-		ZeroMemory(XDFFile[drv], MAX_PATH);
+		memset(XDFFile[drv], 0, MAX_PATH);
 	}
 }
 
@@ -40,7 +40,7 @@ int XDF_SetFD(int drv, char* filename)
 	memset(XDFImg[drv], 0xe5, 1261568);
 	fp = File_Open(XDFFile[drv]);
 	if ( !fp ) {
-		ZeroMemory(XDFFile[drv], MAX_PATH);
+		memset(XDFFile[drv], 0, MAX_PATH);
 		FDD_SetReadOnly(drv);
 		return FALSE;
 	}
@@ -56,7 +56,7 @@ int XDF_Eject(int drv)
 	FILEH fp;
 
 	if ( !XDFImg[drv] ) {
-		ZeroMemory(XDFFile[drv], MAX_PATH);
+		memset(XDFFile[drv], 0, MAX_PATH);
 		return FALSE;
 	}
 	if ( !FDD_IsReadOnly(drv) ) {
@@ -68,13 +68,13 @@ int XDF_Eject(int drv)
 	}
 	free(XDFImg[drv]);
 	XDFImg[drv] = 0;
-	ZeroMemory(XDFFile[drv], MAX_PATH);
+	memset(XDFFile[drv], 0, MAX_PATH);
 	return TRUE;
 
 xdf_eject_error:
 	free(XDFImg[drv]);
 	XDFImg[drv] = 0;
-	ZeroMemory(XDFFile[drv], MAX_PATH);
+	memset(XDFFile[drv], 0, MAX_PATH);
 	return FALSE;
 }
 

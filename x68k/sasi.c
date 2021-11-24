@@ -72,11 +72,11 @@ void SASI_Init(void)
 short SASI_Seek(void)
 {
 	FILEH fp;
-	ZeroMemory(SASI_Buf, 256);
+	memset(SASI_Buf, 0, 256);
 	fp = File_Open(Config.HDImage[SASI_Device*2+SASI_Unit]);
 	if (!fp)
 	{
-		ZeroMemory(SASI_Buf, 256);
+		memset(SASI_Buf, 0, 256);
 		return -1;
 	}
 	if (File_Seek(fp, SASI_Sector<<8, FSEEK_SET)!=(SASI_Sector<<8)) 
@@ -270,7 +270,7 @@ void SASI_CheckCmd(void)
 		SASI_RW = 0;
 		SASI_BufPtr = 0;
 		SASI_Stat = 0;
-		ZeroMemory(SASI_Buf, 256);
+		memset(SASI_Buf, 0, 256);
 		result = SASI_Seek();
 		if ( (result==0)||(result==-1) )
 		{

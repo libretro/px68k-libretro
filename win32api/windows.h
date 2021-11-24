@@ -148,9 +148,6 @@ typedef	void *		DRAWITEMSTRUCT;
 /*
  * replace
  */
-#define	wsprintf		sprintf
-#define	ZeroMemory(d,n)		memset(d,0,n)
-#define	CopyMemory(d,s,n)	memcpy(d,s,n)
 #define	timeGetTime()		FAKE_GetTickCount()
 
 /*
@@ -189,13 +186,6 @@ typedef struct {
 	BITMAPINFOHEADER	bmiHeader;
 	RGBQUAD			bmiColors[1];
 } __attribute__ ((packed)) BITMAPINFO;
-
-typedef struct {
-	DWORD	top;
-	DWORD	left;
-	DWORD	bottom;
-	DWORD	right;
-} RECT;
 
 typedef struct {
 	WORD	x;

@@ -115,9 +115,9 @@ void Pal_SetColor(void)
 // -----------------------------------------------------------------------
 void Pal_Init(void)
 {
-	ZeroMemory(Pal_Regs, 1024);
-	ZeroMemory(TextPal, 512);
-	ZeroMemory(GrphPal, 512);
+	memset(Pal_Regs, 0, 1024);
+	memset(TextPal, 0, 512);
+	memset(GrphPal, 0, 512);
 	Pal_SetColor();
 }
 

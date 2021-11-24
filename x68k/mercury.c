@@ -281,8 +281,8 @@ void Mcry_SetVolume(BYTE vol)
 // -----------------------------------------------------------------------
 void Mcry_Init(DWORD samplerate, const char* path)
 {
-	ZeroMemory(Mcry_BufL, Mcry_BufSize*2);
-	ZeroMemory(Mcry_BufR, Mcry_BufSize*2);
+	memset(Mcry_BufL, 0, Mcry_BufSize*2);
+	memset(Mcry_BufR, 0, Mcry_BufSize*2);
 
 	Mcry_WrPtr = 0;
 	Mcry_RdPtr = 0;

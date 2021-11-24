@@ -18,7 +18,7 @@ static int RTC_Timer16 = 0;
 // -----------------------------------------------------------------------
 void RTC_Init(void)
 {
-	ZeroMemory(&RTC_Regs[1][0], 16);
+	memset(&RTC_Regs[1][0], 0, 16);
 	RTC_Regs[0][13] = 0;
 	RTC_Regs[0][14] = 0;
 	RTC_Regs[0][15] = 0x0c;

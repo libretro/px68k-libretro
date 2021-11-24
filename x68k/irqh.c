@@ -19,7 +19,7 @@ typedef signed int  FASTCALL C68K_INT_CALLBACK(signed int level);
 // -----------------------------------------------------------------------
 void IRQH_Init(void)
 {
-	ZeroMemory(IRQH_IRQ, 8);
+	memset(IRQH_IRQ, 0, 8);
 }
 
 

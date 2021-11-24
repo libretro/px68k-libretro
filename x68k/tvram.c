@@ -38,11 +38,11 @@ void TVRAM_SetAllDirty(void)
 void TVRAM_Init(void)
 {
 	int i, j, bit;
-	ZeroMemory(TVRAM, 0x80000);
-	ZeroMemory(TextDrawWork, 1024*1024);
+	memset(TVRAM, 0, 0x80000);
+	memset(TextDrawWork, 0, 1024*1024);
 	TVRAM_SetAllDirty();
 
-	ZeroMemory(TextDrawPattern, 2048*4);		// パターンテーブル初期化
+	memset(TextDrawPattern, 0, 2048*4);		// パターンテーブル初期化
 	for (i=0; i<256; i++)
 	{
 		for (j=0, bit=0x80; j<8; j++, bit>>=1)
