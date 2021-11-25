@@ -7,7 +7,6 @@ extern "C" {
 #include "timer.h"
 #include "keyboard.h"
 #include "prop.h"
-#include "status.h"
 #include "joystick.h"
 #include "mkcgrom.h"
 #include "winx68k.h"
@@ -513,7 +512,6 @@ extern "C" int pmain(int argc, char *argv[])
 
 	SoundSampleRate = Config.SampleRate;
 
-	StatBar_Show(Config.WindowFDDStat);
 	WinDraw_ChangeSize();
 	WinDraw_ChangeMode(FALSE);
 

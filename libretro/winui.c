@@ -36,7 +36,6 @@
 #include "dswin.h"
 #include "fileio.h"
 #include "prop.h"
-#include "status.h"
 #include "joystick.h"
 #include "mouse.h"
 #include "winx68k.h"

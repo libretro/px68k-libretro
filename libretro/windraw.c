@@ -36,7 +36,6 @@
 #include "mouse.h"
 #include "palette.h"
 #include "prop.h"
-#include "status.h"
 #include "tvram.h"
 #include "joystick.h"
 #include "keyboard.h"
@@ -154,7 +153,6 @@ void WinDraw_ChangeSize(void)
 		return;
 
 	WinDraw_InitWindowSize((WORD)WindowX, (WORD)WindowY);
-	StatBar_Show(Config.WindowFDDStat);
 	Mouse_ChangePos();
 }
 

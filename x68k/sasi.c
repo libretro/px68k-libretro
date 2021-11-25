@@ -7,7 +7,6 @@
 #include "common.h"
 #include "fileio.h"
 #include "prop.h"
-#include "status.h"
 #include "../m68000/m68000.h"
 #include "ioc.h"
 #include "sasi.h"
@@ -196,16 +195,13 @@ BYTE FASTCALL SASI_Read(DWORD adr)
 		}
 	}
 
+#if 0
 	StatBar_HDD((SASI_Phase)?2:0);
+#endif
 
 	return ret;
 }
 
-
-// コマンドのチェック。正直、InsideX68k内の記述ではちと足りない ^^;。
-// 未記述のものとして、
-//   - C2h（初期化系？）。Unit以外のパラメータは無し。DataPhaseで10個のデータを書きこむ。
-//   - 06h（フォーマット？）。論理ブロック指定あり（21hおきに指定している）。ブロック数のとこは6が指定されている。
 void SASI_CheckCmd(void)
 {
 	int16_t result;
@@ -401,5 +397,7 @@ void FASTCALL SASI_Write(DWORD adr, BYTE data)
 			if (IOC_IntStat&8) IRQH_Int(1, &SASI_Int);
 		}
 	}
+#if 0
 	StatBar_HDD((SASI_Phase)?2:0);
+#endif
 }

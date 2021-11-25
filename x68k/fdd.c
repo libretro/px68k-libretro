@@ -2,9 +2,10 @@
 //  FDD.C - 内蔵FDD Unit（イメージファイルの管理とFD挿抜割り込みの発生）
 // ---------------------------------------------------------------------------------------
 
+#include <string.h>
+
 #include "common.h"
 #include "fileio.h"
-#include "status.h"
 #include "irqh.h"
 #include "ioc.h"
 #include "fdc.h"
@@ -12,8 +13,6 @@
 #include "disk_d88.h"
 #include "disk_xdf.h"
 #include "disk_dim.h"
-#include <string.h>
-
 
 typedef struct {
 	int SetDelay[4];
@@ -97,8 +96,6 @@ void FDD_SetFD(int drive, char* filename, int readonly)
 			fdd.SetDelay[drive] = 3;
 			fdd.EMask[drive] = 0;
 			fdd.Blink[drive] = 0;
-			StatBar_SetFDD(drive, filename);
-			StatBar_ParamFDD(drive, (fdd.Types[drive]!=FD_Non)?((fdd.Access==drive)?2:1):0, ((fdd.Types[drive]!=FD_Non)&&(!fdd.EMask[drive]))?1:0, (fdd.Blink[drive])?1:0);
 		}
 	}
 }
@@ -120,8 +117,6 @@ void FDD_EjectFD(int drive)
 	fdd.ROnly[drive] = 0;
 	fdd.EMask[drive] = 0;
 	fdd.Blink[drive] = 0;
-	StatBar_SetFDD(drive, "");
-	StatBar_ParamFDD(drive, (fdd.Types[drive]!=FD_Non)?((fdd.Access==drive)?2:1):0, ((fdd.Types[drive]!=FD_Non)&&(!fdd.EMask[drive]))?1:0, (fdd.Blink[drive])?1:0);
 }
 
 
@@ -133,15 +128,12 @@ void FDD_SetEMask(int drive, int emask)
 	if ( (drive<0)||(drive>3) ) return;
 	if ( fdd.EMask[drive]==emask ) return;
 	fdd.EMask[drive] = emask;
-	StatBar_ParamFDD(drive, (fdd.Types[drive]!=FD_Non)?((fdd.Access==drive)?2:1):0, ((fdd.Types[drive]!=FD_Non)&&(!fdd.EMask[drive]))?1:0, (fdd.Blink[drive])?1:0);
 }
 
 void FDD_SetAccess(int drive)
 {
 	if ( fdd.Access==drive ) return;
 	fdd.Access = drive;
-	StatBar_ParamFDD(0, (fdd.Types[0]!=FD_Non)?((fdd.Access==0)?2:1):0, ((fdd.Types[0]!=FD_Non)&&(!fdd.EMask[0]))?1:0, (fdd.Blink[0])?1:0);
-	StatBar_ParamFDD(1, (fdd.Types[1]!=FD_Non)?((fdd.Access==1)?2:1):0, ((fdd.Types[1]!=FD_Non)&&(!fdd.EMask[1]))?1:0, (fdd.Blink[1])?1:0);
 }
 
 void FDD_SetBlink(int drive, int blink)
@@ -149,7 +141,6 @@ void FDD_SetBlink(int drive, int blink)
 	if ( (drive<0)||(drive>3) ) return;
 	if ( fdd.Blink[drive]==blink ) return;
 	fdd.Blink[drive] = blink;
-	StatBar_ParamFDD(drive, (fdd.Types[drive]!=FD_Non)?((fdd.Access==drive)?2:1):0, ((fdd.Types[drive]!=FD_Non)&&(!fdd.EMask[drive]))?1:0, (fdd.Blink[drive])?1:0);
 }
 
 
