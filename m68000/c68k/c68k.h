@@ -34,8 +34,7 @@ extern "C" {
 
 #include "core.h"
 
-// setting
-///////////
+/* setting */
 
 #define C68K_BYTE_SWAP_OPT
 
@@ -47,16 +46,11 @@ extern "C" {
  #define WORD_OFF 0
 #endif
 
-//#define C68K_NO_JUMP_TABLE
-//#define C68K_DEBUG
 #define C68K_TAS_CAN_SET_MEMORY
-//#define C68K_CONST_JUMP_TABLE
-//#define C68K_AUTOVECTOR_CALLBACK
 
-// 68K core types definitions
-//////////////////////////////
+/* 68K core types definitions */
 
-#define C68K_FETCH_BITS 8   // [4-12]   default = 8
+#define C68K_FETCH_BITS 8   /* [4-12]   default = 8 */
 #define C68K_ADR_BITS   24
 
 #define C68K_FETCH_SFT  (C68K_ADR_BITS - C68K_FETCH_BITS)
@@ -82,7 +76,7 @@ extern "C" {
 #define C68K_CCR_MASK   0x1F
 #define C68K_SR_MASK    (0x2700 | C68K_CCR_MASK)
 
-// exception defines taken from musashi core
+/* exception defines taken from musashi core */
 #define C68K_RESET_EX                   1
 #define C68K_BUS_ERROR_EX               2
 #define C68K_ADDRESS_ERROR_EX           3
@@ -114,59 +108,59 @@ typedef void FASTCALL C68K_WRITE(const u32 adr, u32 data);
 typedef s32  FASTCALL C68K_INT_CALLBACK(s32 level);
 typedef void FASTCALL C68K_RESET_CALLBACK(void);
 
-typedef struct {
-    u32 D[8];       // 32 bytes aligned
-    u32 A[8];       // 16 bytes aligned
+typedef struct
+{
+   u32 D[8];       /* 32 bytes aligned */
+   u32 A[8];       /* 16 bytes aligned */
 
-    u32 flag_C;     // 32 bytes aligned
-    u32 flag_V;
-    u32 flag_notZ;
-    u32 flag_N;
+   u32 flag_C;     /* 32 bytes aligned */
+   u32 flag_V;
+   u32 flag_notZ;
+   u32 flag_N;
 
-    u32 flag_X;     // 16 bytes aligned
-    u32 flag_I;
-    u32 flag_S;
-    
-    u32 USP;
+   u32 flag_X;     /* 16 bytes aligned */
+   u32 flag_I;
+   u32 flag_S;
 
-    pointer PC;         // 32 bytes aligned
-    pointer BasePC;
-    u32 Status;
-    s32 IRQLine;
-    
-    s32 CycleToDo;  // 16 bytes aligned
-    s32 CycleIO;
-    s32 CycleSup;
-    u32 dirty1;
-    
-    C68K_READ *Read_Byte;                   // 32 bytes aligned
-    C68K_READ *Read_Word;
+   u32 USP;
 
-    C68K_WRITE *Write_Byte;
-    C68K_WRITE *Write_Word;
+   pointer PC;         /* 32 bytes aligned */
+   pointer BasePC;
+   u32 Status;
+   s32 IRQLine;
 
-    C68K_INT_CALLBACK *Interrupt_CallBack;  // 16 bytes aligned
-    C68K_RESET_CALLBACK *Reset_CallBack;
+   s32 CycleToDo;  /* 16 bytes aligned */
+   s32 CycleIO;
+   s32 CycleSup;
+   u32 dirty1;
 
-	pointer Fetch[C68K_FETCH_BANK];             // 32 bytes aligned
+   C68K_READ *Read_Byte;                   /* 32 bytes aligned */
+   C68K_READ *Read_Word;
+
+   C68K_WRITE *Write_Byte;
+   C68K_WRITE *Write_Word;
+
+   C68K_INT_CALLBACK *Interrupt_CallBack;  /* 16 bytes aligned */
+   C68K_RESET_CALLBACK *Reset_CallBack;
+
+   pointer Fetch[C68K_FETCH_BANK];             /* 32 bytes aligned */
 } c68k_struc;
 
 
-// 68K core var declaration
-////////////////////////////
+/* 68K core var declaration */
 
 extern  c68k_struc C68K;
 
 
-// 68K core function declaration
-/////////////////////////////////
+/* 68K core function declaration */
 
 void    C68k_Init(c68k_struc *cpu, C68K_INT_CALLBACK *int_cb);
 
 s32     FASTCALL C68k_Reset(c68k_struc *cpu);
 
-// if <  0 --> error (cpu state returned)
-// if >= 0 --> number of extras cycles done
+/* if <  0 --> error (cpu state returned)
+ * if >= 0 --> number of extras cycles done
+ */
 s32	    FASTCALL C68k_Exec(c68k_struc *cpu, s32 cycle);
 
 void    FASTCALL C68k_Set_IRQ(c68k_struc *cpu, s32 level);
@@ -202,5 +196,5 @@ void    C68k_Set_MSP(c68k_struc *cpu, u32 val);
 }
 #endif
 
-#endif  // _C68K_H_
+#endif  /* _C68K_H_ */
 

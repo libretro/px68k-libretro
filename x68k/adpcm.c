@@ -1,8 +1,4 @@
-// ---------------------------------------------------------------------------------------
-//  ADPCM.C - ADPCM (OKI MSM6258V)
-//    な〜んか、X68Sound.dllに比べてカシャカシャした音になるんだよなぁ……
-//    DSoundのクセってのもあるけど、それだけじゃなさそうな気もする
-// ---------------------------------------------------------------------------------------
+/*  ADPCM.C - ADPCM (OKI MSM6258V) */
 
 #include <stdint.h>
 #include <math.h>
@@ -60,10 +56,6 @@ int ADPCM_IsReady(void)
 	return 1;
 }
 
-
-// -----------------------------------------------------------------------
-//   てーぶる初期化
-// -----------------------------------------------------------------------
 static void ADPCM_InitTable(void)
 {
 	int step, n;
@@ -88,18 +80,13 @@ static void ADPCM_InitTable(void)
 	}
 }
 
-
 #define LimitMix(val) { \
 	if ( val > 0x7fff )      val = 0x7fff; \
 	else if ( val < -0x8000 ) val = -0x8000; \
 }
 
-// -----------------------------------------------------------------------
-//   MPUクロック経過分だけバッファにデータを溜めておく
-// -----------------------------------------------------------------------
 void FASTCALL ADPCM_PreUpdate(DWORD clock)
 {
-	/*if (!ADPCM_Playing) return;*/
 	ADPCM_PreCounter += ((ADPCM_ClockRate/24)*clock);
 	while ( ADPCM_PreCounter>=10000000L ) {		// ↓ データの送りすぎ防止（A-JAX）。200サンプリングくらいまでは許そう…。
 		ADPCM_DifBuf -= ( (ADPCM_SampleRate*400)/ADPCM_ClockRate );
@@ -111,10 +98,6 @@ void FASTCALL ADPCM_PreUpdate(DWORD clock)
 	}
 }
 
-
-// -----------------------------------------------------------------------
-//   DSoundが指定してくる分だけバッファにデータを書き出す
-// -----------------------------------------------------------------------
 void FASTCALL ADPCM_Update(int16_t *buffer, DWORD length, int rate, BYTE *pbsp, BYTE *pbep)
 {
 	int outs;
@@ -220,10 +203,6 @@ void FASTCALL ADPCM_Update(int16_t *buffer, DWORD length, int rate, BYTE *pbsp, 
 	if ( ADPCM_DifBuf<0 ) ADPCM_DifBuf += ADPCM_BufSize;
 }
 
-
-// -----------------------------------------------------------------------
-//   1nibble（4bit）をデコード
-// -----------------------------------------------------------------------
 INLINE void ADPCM_WriteOne(int val)
 {
 	ADPCM_Out += dif_table[ADPCM_Step+val];
@@ -266,9 +245,7 @@ INLINE void ADPCM_WriteOne(int val)
 }
 
 
-// -----------------------------------------------------------------------
-//   I/O Write
-// -----------------------------------------------------------------------
+/*   I/O Write */
 void FASTCALL ADPCM_Write(DWORD adr, BYTE data)
 {
 	if ( adr==0xe92001 ) {
@@ -291,26 +268,18 @@ void FASTCALL ADPCM_Write(DWORD adr, BYTE data)
 	}
 }
 
-
-// -----------------------------------------------------------------------
-//   I/O Read（ステータスチェック）
-// -----------------------------------------------------------------------
+/*   I/O Read（ステータスチェック） */
 BYTE FASTCALL ADPCM_Read(DWORD adr)
 {
 	if ( adr==0xe92001 )
 		return ((ADPCM_Playing)?0xc0:0x40);
-	else
-		return 0x00;
+   return 0x00;
 }
 
 
-// -----------------------------------------------------------------------
-//   ぼりゅーむ
-// -----------------------------------------------------------------------
 void ADPCM_SetVolume(BYTE vol)
 {
 	if ( vol>16 ) vol=16;
-//	if ( vol<0  ) vol=0;
 
 	if ( vol )
 		ADPCM_VolumeShift = (int)((double)16/pow(1.189207115, (16-vol)));
@@ -318,10 +287,6 @@ void ADPCM_SetVolume(BYTE vol)
 		ADPCM_VolumeShift = 0;		// Mute
 }
 
-
-// -----------------------------------------------------------------------
-//   Panning
-// -----------------------------------------------------------------------
 void ADPCM_SetPan(int n)
 {
 	if ( (ADPCM_Pan&0x0c)!=(n&0x0c) ) {
@@ -332,10 +297,6 @@ void ADPCM_SetPan(int n)
 	ADPCM_Pan = n;
 }
 
-
-// -----------------------------------------------------------------------
-//   Clock
-// -----------------------------------------------------------------------
 void ADPCM_SetClock(int n)
 {
 	if ( (ADPCM_Clock&4)!=n ) {
@@ -345,10 +306,6 @@ void ADPCM_SetClock(int n)
 	}
 }
 
-
-// -----------------------------------------------------------------------
-//   初期化
-// -----------------------------------------------------------------------
 void ADPCM_Init(DWORD samplerate)
 {
 	ADPCM_WrPtr = 0;

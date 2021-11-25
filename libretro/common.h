@@ -5,7 +5,7 @@
 #include "windows.h"
 #endif
 
-#include <stdio.h>
+#include <stdint.h>
 #include <string.h>
 
 #ifndef _WIN32

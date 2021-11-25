@@ -23,6 +23,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <stdio.h>
 #include <stdint.h>
 #include "common.h"
 
@@ -40,13 +41,8 @@
 #include "joystick.h"
 #include "keyboard.h"
 
-#ifdef __LIBRETRO__
 extern uint16_t *videoBuffer;
-#endif
 WORD menu_buffer[800*600];
-#if 0
-#include "../icons/keropi.xpm"
-#endif
 
 extern BYTE Debug_Text, Debug_Grp, Debug_Sp;
 

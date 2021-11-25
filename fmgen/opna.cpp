@@ -115,14 +115,11 @@ void OPNBase::SetPrescaler(uint p)
 	if (prescale != p)
 	{
 		prescale = p;
-		//assert(0 <= prescale && prescale < 3);
 		
 		uint fmclock = clock / table[p][0] / 12;
 		
 		rate = psgrate;
 		
-		// ¹çÀ®¼þÇÈ¿ô¤È½ÐÎÏ¼þÇÈ¿ô¤ÎÈæ
-		assert(fmclock < (0x80000000 >> FM_RATIOBITS));
 		uint ratio = ((fmclock << FM_RATIOBITS) + rate/2) / rate;
 
 		SetTimerBase(fmclock);

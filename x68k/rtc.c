@@ -1,6 +1,4 @@
-// ---------------------------------------------------------------------------------------
-//  RTC.C - RTC (Real Time Clock / RICOH RP5C15)
-// ---------------------------------------------------------------------------------------
+/*  RTC.C - RTC (Real Time Clock / RICOH RP5C15) */
 
 #include "common.h"
 #include "mfp.h"
@@ -12,10 +10,6 @@ BYTE	RTC_Bank = 0;
 static int RTC_Timer1 = 0;
 static int RTC_Timer16 = 0;
 
-
-// -----------------------------------------------------------------------
-//   初期化
-// -----------------------------------------------------------------------
 void RTC_Init(void)
 {
 	memset(&RTC_Regs[1][0], 0, 16);
@@ -24,10 +18,6 @@ void RTC_Init(void)
 	RTC_Regs[0][15] = 0x0c;
 }
 
-
-// -----------------------------------------------------------------------
-//   とけいのりーど
-// -----------------------------------------------------------------------
 BYTE FASTCALL RTC_Read(DWORD adr)
 {
    time_t t      = time(NULL);
@@ -67,17 +57,13 @@ BYTE FASTCALL RTC_Read(DWORD adr)
    return RTC_Regs[1][adr>>1];
 }
 
-
-// -----------------------------------------------------------------------
-//   らいと
-// -----------------------------------------------------------------------
 void FASTCALL RTC_Write(DWORD adr, BYTE data)
 {
    if ( adr==0xe8a001 ) { }
    else if ( adr==0xe8a01b )
-      RTC_Regs[0][13] = RTC_Regs[1][13] = data&0x0c;		// Alarm/Timer Enable制御
+      RTC_Regs[0][13] = RTC_Regs[1][13] = data&0x0c; // Alarm/Timer Enable
    else if ( adr==0xe8a01f )
-      RTC_Regs[0][15] = RTC_Regs[1][15] = data&0x0c;		// Alarm端子出力制御
+      RTC_Regs[0][15] = RTC_Regs[1][15] = data&0x0c; // Alarm端子出力制御
 }
 
 

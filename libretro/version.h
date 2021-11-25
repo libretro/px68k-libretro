@@ -1,10 +1,10 @@
-// ---------------------------------------------------------------------------
-//	WinX68k - SHARP X680x0 Emulator
-//	Copyright (C) Kenjo 2000
-// ---------------------------------------------------------------------------
+/* ---------------------------------------------------------------------------
+ *	WinX68k - SHARP X680x0 Emulator
+ *	Copyright (C) Kenjo 2000
+ */
 
-#ifndef _version_h
-#define _version_h
+#ifndef _VERSION_H
+#define _VERSION_H
 
 #define APP_VER_MAJOR	0
 #define APP_VER_MINOR	65
@@ -12,4 +12,4 @@
 
 #define	SOURCE_VERSION	"20081108"
 
-#endif //_version_h
+#endif /* _VERSION_H */

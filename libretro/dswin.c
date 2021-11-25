@@ -160,9 +160,11 @@ audio_samples_discard(int discard)
    if (discard <= 0)
       return;
 
-   if (pbrp > pbwp) {
+   if (pbrp > pbwp)
+   {
       int availa = (pbep - pbrp) / 4;
-      if (discard >= availa) {
+      if (discard >= availa)
+      {
          pbrp = pbsp;
          discard -= availa;
       }
@@ -198,7 +200,7 @@ cb_start:
       if (pbrp > pbwp)
          goto cb_start;
 
-      buf = pbrp;
+      buf   = pbrp;
       pbrp += len;
    }
    else

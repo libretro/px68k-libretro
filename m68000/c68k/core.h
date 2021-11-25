@@ -21,7 +21,7 @@
 #ifndef CORE_H
 #define CORE_H
 
-#include <stdio.h>
+#include <stdint.h>
 #include <string.h>
 
 #ifndef ALIGNED
@@ -79,7 +79,7 @@ typedef uint64_t u64;
 typedef  int64_t s64;
 typedef uintptr_t pointer;
 
-#else  // !HAVE_STDINT_H
+#else  /* !HAVE_STDINT_H */
 
 typedef unsigned char u8;
 typedef unsigned short u16;
@@ -111,7 +111,7 @@ typedef __int64 s64;
 typedef signed long long s64;
 
 #else
-// 32-bit Linux GCC/MINGW/etc.
+/* 32-bit Linux GCC/MINGW/etc */
 typedef unsigned long u32;
 typedef unsigned long long u64;
 typedef unsigned long pointer;
@@ -120,11 +120,9 @@ typedef signed long s32;
 typedef signed long long s64;
 #endif
 
-#endif  // !HAVE_STDINT_H
+#endif  /* !HAVE_STDINT_H */
 
-#endif // !GEKKO
-
-//////////////////////////////////////////////////////////////////////////////
+#endif /* !GEKKO */
 
 #ifdef HAVE_LIBMINI18N
 #include "mini18n.h"
@@ -134,16 +132,12 @@ typedef signed long long s64;
 #endif
 #endif
 
-//////////////////////////////////////////////////////////////////////////////
-
 /* Minimum/maximum values */
 
 #undef MIN
 #undef MAX
 #define MIN(a,b)  ((a) < (b) ? (a) : (b))
 #define MAX(a,b)  ((a) > (b) ? (a) : (b))
-
-//////////////////////////////////////////////////////////////////////////////
 
 /*
  * BSWAP16(x) swaps two bytes in a 16-bit value (AABB -> BBAA) or adjacent
@@ -193,8 +187,6 @@ typedef signed long long s64;
 #ifndef WSWAP32
 # define WSWAP32(x)  ((u32)(x)>>16 | (u32)(x)<<16)
 #endif
-
-//////////////////////////////////////////////////////////////////////////////
 
 #ifdef __GNUC__
 

@@ -5,7 +5,7 @@
 #define WIN32_LEAN_AND_MEAN
 
 #include "windows.h"
-#include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
@@ -18,4 +18,4 @@
 	#define min _MIN
 #endif
 
-#endif	// WIN_HEADERS_H
+#endif	/* WIN_HEADERS_H */

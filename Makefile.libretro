@@ -419,7 +419,7 @@ WARNINGS :=
 FLAGS    += -D__LIBRETRO__ $(ENDIANNESS_DEFINES) $(WARNINGS) $(fpic)
 
 CXXFLAGS += $(FLAGS) $(CPU_FLAGS) -fpermissive
-CFLAGS   += $(FLAGS) -std=gnu99 $(CPU_FLAGS)
+CFLAGS   += $(FLAGS) -std=c99 $(CPU_FLAGS)
 
 $(TARGET): $(OBJECTS)
 ifeq ($(STATIC_LINKING), 1)

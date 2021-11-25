@@ -27,8 +27,8 @@
  *  WINUI.C - UI                                                              *
  * -------------------------------------------------------------------------- */
 
+#include <stdio.h>
 #include <sys/stat.h>
-#include <errno.h>
 
 #include "common.h"
 #include "keyboard.h"
@@ -88,6 +88,9 @@ char cur_dir_str[MAX_PATH];
 int cur_dir_slen;
 
 struct menu_flist mfl;
+
+extern char slash;
+extern char base_dir[MAX_PATH];
 
 /***** menu items *****/
 
@@ -170,33 +173,7 @@ int WinUI_get_drv_num(int key)
 	}
 }
 
-static void menu_hwjoy_print(int v)
-{
-	/*if (v <= 1) {
-		sprintf(menu_items[M_HJS][v], "Axis%d(%s): %d",
-			v,
-			(v == 0)? "Left/Right" : "Up/Down",
-			Config.HwJoyAxis[v]);
-	} else if (v == 2) {
-		sprintf(menu_items[M_HJS][v], "Hat: %d", Config.HwJoyHat);
-	} else {
-		sprintf(menu_items[M_HJS][v], "Button%d: %d",
-			v - 3,
-			Config.HwJoyBtn[v - 3]);
-	}*/
-}
-
-/******************************************************************************
- * init
- ******************************************************************************/
-void
-WinUI_Init(void)
-{
-	int i;
-
-	for (i = 0; i < 11; i++) {
-		menu_hwjoy_print(i);
-	}
+static void menu_hwjoy_print(int v) { }
 
 #if defined(ANDROID)
 #define CUR_DIR_STR winx68k_dir
@@ -204,27 +181,30 @@ WinUI_Init(void)
 #define CUR_DIR_STR "/var/mobile/px68k/"
 #else
 
-#ifdef __LIBRETRO__
-
 #ifdef _WIN32
 #define CUR_DIR_STR "c:\\"
 #else
 #define CUR_DIR_STR "/"
 #endif
-#else
-#define CUR_DIR_STR "./"
 #endif
-#endif
-if(filepath[0] != 0)strcpy(cur_dir_str, filepath);
-else	strcpy(cur_dir_str, CUR_DIR_STR);
+
+/******************************************************************************
+ * init
+ ******************************************************************************/
+void WinUI_Init(void)
+{
+   unsigned i;
+	if(filepath[0] != 0)
+      strcpy(cur_dir_str, filepath);
+	else
+		strcpy(cur_dir_str, CUR_DIR_STR);
 #ifdef ANDROID
 	strcat(cur_dir_str, "/");
 #endif
 	cur_dir_slen = strlen(cur_dir_str);
 
-	for (i = 0; i < 4; i++) {
+	for (i = 0; i < 4; i++)
 		strcpy(mfl.dir[i], cur_dir_str);
-	}
 }
 
 float VKey_scale[] = {3.0, 2.5, 2.0, 1.5, 1.25, 1.0};
@@ -232,11 +212,9 @@ float VKey_scale[] = {3.0, 2.5, 2.0, 1.5, 1.25, 1.0};
 float WinUI_get_vkscale(void)
 {
 	int n = Config.VkeyScale;
-
-	// failsafe against invalid values
-	if (n < 0 || n >= sizeof(VKey_scale)/sizeof(float)) {
+	/* failsafe against invalid values */
+	if (n < 0 || n >= sizeof(VKey_scale)/sizeof(float))
 		return 1.0;
-	}
 	return VKey_scale[n];
 }
 
@@ -246,14 +224,15 @@ int mkey_pos = 0;
 
 static void menu_system(int v)
 {
-	switch (v) {
-	case 0 :
-		WinX68k_Reset();
-		break;
-	case 1:
-		IRQH_Int(7, NULL);
-		break;
-	}
+   switch (v)
+   {
+      case 0 :
+         WinX68k_Reset();
+         break;
+      case 1:
+         IRQH_Int(7, NULL);
+         break;
+   }
 }
 
 static void menu_joy_or_mouse(int v)
@@ -265,17 +244,17 @@ static void menu_joy_or_mouse(int v)
 
 static void upper(char *s)
 {
-	while (*s != '\0') {
-		if (*s >= 'a' && *s <= 'z') {
-			*s = 'A' + *s - 'a';
-		}
-		s++;
-	}
+	while (*s != '\0')
+   {
+      if (*s >= 'a' && *s <= 'z')
+         *s = 'A' + *s - 'a';
+      s++;
+   }
 }
 
 static void switch_mfl(int a, int b)
 {
-	// exchange 2 values in mfl list
+	/* exchange 2 values in mfl list */
 	char name_tmp[MAX_PATH];
 	char type_tmp;
 
@@ -289,103 +268,103 @@ static void switch_mfl(int a, int b)
 	mfl.type[b] = type_tmp;
 }
 
-#ifdef __LIBRETRO__
-extern char slash;
-extern char base_dir[MAX_PATH];
-#endif
-
 static void menu_create_flist(int v)
 {
-	int drv;
-	//file extension of FD image
-	char support[] = "D8888DHDMDUP2HDDIMXDFIMG";
-
-	drv = WinUI_get_drv_num(mkey_y);
-
-	if (drv < 0) {
-		return;
-	}
-
-	// set current directory when FDD is ejected
-	if (v == 1) {
-		if (drv < 2) {
-			FDD_EjectFD(drv);
-			Config.FDDImage[drv][0] = '\0';
-		} else {
-			Config.HDImage[drv - 2][0] = '\0';
-		}
-		strcpy(mfl.dir[drv], cur_dir_str);
-		return;
-	}
-
-	if (drv >= 2) {
-		strcpy(support, "HDF");
-	}
-
-	// This routine gets file lists.
 	DIR *dp;
 	struct dirent *dent;
 	struct stat buf;
-	int i, len;
+	int a, b, i;
 	char *n, ext[4], *p;
 	char ent_name[MAX_PATH];
+	//file extension of FD image
+	char support[] = "D8888DHDMDUP2HDDIMXDFIMG";
+	int drv = WinUI_get_drv_num(mkey_y);
 
+	if (drv < 0)
+		return;
+
+	// set current directory when FDD is ejected
+	if (v == 1)
+   {
+      if (drv < 2)
+      {
+         FDD_EjectFD(drv);
+         Config.FDDImage[drv][0] = '\0';
+      }
+      else
+         Config.HDImage[drv - 2][0] = '\0';
+      strcpy(mfl.dir[drv], cur_dir_str);
+      return;
+   }
+
+	if (drv >= 2)
+		strcpy(support, "HDF");
+
+	// This routine gets file lists.
 	dp = opendir(mfl.dir[drv]);
 
 	// xxx check if dp is null...
-	if (!dp) {
-		char tmp[PATH_MAX];
-		/* failed to open StartDir, use rom folder as default */
-		/* TODO: check for path more early */
-		snprintf(tmp, sizeof(tmp), "%s%c", base_dir, slash);
-		strcpy(mfl.dir[drv], tmp);
-		/* re-open folder */
-		dp = opendir(mfl.dir[drv]);
-	}
+	if (!dp)
+   {
+      char tmp[PATH_MAX];
+      /* failed to open StartDir, use rom folder as default */
+      /* TODO: check for path more early */
+      snprintf(tmp, sizeof(tmp), "%s%c", base_dir, slash);
+      strcpy(mfl.dir[drv], tmp);
+      /* re-open folder */
+      dp = opendir(mfl.dir[drv]);
+   }
 
 	// xxx You can get only MFL_MAX files.
-	for (i = 0 ; i < MFL_MAX; i++) {
-		dent = readdir(dp);
-		if (dent == NULL) {
-			break;
-		}
-		n = dent->d_name;
-		strcpy(ent_name, mfl.dir[drv]);
-		strcat(ent_name, n);
-		stat(ent_name, &buf);
+	for (i = 0 ; i < MFL_MAX; i++)
+   {
+      dent = readdir(dp);
+      if (!dent)
+         break;
+      n = dent->d_name;
+      strcpy(ent_name, mfl.dir[drv]);
+      strcat(ent_name, n);
+      stat(ent_name, &buf);
 
-		if (!S_ISDIR(buf.st_mode)) {
-			// Check extension if this is file.
-			len = strlen(n);
-			if (len < 4 || *(n + len - 4) != '.') {
-				i--;
-				continue;
-			}
-			strcpy(ext, n + len - 3);
-			upper(ext);
-			p = strstr(support, ext);
-			if (p == NULL || (p - support) % 3 != 0) {
-				i--;
-				continue;
-			}
-		} else {
-			if (!strcmp(n, ".")) {
-				i--;
-				continue;
-			}
+      if (!S_ISDIR(buf.st_mode))
+      {
+         /* Check extension if this is a file. */
+         size_t len = strlen(n);
+         if (len < 4 || *(n + len - 4) != '.')
+         {
+            i--;
+            continue;
+         }
+         strcpy(ext, n + len - 3);
+         upper(ext);
+         p = strstr(support, ext);
+         if (!p || (p - support) % 3 != 0)
+         {
+            i--;
+            continue;
+         }
+      }
+      else
+      {
+         if (!strcmp(n, "."))
+         {
+            i--;
+            continue;
+         }
 
-			// You can't go up over current directory.
-			if (!strcmp(n, "..") &&
-			    !strcmp(mfl.dir[drv], cur_dir_str)) {
-				i--;
-				continue;
-			}
-		}
+         // You can't go up over current directory.
+         if (     !strcmp(n, "..")
+               && !strcmp(mfl.dir[drv], cur_dir_str))
+         {
+            i--;
+            continue;
+         }
+      }
 
-		strcpy(mfl.name[i], n);
-		// set 1 if this is directory
-		mfl.type[i] = S_ISDIR(buf.st_mode)? 1 : 0;
-	}
+      strcpy(mfl.name[i], n);
+      // set 1 if this is directory
+      mfl.type[i] = S_ISDIR(buf.st_mode)? 1 : 0;
+   }
 
 	closedir(dp);
 
@@ -393,49 +372,50 @@ static void menu_create_flist(int v)
 	mfl.num = i;
 	mfl.ptr = 0;
 
-	// Sorting mfl!
-	// Folder first, than files
-	// buble sort glory
-	for (int a=0; a<i-1; a++) {
-		for (int b=a+1; b<i; b++) {
-			if (mfl.type[a]<mfl.type[b])
-				switch_mfl(a, b);
-			if ((mfl.type[a]==mfl.type[b]) && (strcasecmp(mfl.name[a], mfl.name[b])>0))
-				switch_mfl(a, b);
-		}
-	}
+	/* Sorting mfl
+	 * Folder first, then files
+	 * bubble sort glory */
+	for (a=0; a<i-1; a++)
+   {
+      for (b=a+1; b<i; b++)
+      {
+         if (mfl.type[a]<mfl.type[b])
+            switch_mfl(a, b);
+         if (     (mfl.type[a]==mfl.type[b]) 
+               && (strcasecmp(mfl.name[a], mfl.name[b])>0))
+            switch_mfl(a, b);
+      }
+   }
 }
 
 static void menu_frame_skip(int v)
 {
-	if (v == 0) {
+	if (v == 0)
 		Config.FrameRate = 7;
-	} else if (v == 7) {
+	else if (v == 7)
 		Config.FrameRate = 8;
-	} else if (v == 8) {
+	else if (v == 8)
 		Config.FrameRate = 16;
-	} else if (v == 9) {
+	else if (v == 9)
 		Config.FrameRate = 32;
-	} else if (v == 10) {
+	else if (v == 10)
 		Config.FrameRate = 60;
-	} else {
+	else
 		Config.FrameRate = v;
-	}
 }
 
 static void menu_sound_rate(int v)
 {
-	if (v == 0) {
+	if (v == 0)
 		Config.SampleRate = 0;
-	} else if (v == 1) {
+	else if (v == 1)
 		Config.SampleRate = 11025;
-	} else if (v == 2) {
+	else if (v == 2)
 		Config.SampleRate = 22050;
-	} else if (v == 3) {
+	else if (v == 3)
 		Config.SampleRate = 44100;
-	} else if (v == 4) {
+	else if (v == 4)
 		Config.SampleRate = 48000;
-	}
 }
 
 static void menu_vkey_size(int v)
@@ -463,23 +443,21 @@ static void menu_joykey(int v)
 	Config.JoyKey = v;
 }
 
-// ex. ./hoge/.. -> ./
-// ( ./ ---down hoge dir--> ./hoge ---up hoge dir--> ./hoge/.. )
 static void shortcut_dir(int drv)
 {
-	int i, len, found = 0;
-	char *p;
-
-	// len is larger than 2
-	len = strlen(mfl.dir[drv]);
-	p = mfl.dir[drv] + len - 2;
-	for (i = len - 2; i >= 0; i--) {
-		if (*p == slash/*'/'*/) {
-			found = 1;
-			break;
-		}
-		p--;
-	}
+	int i, found = 0;
+	/* len is larger than 2 */
+	size_t len = strlen(mfl.dir[drv]);
+	char *p    = mfl.dir[drv] + len - 2;
+	for (i = len - 2; i >= 0; i--)
+   {
+      if (*p == slash)
+      {
+         found = 1;
+         break;
+      }
+      p--;
+   }
 #ifdef _WIN32
 	if (found && strcmp(p, "\\..\\")) {
 #else
@@ -667,9 +645,6 @@ int WinUI_Menu(int first)
 					}
 				} else if (mfl.y + 1 < mfl.num) {
 					mfl.y++;
-#ifdef DEBUG
-					printf("mfl.y %d\n", mfl.y);
-#endif
 				}
 				mfile_redraw = 1;
 			}

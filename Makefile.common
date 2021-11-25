@@ -52,7 +52,6 @@ SOURCES_C 		+= \
 			   $(CORE_DIR)/libretro/keyboard.c \
 			   $(CORE_DIR)/libretro/mouse.c \
 			   $(CORE_DIR)/libretro/prop.c \
-			   $(CORE_DIR)/libretro/status.c \
 			   $(CORE_DIR)/libretro/timer.c \
 			   $(CORE_DIR)/libretro/dswin.c \
 			   $(CORE_DIR)/libretro/windraw.c \

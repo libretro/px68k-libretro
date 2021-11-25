@@ -8,8 +8,6 @@
 #include "opm.h"
 #include "fmgeninl.h"
 
-//#define LOGNAME "opm"
-
 namespace FM
 {
 
@@ -93,8 +91,6 @@ void OPM::Reset()
 void OPM::RebuildTimeTable()
 {
 	uint fmclock = clock / 64;
-
-	assert(fmclock < (0x80000000 >> FM_RATIOBITS));
 	rateratio = ((fmclock << FM_RATIOBITS) + rate/2) / rate;
 	SetTimerBase(fmclock);
 	
@@ -207,8 +203,6 @@ void OPM::SetReg(uint addr, uint data)
 	
 	case 0x18:					// LFRQ(lfo freq)
 		lfofreq = data;
-
-		assert(16-4-FM_RATIOBITS >= 0);
 		lfo_count_diff_ = 
 			rateratio 
 			* ((16 + (lfofreq & 15)) << (16 - 4 - FM_RATIOBITS)) 
@@ -361,7 +355,6 @@ void OPM::BuildLFOTable()
 
 			amtable[type][c] = a;
 			pmtable[type][c] = -p-1;
-//			printf("%d ", p);
 		}
 	}
 }
@@ -372,13 +365,9 @@ inline void OPM::LFO()
 {
 	if (lfowaveform != 3)
 	{
-//		if ((lfo_count_ ^ lfo_count_prev_) & ~((1 << 15) - 1))
-		{
-			int c = (lfo_count_ >> 15) & 0x1fe;
-//	fprintf(stderr, "%.8x %.2x\n", lfo_count_, c);
-			chip.SetPML(pmtable[lfowaveform][c] * pmd / 128 + 0x80);
-			chip.SetAML(amtable[lfowaveform][c] * amd / 128);
-		}
+		int c = (lfo_count_ >> 15) & 0x1fe;
+		chip.SetPML(pmtable[lfowaveform][c] * pmd / 128 + 0x80);
+		chip.SetAML(amtable[lfowaveform][c] * amd / 128);
 	}
 	else
 	{

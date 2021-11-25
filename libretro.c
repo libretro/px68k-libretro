@@ -1,4 +1,3 @@
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -31,10 +30,12 @@ char slash = '/';
 #define MODE_HIGH_ACTUAL 55.46 /* floor((10*100*1000^2 / VSYNC_HIGH)) / 100 */
 #define MODE_NORM_ACTUAL 61.46 /* floor((10*100*1000^2 / VSYNC_NORM)) / 100 */
 #define MODE_HIGH_COMPAT 55.5  /* 31.50 kHz - commonly used  */
-#define MODE_NORM_COMPAT 59.94 /* 15.98 kHz - actual value should be ~61.46 fps. this is lowered to
-                     * reduced the chances of audio stutters due to mismatch
-                     * fps when vsync is used since most monitors are only capable
-                     * of upto 60Hz refresh rate. */
+#define MODE_NORM_COMPAT 59.94 /* 15.98 kHz - actual value should 
+                                  be ~61.46 fps. this is lowered to
+                                  reduce the chances of audio stutters 
+                                  due to mismatched fps when vsync is
+                                  used since most monitors are only 
+                                  capable of up to 60Hz refresh rate */
 enum { MODES_ACTUAL, MODES_COMPAT, MODE_NORM = 0, MODE_HIGH, MODES };
 const float framerates[][MODES] = {
    { MODE_NORM_ACTUAL, MODE_HIGH_ACTUAL },
@@ -66,9 +67,10 @@ int CHANGEAV_TIMING = 0; /* Separate change of geometry from change of refresh r
 int VID_MODE = MODE_NORM; /* what framerate we start in */
 static float FRAMERATE;
 DWORD libretro_supports_input_bitmasks = 0;
+/* TODO/FIXME - is total_usec even used for anything meaningful here? */
 unsigned int total_usec = (unsigned int) -1;
 
-static signed short soundbuf[1024 * 2];
+static int16_t soundbuf[1024 * 2];
 static int soundbuf_size;
 
 uint16_t *videoBuffer;
@@ -83,7 +85,8 @@ static int opt_rumble_enabled = 1;
 
 #define MAX_DISKS 10
 
-typedef enum {
+typedef enum
+{
    FDD0 = 0,
    FDD1 = 1
 } disk_drive;
@@ -91,10 +94,12 @@ typedef enum {
 /* .dsk swap support */
 struct disk_control_interface_t
 {
-   unsigned dci_version;                        /* disk control interface version, 0 = use old interface */
-   unsigned total_images;                       /* total number if disk images */
-   unsigned index;                              /* currect disk index */
-   disk_drive cur_drive;                          /* current active drive */
+   /* disk control interface version, 0 = use old interface */
+   unsigned dci_version;
+   /* total number if disk images */
+   unsigned total_images;                       
+   unsigned index;                              /* current disk index */
+   disk_drive cur_drive;                        /* current active drive */
    bool inserted[2];                            /* tray state for FDD0/FDD1, 0 = disk ejected, 1 = disk inserted */
 
    unsigned char path[MAX_DISKS][MAX_PATH];     /* disk image paths */
@@ -107,8 +112,6 @@ struct disk_control_interface_t
 static struct disk_control_interface_t disk;
 static struct retro_disk_control_callback dskcb;
 static struct retro_disk_control_ext_callback dskcb_ext;
-
-static void update_variables(void);
 
 static bool is_path_absolute(const char* path)
 {
@@ -298,40 +301,43 @@ void attach_disk_swap_interface(void)
 
 void attach_disk_swap_interface_ext(void)
 {
-   dskcb_ext.set_eject_state = set_eject_state;
-   dskcb_ext.get_eject_state = get_eject_state;
-   dskcb_ext.set_image_index = set_image_index;
-   dskcb_ext.get_image_index = get_image_index;
-   dskcb_ext.get_num_images  = get_num_images;
-   dskcb_ext.add_image_index = add_image_index;
+   dskcb_ext.set_eject_state     = set_eject_state;
+   dskcb_ext.get_eject_state     = get_eject_state;
+   dskcb_ext.set_image_index     = set_image_index;
+   dskcb_ext.get_image_index     = get_image_index;
+   dskcb_ext.get_num_images      = get_num_images;
+   dskcb_ext.add_image_index     = add_image_index;
    dskcb_ext.replace_image_index = replace_image_index;
-   dskcb_ext.set_initial_image = NULL;
-   dskcb_ext.get_image_path = disk_get_image_path;
-   dskcb_ext.get_image_label = disk_get_image_label;
+   dskcb_ext.set_initial_image   = NULL;
+   dskcb_ext.get_image_path      = disk_get_image_path;
+   dskcb_ext.get_image_label     = disk_get_image_label;
 
-   environ_cb(RETRO_ENVIRONMENT_SET_DISK_CONTROL_EXT_INTERFACE, &dskcb_ext);
+   environ_cb(RETRO_ENVIRONMENT_SET_DISK_CONTROL_EXT_INTERFACE,
+         &dskcb_ext);
 }
 
 static void disk_swap_interface_init(void)
 {
    unsigned i;
-   disk.dci_version  = 0;
-   disk.total_images = 0;
-   disk.index        = 0;
-   disk.cur_drive    = FDD1;
-   disk.inserted[0]  = false;
-   disk.inserted[1]  = false;
+   disk.dci_version            = 0;
+   disk.total_images           = 0;
+   disk.index                  = 0;
+   disk.cur_drive              = FDD1;
+   disk.inserted[0]            = false;
+   disk.inserted[1]            = false;
 
    disk.g_initial_disc         = 0;
    disk.g_initial_disc_path[0] = '\0';
 
    for (i = 0; i < MAX_DISKS; i++)
    {
-      disk.path[i][0]  = '\0';
-      disk.label[i][0] = '\0';
+      disk.path[i][0]          = '\0';
+      disk.label[i][0]         = '\0';
    }
 
-   if (environ_cb(RETRO_ENVIRONMENT_GET_DISK_CONTROL_INTERFACE_VERSION, &disk.dci_version) && (disk.dci_version >= 1))
+   if (environ_cb(
+            RETRO_ENVIRONMENT_GET_DISK_CONTROL_INTERFACE_VERSION,
+            &disk.dci_version) && (disk.dci_version >= 1))
       attach_disk_swap_interface_ext();
    else
       attach_disk_swap_interface();
@@ -353,11 +359,10 @@ static char CMDFILE[512];
 
 static int loadcmdfile(char *argv)
 {
-   int res = 0;
-
+   int res  = 0;
    FILE *fp = fopen(argv, "r");
 
-   if (fp != NULL)
+   if (fp)
    {
       if (fgets(CMDFILE, 512, fp) != NULL)
          res = 1;
@@ -369,24 +374,21 @@ static int loadcmdfile(char *argv)
 
 static int HandleExtension(char *path, char *ext)
 {
-   int len = strlen(path);
-
-   if (len >= 4 &&
-         path[len - 4] == '.' &&
-         path[len - 3] == ext[0] &&
-         path[len - 2] == ext[1] &&
-         path[len - 1] == ext[2])
-   {
+   size_t len = strlen(path);
+   if (     len >= 4
+         && path[len - 4] == '.'
+         && path[len - 3] == ext[0]
+         && path[len - 2] == ext[1]
+         && path[len - 1] == ext[2])
       return 1;
-   }
-
    return 0;
 }
-//Args for experimental_cmdline
+
+/* Args for experimental_cmdline */
 static char ARGUV[64][1024];
 static unsigned char ARGUC = 0;
 
-// Args for Core
+/* Args for Core */
 static char XARGV[64][1024];
 static const char* xargv_cmd[64];
 static int PARAMCOUNT = 0;
@@ -740,7 +742,7 @@ void retro_set_controller_port_device(unsigned port, unsigned device)
             joypad2 = false;
          break;
       default:
-	 break;
+         break;
    }
    retro_set_controller_descriptors();
 }
@@ -769,8 +771,8 @@ void retro_set_environment(retro_environment_t cb)
 
 static void update_variables(void)
 {
-   int i = 0, snd_opt = 0;
-   char key[256] = {0};
+   int i = 0, snd_opt        = 0;
+   char key[256]             = {0};
    struct retro_variable var = {0};
 
    strcpy(key, "px68k_joytype");
@@ -779,14 +781,14 @@ static void update_variables(void)
    {
       key[strlen("px68k_joytype")] = '1' + i;
       var.value = NULL;
-      if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value) {
-         if (!(strcmp(var.value, "Default (2 Buttons)"))) {
+      if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+      {
+         if (!(strcmp(var.value, "Default (2 Buttons)")))
             Config.JOY_TYPE[i] = 0;
-         } else if (!(strcmp(var.value, "CPSF-MD (8 Buttons)"))) {
+         else if (!(strcmp(var.value, "CPSF-MD (8 Buttons)")))
             Config.JOY_TYPE[i] = 1;
-         } else if (!(strcmp(var.value, "CPSF-SFC (8 Buttons)"))) {
+         else if (!(strcmp(var.value, "CPSF-SFC (8 Buttons)")))
             Config.JOY_TYPE[i] = 2;
-         }
       }
    }
 
@@ -847,21 +849,18 @@ static void update_variables(void)
       Config.ram_size = (value * 1024 * 1024);
    }
 
-   var.key = "px68k_analog";
+   var.key   = "px68k_analog";
    var.value = NULL;
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
-      //fprintf(stderr, "value: %s\n", var.value);
       if (!strcmp(var.value, "disabled"))
          opt_analog = false;
       if (!strcmp(var.value, "enabled"))
          opt_analog = true;
-
-      //fprintf(stderr, "[libretro-test]: Analog: %s.\n",opt_analog?"ON":"OFF");
    }
 
-   var.key = "px68k_adpcm_vol";
+   var.key   = "px68k_adpcm_vol";
    var.value = NULL;
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
@@ -1094,9 +1093,9 @@ void retro_get_system_info(struct retro_system_info *info)
 #define PX68K_VERSION "0.15+"
 #endif
    memset(info, 0, sizeof(*info));
-   info->library_name = "PX68K";
-   info->library_version = PX68K_VERSION GIT_VERSION;
-   info->need_fullpath = true;
+   info->library_name     = "PX68K";
+   info->library_version  = PX68K_VERSION GIT_VERSION;
+   info->need_fullpath    = true;
    info->valid_extensions = "dim|zip|img|d88|88d|hdm|dup|2hd|xdf|hdf|cmd|m3u";
 }
 
@@ -1104,7 +1103,7 @@ void retro_get_system_info(struct retro_system_info *info)
 void retro_get_system_av_info(struct retro_system_av_info *info)
 {
    /* FIXME handle PAL/NTSC */
-   struct retro_game_geometry geom = { retrow, retroh,800, 600 ,4.0 / 3.0 };
+   struct retro_game_geometry geom   = { retrow, retroh, 800, 600 ,4.0 / 3.0 };
    struct retro_system_timing timing = { FRAMERATE, SOUNDRATE };
 
    info->geometry = geom;
@@ -1114,8 +1113,8 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
 void update_geometry(void)
 {
    struct retro_system_av_info system_av_info;
-   system_av_info.geometry.base_width = retrow;
-   system_av_info.geometry.base_height = retroh;
+   system_av_info.geometry.base_width   = retrow;
+   system_av_info.geometry.base_height  = retroh;
    system_av_info.geometry.aspect_ratio = (float)4.0/3.0;// retro_aspect;
    environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &system_av_info);
 }
@@ -1123,7 +1122,8 @@ void update_geometry(void)
 static void frame_time_cb(retro_usec_t usec)
 {
    total_usec += usec;
-   /* -1 is reserved as an error code for unavailable a la stdlib clock() */
+   /* -1 is reserved as an error code 
+      for unavailable a la stdlib clock() */
    if (total_usec == (unsigned int) -1)
       total_usec = 0;
 }
@@ -1131,8 +1131,7 @@ static void frame_time_cb(retro_usec_t usec)
 static void setup_frame_time_cb(void)
 {
    struct retro_frame_time_callback cb;
-
-   cb.callback = frame_time_cb;
+   cb.callback  = frame_time_cb;
    cb.reference = ceil(1000000 / FRAMERATE);
    if (!environ_cb(RETRO_ENVIRONMENT_SET_FRAME_TIME_CALLBACK, &cb))
       total_usec = (unsigned int) -1;
@@ -1180,10 +1179,11 @@ bool retro_load_game(const struct retro_game_info *info)
    no_content = 1;
    RPATH[0] = '\0';
 
-   if (info && info->path) {
+   if (info && info->path)
+   {
       const char *full_path = 0;
-      no_content = 0;
-      full_path = info->path;
+      no_content            = 0;
+      full_path             = info->path;
       strcpy(RPATH, full_path);
       extract_directory(base_dir, info->path, sizeof(base_dir));
 
@@ -1194,7 +1194,8 @@ bool retro_load_game(const struct retro_game_info *info)
    return true;
 }
 
-bool retro_load_game_special(unsigned game_type, const struct retro_game_info *info, size_t num_info)
+bool retro_load_game_special(unsigned game_type,
+      const struct retro_game_info *info, size_t num_info)
 {
    (void)game_type;
    (void)info;
@@ -1234,52 +1235,45 @@ void retro_init(void)
 {
    struct retro_log_callback log;
    struct retro_rumble_interface rumble;
-   const char *system_dir = NULL;
+   const char *save_dir        = NULL;
+   const char *content_dir     = NULL;
+   const char *system_dir      = NULL;
+   enum retro_pixel_format fmt = RETRO_PIXEL_FORMAT_RGB565;
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_LOG_INTERFACE, &log))
       log_cb = log.log;
    else
       log_cb = NULL;
 
-   if (environ_cb(RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY, &system_dir) && system_dir)
-   {
-      // if defined, use the system directory
+   if (environ_cb(RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY, &system_dir) 
+         && system_dir)
       retro_system_directory = system_dir;
-   }
 
-   const char *content_dir = NULL;
 
-   if (environ_cb(RETRO_ENVIRONMENT_GET_CONTENT_DIRECTORY, &content_dir) && content_dir)
-   {
-      // if defined, use the system directory
+   if (environ_cb(RETRO_ENVIRONMENT_GET_CONTENT_DIRECTORY, &content_dir) 
+         && content_dir)
       retro_content_directory = content_dir;
-   }
 
-   const char *save_dir = NULL;
-
-   if (environ_cb(RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY, &save_dir) && save_dir)
-   {
-      // If save directory is defined use it, otherwise use system directory
+   /* If save directory is defined use it, 
+      otherwise use system directory */
+   if (environ_cb(RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY, &save_dir) 
+		   && save_dir)
       retro_save_directory = *save_dir ? save_dir : retro_system_directory;
-   }
    else
    {
       // make retro_save_directory the same in case RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY is not implemented by the frontend
       retro_save_directory = retro_system_directory;
    }
 
-   if(retro_system_directory == NULL) sprintf(RETRO_DIR, "%s\0",".");
-   else sprintf(RETRO_DIR, "%s\0", retro_system_directory);
+   if (!retro_system_directory)
+	   sprintf(RETRO_DIR, "%s\0",".");
+   else
+	   sprintf(RETRO_DIR, "%s\0", retro_system_directory);
 
    sprintf(retro_system_conf, "%s%ckeropi\0", RETRO_DIR, slash);
 
-   enum retro_pixel_format fmt = RETRO_PIXEL_FORMAT_RGB565;
-
    if (!environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &fmt))
-   {
-      fprintf(stderr, "RGB565 is not supported.\n");
       exit(0);
-   }
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_RUMBLE_INTERFACE, &rumble) && rumble.set_rumble_state)
       rumble_cb = rumble.set_rumble_state;
@@ -1296,10 +1290,10 @@ void retro_init(void)
 
    /* set sane defaults */
    Config.save_fdd_path = 1;
-   Config.clockmhz = 10;
-   Config.ram_size = 2 * 1024 *1024;
-   Config.JOY_TYPE[0] = 0;
-   Config.JOY_TYPE[1] = 0;
+   Config.clockmhz      = 10;
+   Config.ram_size      = 2 * 1024 *1024;
+   Config.JOY_TYPE[0]   = 0;
+   Config.JOY_TYPE[1]   = 0;
 
    update_variables();
 
@@ -1360,10 +1354,9 @@ void retro_run(void)
       return;
    }
 
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE, &updated) && updated)
-   {
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE, &updated) 
+         && updated)
       update_variables();
-   }
 
    if (CHANGEAV || CHANGEAV_TIMING)
    {

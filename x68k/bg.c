@@ -1,7 +1,4 @@
-// ---------------------------------------------------------------------------------------
-//  BG.C - BGとスプライト
-//  ToDo：透明色の処理チェック（特に対Text間）
-// ---------------------------------------------------------------------------------------
+/*  BG.C - BGとスプライト */
 
 #include <stdint.h>
 #include <string.h>
@@ -59,9 +56,7 @@ void BG_Init(void)
 }
 
 
-// -----------------------------------------------------------------------
-//   I/O Read
-// -----------------------------------------------------------------------
+/*   I/O Read */
 BYTE FASTCALL BG_Read(DWORD adr)
 {
 	if ((adr>=0xeb0000)&&(adr<0xeb0400))
@@ -78,9 +73,7 @@ BYTE FASTCALL BG_Read(DWORD adr)
 }
 
 
-// -----------------------------------------------------------------------
-//   I/O Write
-// -----------------------------------------------------------------------
+/*   I/O Write */
 void FASTCALL BG_Write(DWORD adr, BYTE data)
 {
 	DWORD bg16chr;
@@ -256,20 +249,17 @@ void FASTCALL BG_Write(DWORD adr, BYTE data)
 	}
 }
 
-// -----------------------------------------------------------------------
-//   1ライン分の描画
-// -----------------------------------------------------------------------
-struct SPRITECTRLTBL {
-	WORD	sprite_posx;
-	WORD	sprite_posy;
-	WORD	sprite_ctrl;
-	BYTE	sprite_ply;
-	BYTE	dummy;
+struct SPRITECTRLTBL
+{
+   WORD	sprite_posx;
+   WORD	sprite_posy;
+   WORD	sprite_ctrl;
+   BYTE	sprite_ply;
+   BYTE	dummy;
 } __attribute__ ((packed));
 typedef struct SPRITECTRLTBL SPRITECTRLTBL_T;
 
-INLINE void
-Sprite_DrawLineMcr(int pri)
+INLINE void Sprite_DrawLineMcr(int pri)
 {
 	SPRITECTRLTBL_T *sct = (SPRITECTRLTBL_T *)Sprite_Regs;
 	DWORD y;
@@ -354,58 +344,55 @@ Sprite_DrawLineMcr(int pri)
         }						    \
 }
 
-void bg_drawline_loopx8(WORD BGTOP, DWORD BGScrollX, DWORD BGScrollY, long adjust, int ng)
+void bg_drawline_loopx8(WORD BGTOP, DWORD BGScrollX,
+      DWORD BGScrollY, long adjust, int ng)
 {
-       unsigned char dat, bl;
-       int i, j, d;
-       DWORD ebp, edx, edi, ecx;
-       WORD si;
-       BYTE *esi;
+   unsigned char dat, bl;
+   int i, j, d;
+   WORD si;
+   BYTE *esi;
+   DWORD ebp = ((BGScrollY + VLINEBG - BG_VLINE) & 7) << 3;
+   DWORD edx = BGTOP + (((BGScrollY + VLINEBG - BG_VLINE) & 0x1f8) << 4);
+   DWORD edi = ((BGScrollX - adjust) & 7) ^ 15;
+   DWORD ecx = ((BGScrollX - adjust) & 0x1f8) >> 2;
 
-       ebp = ((BGScrollY + VLINEBG - BG_VLINE) & 7) << 3;
-       edx = BGTOP + (((BGScrollY + VLINEBG - BG_VLINE) & 0x1f8) << 4);
-       edi = ((BGScrollX - adjust) & 7) ^ 15;
-       ecx = ((BGScrollX - adjust) & 0x1f8) >> 2;
+   for (i = TextDotX >> 3; i >= 0; i--) {
+      bl = BG[ecx + edx];
+      si = (WORD)BG[ecx + edx + 1] << 6;
 
-       for (i = TextDotX >> 3; i >= 0; i--) {
-               bl = BG[ecx + edx];
-               si = (WORD)BG[ecx + edx + 1] << 6;
-
-               if (bl < 0x40) {
-                       esi = &BGCHR8[si + ebp];
-                       d = +1;
-               } else if ((bl - 0x40) & 0x80) {
-                       esi = &BGCHR8[si + 0x3f - ebp];
-                       d = -1;
-               } else if ((signed char)bl >= 0x40) {
-                       esi = &BGCHR8[si + ebp + 7];
-                       d = -1;
-               } else {
-                       esi = &BGCHR8[si + 0x38 - ebp];
-                       d = +1;
-               }
-	       if (ng) {
-		       BG_DRAWLINE_LOOPY_NG(8);
-	       } else {
-		       BG_DRAWLINE_LOOPY(8);
-	       }
-               ecx += 2;
-               ecx &= 0x7f;
-       }
+      if (bl < 0x40) {
+         esi = &BGCHR8[si + ebp];
+         d = +1;
+      } else if ((bl - 0x40) & 0x80) {
+         esi = &BGCHR8[si + 0x3f - ebp];
+         d = -1;
+      } else if ((signed char)bl >= 0x40) {
+         esi = &BGCHR8[si + ebp + 7];
+         d = -1;
+      } else {
+         esi = &BGCHR8[si + 0x38 - ebp];
+         d = +1;
+      }
+      if (ng) {
+         BG_DRAWLINE_LOOPY_NG(8);
+      } else {
+         BG_DRAWLINE_LOOPY(8);
+      }
+      ecx += 2;
+      ecx &= 0x7f;
+   }
 }
 
 void bg_drawline_loopx16(WORD BGTOP, DWORD BGScrollX, DWORD BGScrollY, long adjust, int ng)
 {
        unsigned char dat, bl;
        int i, j, d;
-       DWORD ebp, edx, edi, ecx;
        WORD si;
        BYTE *esi;
-
-       ebp = ((BGScrollY + VLINEBG - BG_VLINE) & 15) << 4;
-       edx = BGTOP + (((BGScrollY + VLINEBG - BG_VLINE) & 0x3f0) << 3);
-       edi = ((BGScrollX - adjust) & 15) ^ 15;
-       ecx = ((BGScrollX - adjust) & 0x3f0) >> 3;
+       DWORD ebp = ((BGScrollY + VLINEBG - BG_VLINE) & 15) << 4;
+       DWORD edx = BGTOP + (((BGScrollY + VLINEBG - BG_VLINE) & 0x3f0) << 3);
+       DWORD edi = ((BGScrollX - adjust) & 15) ^ 15;
+       DWORD ecx = ((BGScrollX - adjust) & 0x3f0) >> 3;
 
        for (i = TextDotX >> 4; i >= 0; i--) {
 		bl = BG[ecx + edx];

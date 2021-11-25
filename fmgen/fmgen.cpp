@@ -26,15 +26,9 @@
 #include "fmgen.h"
 #include "fmgeninl.h"
 
-#define LOGNAME "fmgen"
-
-// ---------------------------------------------------------------------------
-
 #define FM_EG_BOTTOM 955
 
-// ---------------------------------------------------------------------------
-//	Table/etc
-//
+/*	Table/etc */
 namespace FM
 {
 	const uint8 Operator::notetable[128] =
@@ -198,7 +192,6 @@ void MakeLFOTable()
 	//		 3		 6,      12      30       60       240      420		/ 720
 	//	1.000963
 	//	lfofref[level * max * wave];
-	//	pre = lfofref[level][pms * wave >> 8];
 	static const uint8 amt[2][4] = 
 	{
 		{ 31, 6, 4, 3 }, // OPNA
@@ -212,23 +205,14 @@ void MakeLFOTable()
 			double pmb = pms[type][i];
 			for (int j=0; j<FM_LFOENTS; j++)
 			{
-				//double v = pow(2.0, pmb * (2 * j - FM_LFOENTS+1) / (FM_LFOENTS-1));
 				double w = 0.6 * pmb * sin(2 * j * 3.14159265358979323846 / FM_LFOENTS) + 1;
-//				pmtable[type][i][j] = int(0x10000 * (v - 1));
-//				if (type == 0)
-					pmtable[type][i][j] = int(0x10000 * (w - 1));
-//				else
-//					pmtable[type][i][j] = int(0x10000 * (v - 1));
-
-//				printf("pmtable[%d][%d][%.2x] = %5d  %7.5f %7.5f\n", type, i, j, pmtable[type][i][j], v, w);
+				pmtable[type][i][j] = int(0x10000 * (w - 1));
 			}
 		}
 		for (i=0; i<4; i++)
 		{
 			for (int j=0; j<FM_LFOENTS; j++)
-			{
 				amtable[type][i][j] = (((j * 4) >> amt[type][i]) * 2) << 2;
-			}
 		}
 	}
 }
@@ -260,7 +244,6 @@ void Chip::MakeTable()
 	static const float dt2lv[4] = { 1.f, 1.414f, 1.581f, 1.732f };
 	for (h=0; h<4; h++)
 	{
-		assert(2 + FM_RATIOBITS - FM_PGBITS >= 0);
 		double rr = dt2lv[h] * double(ratio_) / (1 << (2 + FM_RATIOBITS - FM_PGBITS));
 		for (l=0; l<16; l++)
 		{
@@ -326,9 +309,6 @@ void FM::Operator::Reset()
 
 void Operator::MakeTable()
 {
-	// 対数テーブルの作成
-	assert(FM_CLENTS >= 256);
-
 	int* p = cltable;
 	int i;
 	for (i=0; i<256; i++)
@@ -344,17 +324,12 @@ void Operator::MakeTable()
 		p++;
 	}
 
-//	for (i=0; i<13*256; i++)
-//		printf("%4d, %d, %d\n", i, cltable[i*2], cltable[i*2+1]);
-
-	// サインテーブルの作成
 	double log2 = log(2.);
 	for (i=0; i<FM_OPSINENTS/2; i++)
 	{
 		double r = (i * 2 + 1) * FM_PI / FM_OPSINENTS;
 		double q = -256 * log(sin(r)) / log2;
 		uint s = (int) (floor(q + 0.5)) + 1;
-//		printf("%d, %d\n", s, cltable[s * 2] / 8);
 		sinetable[i]                  = s * 2 ;
 		sinetable[FM_OPSINENTS / 2 + i] = s * 2 + 1;
 	}
@@ -411,8 +386,6 @@ void Operator::Prepare()
 		if (ssg_type_ && (eg_phase_ != release))
 		{
 			int m = ar_ >= ((ssg_type_ == 8 || ssg_type_ == 12) ? 56 : 60);
-
-			assert(0 <= ssg_phase_ && ssg_phase_ <= 2);
 			const int* table = ssgenvtable[ssg_type_ & 7][m][ssg_phase_];
 
 			ssg_offset_ = table[0] * 0x200;
@@ -439,8 +412,6 @@ void Operator::ShiftPhase(EGPhase nextphase)
 				ssg_phase_ = 1;
 			
 			int m = ar_ >= ((ssg_type_ == 8 || ssg_type_ == 12) ? 56 : 60);
-
-			assert(0 <= ssg_phase_ && ssg_phase_ <= 2);
 			const int* table = ssgenvtable[ssg_type_ & 7][m][ssg_phase_];
 
 			ssg_offset_ = table[0] * 0x200;
@@ -763,29 +734,25 @@ void Channel4::SetFNum(uint f)
 //	KC/KF を設定
 void Channel4::SetKCKF(uint kc, uint kf)
 {
-	static const uint kctable[16] = 
-	{ 
-		5197, 5506, 5833, 6180, 6180, 6547, 6937, 7349, 
-		7349, 7786, 8249, 8740, 8740, 9259, 9810, 10394, 
-	};
+   static const uint kctable[16] = 
+   { 
+      5197, 5506, 5833, 6180, 6180, 6547, 6937, 7349, 
+      7349, 7786, 8249, 8740, 8740, 9259, 9810, 10394, 
+   };
 
-	int oct = 19 - ((kc >> 4) & 7);
+   int oct = 19 - ((kc >> 4) & 7);
 
-//printf("%p", this);
-	uint kcv = kctable[kc & 0x0f];
-	kcv = (kcv + 2) / 4 * 4;
-//printf(" %.4x", kcv);
-	uint dp = kcv * kftable[kf & 0x3f];
-//printf(" %.4x %.4x %.8x", kcv, kftable[kf & 0x3f], dp >> oct);
-	dp >>= 16 + 3;
-	dp <<= 16 + 3;
-	dp >>= oct;	
-	uint bn = (kc >> 2) & 31;
-	op[0].SetDPBN(dp, bn);
-	op[1].SetDPBN(dp, bn);
-	op[2].SetDPBN(dp, bn);
-	op[3].SetDPBN(dp, bn);
-//printf(" %.8x\n", dp);
+   uint kcv = kctable[kc & 0x0f];
+   kcv = (kcv + 2) / 4 * 4;
+   uint dp = kcv * kftable[kf & 0x3f];
+   dp >>= 16 + 3;
+   dp <<= 16 + 3;
+   dp >>= oct;	
+   uint bn = (kc >> 2) & 31;
+   op[0].SetDPBN(dp, bn);
+   op[1].SetDPBN(dp, bn);
+   op[2].SetDPBN(dp, bn);
+   op[3].SetDPBN(dp, bn);
 }
 
 //	キー制御
@@ -950,7 +917,6 @@ ISample Channel4::CalcN(uint noise)
 	return *out[2] + o;
 }
 
-//  合成
 ISample Channel4::CalcLN(uint noise)
 {
 	chip_->SetPMV(pms[chip_->GetPML()]);
@@ -964,4 +930,4 @@ ISample Channel4::CalcLN(uint noise)
 	return *out[2] + o;
 }
 
-}	// namespace FM
+}	/* namespace FM */

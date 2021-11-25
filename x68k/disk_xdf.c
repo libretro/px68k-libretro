@@ -13,18 +13,20 @@ void XDF_Init(void)
 {
 	int drv;
 
-	for (drv=0; drv<4; drv++) {
-		XDFCur[drv] = 0;
-		XDFImg[drv] = 0;
-		memset(XDFFile[drv], 0, MAX_PATH);
-	}
+	for (drv=0; drv<4; drv++)
+   {
+      XDFCur[drv] = 0;
+      XDFImg[drv] = 0;
+      memset(XDFFile[drv], 0, MAX_PATH);
+   }
 }
 
 
 void XDF_Cleanup(void)
 {
 	int drv;
-	for (drv=0; drv<4; drv++) XDF_Eject(drv);
+	for (drv=0; drv<4; drv++)
+      XDF_Eject(drv);
 }
 
 
@@ -39,11 +41,12 @@ int XDF_SetFD(int drv, char* filename)
 	if ( !XDFImg[drv] ) return FALSE;
 	memset(XDFImg[drv], 0xe5, 1261568);
 	fp = File_Open(XDFFile[drv]);
-	if ( !fp ) {
-		memset(XDFFile[drv], 0, MAX_PATH);
-		FDD_SetReadOnly(drv);
-		return FALSE;
-	}
+	if ( !fp )
+   {
+      memset(XDFFile[drv], 0, MAX_PATH);
+      FDD_SetReadOnly(drv);
+      return FALSE;
+   }
 	File_Seek(fp, 0, FSEEK_SET);
 	File_Read(fp, XDFImg[drv], 1261568);
 	File_Close(fp);
@@ -156,7 +159,6 @@ int XDF_Read(int drv, FDCID* id, unsigned char* buf)
 int XDF_ReadDiag(int drv, FDCID* id, FDCID* retid, unsigned char* buf)
 {
 	int pos;
-	(void)id;
 	if ( (drv<0)||(drv>3) ) return FALSE;
 	if ( (XDFTrk[drv]<0)||(XDFTrk[drv]>153) ) return FALSE;
 	if ( (XDFCur[drv]<0)||(XDFCur[drv]>8) ) return FALSE;
@@ -175,7 +177,6 @@ int XDF_ReadDiag(int drv, FDCID* id, FDCID* retid, unsigned char* buf)
 int XDF_Write(int drv, FDCID* id, unsigned char* buf, int del)
 {
 	int pos;
-	(void)del;
 	if ( (drv<0)||(drv>3) ) return FALSE;
 	if ( (XDFTrk[drv]<0)||(XDFTrk[drv]>153) ) return FALSE;
 	if ( !XDFImg[drv] ) return FALSE;

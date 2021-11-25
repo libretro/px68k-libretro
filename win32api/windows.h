@@ -2,7 +2,6 @@
 #define	__NP2_WIN32EMUL_H__
 
 #include <sys/param.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <stddef.h>

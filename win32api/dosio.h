@@ -31,6 +31,7 @@
 #ifndef	__NP2_DOSIO_H__
 #define	__NP2_DOSIO_H__
 
+#include <stdio.h>
 #include "common.h"
 #include "appftype.h"
 
@@ -49,17 +50,17 @@ void dosio_term(void);
 							// ファイル操作
 FILEH file_open(LPSTR filename);
 FILEH file_create(LPSTR filename, int ftype);
-DWORD file_seek(FILEH handle, long pointer, short mode);
+DWORD file_seek(FILEH handle, long pointer, int16_t mode);
 DWORD file_lread(FILEH handle, void *data, DWORD length);
 DWORD file_lwrite(FILEH handle, void *data, DWORD length);
 WORD file_read(FILEH handle, void *data, WORD length);
-short file_close(FILEH handle);
-short file_attr(LPSTR filename);
+int16_t file_close(FILEH handle);
+int16_t file_attr(LPSTR filename);
 							// カレントファイル操作
 void file_setcd(LPSTR exename);
 FILEH file_open_c(LPSTR filename);
 FILEH file_create_c(LPSTR filename, int ftype);
-short file_attr_c(LPSTR filename);
+int16_t file_attr_c(LPSTR filename);
 
 LPSTR getFileName(LPSTR filename);
 void plusyen(LPSTR str, int len);

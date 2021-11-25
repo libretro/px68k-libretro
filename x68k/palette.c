@@ -1,6 +1,4 @@
-// ---------------------------------------------------------------------------------------
-//  PALETTE.C - Text/BG/Graphic Palette
-// ---------------------------------------------------------------------------------------
+/*  PALETTE.C - Text/BG/Graphic Palette */
 
 #include	"common.h"
 #include	"windraw.h"
@@ -15,14 +13,11 @@ BYTE	Pal_Regs[1024];
 WORD	TextPal[256];
 WORD	GrphPal[256];
 WORD	Pal16[65536];
-WORD	Ibit;				// 半透明処理とかで使うかも〜
+WORD	Ibit;				
 
 WORD	Pal_HalfMask, Pal_Ix2;
-WORD	Pal_R, Pal_G, Pal_B;		// 画面輝度変更時用
+WORD	Pal_R, Pal_G, Pal_B;		
 
-// ----- DDrawの16ビットモードの色マスクからX68k→Win用の変換テーブルを作る -----
-// X68kは「GGGGGRRRRRBBBBBI」の構造。Winは「RRRRRGGGGGGBBBBB」の形が多いみたい。が、
-// 違う場合もあるみたいなので計算してみやう。
 void Pal_SetColor(void)
 {
 	WORD TempMask, bit;
@@ -67,13 +62,8 @@ void Pal_SetColor(void)
 		}
 	}
 
-	// ねこーねこー
-	// Pal_Ix2 = 0 になったらどうしよう… その時は32bit拡張…
-
-	// → Riva128なんかでは見事になるみたい（笑） でもそれでも特に問題無いかも…
-
 	Pal_HalfMask = ~(B[0] | R[0] | G[0] | Ibit);
-	Pal_Ix2 = Ibit << 1;
+	Pal_Ix2      = Ibit << 1;
 
    // X68kのビット配置に合わせてテーブル作成
    // すっげ〜手際が悪いね（汗
@@ -100,10 +90,6 @@ void Pal_SetColor(void)
 	}
 }
 
-
-// -----------------------------------------------------------------------
-//   初期化
-// -----------------------------------------------------------------------
 void Pal_Init(void)
 {
 	memset(Pal_Regs, 0, 1024);
@@ -113,9 +99,7 @@ void Pal_Init(void)
 }
 
 
-// -----------------------------------------------------------------------
-//   I/O Read
-// -----------------------------------------------------------------------
+/*   I/O Read */
 BYTE FASTCALL Pal_Read(DWORD adr)
 {
 	if (adr<0xe82400)
@@ -123,10 +107,7 @@ BYTE FASTCALL Pal_Read(DWORD adr)
 	else return 0xff;
 }
 
-
-// -----------------------------------------------------------------------
-//   I/O Write
-// -----------------------------------------------------------------------
+/*   I/O Write */
 void FASTCALL Pal_Write(DWORD adr, BYTE data)
 {
 	WORD pal;
@@ -156,10 +137,6 @@ void FASTCALL Pal_Write(DWORD adr, BYTE data)
 	}
 }
 
-
-// -----------------------------------------------------------------------
-//   こんとらすと変更（パレットに対するWin側の表示色で実現してます ^^;）
-// -----------------------------------------------------------------------
 void Pal_ChangeContrast(int num)
 {
 	WORD bit;

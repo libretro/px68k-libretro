@@ -32,22 +32,31 @@ unsigned int read16(unsigned int a) {
 
 unsigned int MyCheckPc(unsigned int pc)
 {
-
-
-  pc-= m68k.membase; // Get the real program counter
-  if (pc <= 0xbfffff) 			       					{ m68k.membase=(int) MEM; return m68k.membase+pc; }
-  if ((pc >= 0xfc0000) && (pc <= 0xffffff))	{ m68k.membase=(int) IPL - 0xfc0000; return m68k.membase+pc; }
-  if ((pc >= 0xc00000) && (pc <= 0xc7ffff)) m68k.membase=(int) GVRAM - 0xc00000;
-  if ((pc >= 0xe00000) && (pc <= 0xe7ffff))	m68k.membase=(int) TVRAM - 0xe00000;
-  if ((pc >= 0xea0000) && (pc <= 0xea1fff))	m68k.membase=(int) SCSIIPL - 0xea0000;
-  if ((pc >= 0xed0000) && (pc <= 0xed3fff))	m68k.membase=(int) SRAM - 0xed0000;
-  if ((pc >= 0xf00000) && (pc <= 0xfbffff))	m68k.membase=(int) FONT - 0xf00000;
-
-  return m68k.membase+pc; // New program counter
+   pc-= m68k.membase; /* Get the real program counter */
+   if (pc <= 0xbfffff)
+   {
+      m68k.membase=(int) MEM;
+      return m68k.membase+pc;
+   }
+   if ((pc >= 0xfc0000) && (pc <= 0xffffff))
+   {
+      m68k.membase=(int) IPL - 0xfc0000;
+      return m68k.membase+pc;
+   }
+   if ((pc >= 0xc00000) && (pc <= 0xc7ffff))
+      m68k.membase=(int) GVRAM - 0xc00000;
+   if ((pc >= 0xe00000) && (pc <= 0xe7ffff))
+      m68k.membase=(int) TVRAM - 0xe00000;
+   if ((pc >= 0xea0000) && (pc <= 0xea1fff))
+      m68k.membase=(int) SCSIIPL - 0xea0000;
+   if ((pc >= 0xed0000) && (pc <= 0xed3fff))
+      m68k.membase=(int) SRAM - 0xed0000;
+   if ((pc >= 0xf00000) && (pc <= 0xfbffff))
+      m68k.membase=(int) FONT - 0xf00000;
+   return m68k.membase+pc; // New program counter
 }
 
 #endif /* HAVE_CYCLONE */
-
 
 /******************************************************************************
 	M68000インタフェース関数
@@ -112,8 +121,8 @@ void m68000_reset(void)
 {
 #if defined (HAVE_CYCLONE)
 	CycloneReset(&m68k);
-	m68k.state_flags = 0; // Go to default state (not stopped, halted, etc.)
-	m68k.srh = 0x27; // Set supervisor mode
+	m68k.state_flags = 0; /* Go to default state (not stopped, halted, etc.) */
+	m68k.srh         = 0x27; /* Set supervisor mode */
 #elif defined (HAVE_C68K)
 	C68k_Reset(&C68K);
 #endif /* HAVE_C68K */
@@ -155,10 +164,12 @@ void m68000_set_irq_line(int irqline, int state)
 #if defined (HAVE_CYCLONE)
 	m68k.irq = irqline;
 #elif defined (HAVE_C68K)
-//	if (irqline == IRQ_LINE_NMI)
-//		irqline = 7;
+#if 0
+   if (irqline == IRQ_LINE_NMI)
+      irqline = 7;
 
-//	C68k_Set_IRQ(&C68K, irqline, state);
+   C68k_Set_IRQ(&C68K, irqline, state);
+#endif
 	C68k_Set_IRQ(&C68K, irqline);
 #endif /* HAVE_C68K */
 }
@@ -170,7 +181,9 @@ void m68000_set_irq_line(int irqline, int state)
 
 void m68000_set_irq_callback(int (*callback)(int line))
 {
-//	C68k_Set_IRQ_Callback(&C68K, callback);
+#if 0
+	C68k_Set_IRQ_Callback(&C68K, callback);
+#endif
 }
 
 
@@ -207,53 +220,31 @@ UINT32 m68000_get_reg(int regnum)
 	return 0x0BADC0DE;
 #elif defined (HAVE_C68K)
 	switch (regnum)
-	{
-#if 0
-	case M68K_PC:  return C68k_Get_Reg(&C68K, C68K_PC);
-	case M68K_USP: return C68k_Get_Reg(&C68K, C68K_USP);
-	case M68K_MSP: return C68k_Get_Reg(&C68K, C68K_MSP);
-	case M68K_SR:  return C68k_Get_Reg(&C68K, C68K_SR);
-	case M68K_D0:  return C68k_Get_Reg(&C68K, C68K_D0);
-	case M68K_D1:  return C68k_Get_Reg(&C68K, C68K_D1);
-	case M68K_D2:  return C68k_Get_Reg(&C68K, C68K_D2);
-	case M68K_D3:  return C68k_Get_Reg(&C68K, C68K_D3);
-	case M68K_D4:  return C68k_Get_Reg(&C68K, C68K_D4);
-	case M68K_D5:  return C68k_Get_Reg(&C68K, C68K_D5);
-	case M68K_D6:  return C68k_Get_Reg(&C68K, C68K_D6);
-	case M68K_D7:  return C68k_Get_Reg(&C68K, C68K_D7);
-	case M68K_A0:  return C68k_Get_Reg(&C68K, C68K_A0);
-	case M68K_A1:  return C68k_Get_Reg(&C68K, C68K_A1);
-	case M68K_A2:  return C68k_Get_Reg(&C68K, C68K_A2);
-	case M68K_A3:  return C68k_Get_Reg(&C68K, C68K_A3);
-	case M68K_A4:  return C68k_Get_Reg(&C68K, C68K_A4);
-	case M68K_A5:  return C68k_Get_Reg(&C68K, C68K_A5);
-	case M68K_A6:  return C68k_Get_Reg(&C68K, C68K_A6);
-	case M68K_A7:  return C68k_Get_Reg(&C68K, C68K_A7);
-#else
-	case M68K_PC:  return C68k_Get_PC(&C68K);
-	case M68K_USP: return C68k_Get_USP(&C68K);
-	case M68K_MSP: return C68k_Get_MSP(&C68K);
-	case M68K_SR:  return C68k_Get_SR(&C68K);
-	case M68K_D0:  return C68k_Get_DReg(&C68K, 0);
-	case M68K_D1:  return C68k_Get_DReg(&C68K, 1);
-	case M68K_D2:  return C68k_Get_DReg(&C68K, 2);
-	case M68K_D3:  return C68k_Get_DReg(&C68K, 3);
-	case M68K_D4:  return C68k_Get_DReg(&C68K, 4);
-	case M68K_D5:  return C68k_Get_DReg(&C68K, 5);
-	case M68K_D6:  return C68k_Get_DReg(&C68K, 6);
-	case M68K_D7:  return C68k_Get_DReg(&C68K, 7);
-	case M68K_A0:  return C68k_Get_AReg(&C68K, 0);
-	case M68K_A1:  return C68k_Get_AReg(&C68K, 1);
-	case M68K_A2:  return C68k_Get_AReg(&C68K, 2);
-	case M68K_A3:  return C68k_Get_AReg(&C68K, 3);
-	case M68K_A4:  return C68k_Get_AReg(&C68K, 4);
-	case M68K_A5:  return C68k_Get_AReg(&C68K, 5);
-	case M68K_A6:  return C68k_Get_AReg(&C68K, 6);
-	case M68K_A7:  return C68k_Get_AReg(&C68K, 7);
-#endif
+   {
+      case M68K_PC:  return C68k_Get_PC(&C68K);
+      case M68K_USP: return C68k_Get_USP(&C68K);
+      case M68K_MSP: return C68k_Get_MSP(&C68K);
+      case M68K_SR:  return C68k_Get_SR(&C68K);
+      case M68K_D0:  return C68k_Get_DReg(&C68K, 0);
+      case M68K_D1:  return C68k_Get_DReg(&C68K, 1);
+      case M68K_D2:  return C68k_Get_DReg(&C68K, 2);
+      case M68K_D3:  return C68k_Get_DReg(&C68K, 3);
+      case M68K_D4:  return C68k_Get_DReg(&C68K, 4);
+      case M68K_D5:  return C68k_Get_DReg(&C68K, 5);
+      case M68K_D6:  return C68k_Get_DReg(&C68K, 6);
+      case M68K_D7:  return C68k_Get_DReg(&C68K, 7);
+      case M68K_A0:  return C68k_Get_AReg(&C68K, 0);
+      case M68K_A1:  return C68k_Get_AReg(&C68K, 1);
+      case M68K_A2:  return C68k_Get_AReg(&C68K, 2);
+      case M68K_A3:  return C68k_Get_AReg(&C68K, 3);
+      case M68K_A4:  return C68k_Get_AReg(&C68K, 4);
+      case M68K_A5:  return C68k_Get_AReg(&C68K, 5);
+      case M68K_A6:  return C68k_Get_AReg(&C68K, 6);
+      case M68K_A7:  return C68k_Get_AReg(&C68K, 7);
 
-	default: return 0;
-	}
+      default:
+                     return 0;
+   }
 #endif /* HAVE_C68K */
 }
 
@@ -295,52 +286,30 @@ void m68000_set_reg(int regnum, UINT32 val)
 	}	
 #elif defined (HAVE_C68k)
 	switch (regnum)
-	{
-#if 0
-	case M68K_PC:  C68k_Set_Reg(&C68K, C68K_PC, val); break;
-	case M68K_USP: C68k_Set_Reg(&C68K, C68K_USP, val); break;
-	case M68K_MSP: C68k_Set_Reg(&C68K, C68K_MSP, val); break;
-	case M68K_SR:  C68k_Set_Reg(&C68K, C68K_SR, val); break;
-	case M68K_D0:  C68k_Set_Reg(&C68K, C68K_D0, val); break;
-	case M68K_D1:  C68k_Set_Reg(&C68K, C68K_D1, val); break;
-	case M68K_D2:  C68k_Set_Reg(&C68K, C68K_D2, val); break;
-	case M68K_D3:  C68k_Set_Reg(&C68K, C68K_D3, val); break;
-	case M68K_D4:  C68k_Set_Reg(&C68K, C68K_D4, val); break;
-	case M68K_D5:  C68k_Set_Reg(&C68K, C68K_D5, val); break;
-	case M68K_D6:  C68k_Set_Reg(&C68K, C68K_D6, val); break;
-	case M68K_D7:  C68k_Set_Reg(&C68K, C68K_D7, val); break;
-	case M68K_A0:  C68k_Set_Reg(&C68K, C68K_A0, val); break;
-	case M68K_A1:  C68k_Set_Reg(&C68K, C68K_A1, val); break;
-	case M68K_A2:  C68k_Set_Reg(&C68K, C68K_A2, val); break;
-	case M68K_A3:  C68k_Set_Reg(&C68K, C68K_A3, val); break;
-	case M68K_A4:  C68k_Set_Reg(&C68K, C68K_A4, val); break;
-	case M68K_A5:  C68k_Set_Reg(&C68K, C68K_A5, val); break;
-	case M68K_A6:  C68k_Set_Reg(&C68K, C68K_A6, val); break;
-	case M68K_A7:  C68k_Set_Reg(&C68K, C68K_A7, val); break;
-#else
-	case M68K_PC:  C68k_Set_PC(&C68K, val); break;
-	case M68K_USP: C68k_Set_USP(&C68K, val); break;
-	case M68K_MSP: C68k_Set_MSP(&C68K, val); break;
-	case M68K_SR:  C68k_Set_SR(&C68K, val); break;
-	case M68K_D0:  C68k_Set_DReg(&C68K, 0, val); break;
-	case M68K_D1:  C68k_Set_DReg(&C68K, 1, val); break;
-	case M68K_D2:  C68k_Set_DReg(&C68K, 2, val); break;
-	case M68K_D3:  C68k_Set_DReg(&C68K, 3, val); break;
-	case M68K_D4:  C68k_Set_DReg(&C68K, 4, val); break;
-	case M68K_D5:  C68k_Set_DReg(&C68K, 5, val); break;
-	case M68K_D6:  C68k_Set_DReg(&C68K, 6, val); break;
-	case M68K_D7:  C68k_Set_DReg(&C68K, 7, val); break;
-	case M68K_A0:  C68k_Set_AReg(&C68K, 0, val); break;
-	case M68K_A1:  C68k_Set_AReg(&C68K, 1, val); break;
-	case M68K_A2:  C68k_Set_AReg(&C68K, 2, val); break;
-	case M68K_A3:  C68k_Set_AReg(&C68K, 3, val); break;
-	case M68K_A4:  C68k_Set_AReg(&C68K, 4, val); break;
-	case M68K_A5:  C68k_Set_AReg(&C68K, 5, val); break;
-	case M68K_A6:  C68k_Set_AReg(&C68K, 6, val); break;
-	case M68K_A7:  C68k_Set_AReg(&C68K, 7, val); break;
-#endif
-	default: break;
-	}
+   {
+      case M68K_PC:  C68k_Set_PC(&C68K, val); break;
+      case M68K_USP: C68k_Set_USP(&C68K, val); break;
+      case M68K_MSP: C68k_Set_MSP(&C68K, val); break;
+      case M68K_SR:  C68k_Set_SR(&C68K, val); break;
+      case M68K_D0:  C68k_Set_DReg(&C68K, 0, val); break;
+      case M68K_D1:  C68k_Set_DReg(&C68K, 1, val); break;
+      case M68K_D2:  C68k_Set_DReg(&C68K, 2, val); break;
+      case M68K_D3:  C68k_Set_DReg(&C68K, 3, val); break;
+      case M68K_D4:  C68k_Set_DReg(&C68K, 4, val); break;
+      case M68K_D5:  C68k_Set_DReg(&C68K, 5, val); break;
+      case M68K_D6:  C68k_Set_DReg(&C68K, 6, val); break;
+      case M68K_D7:  C68k_Set_DReg(&C68K, 7, val); break;
+      case M68K_A0:  C68k_Set_AReg(&C68K, 0, val); break;
+      case M68K_A1:  C68k_Set_AReg(&C68K, 1, val); break;
+      case M68K_A2:  C68k_Set_AReg(&C68K, 2, val); break;
+      case M68K_A3:  C68k_Set_AReg(&C68K, 3, val); break;
+      case M68K_A4:  C68k_Set_AReg(&C68K, 4, val); break;
+      case M68K_A5:  C68k_Set_AReg(&C68K, 5, val); break;
+      case M68K_A6:  C68k_Set_AReg(&C68K, 6, val); break;
+      case M68K_A7:  C68k_Set_AReg(&C68K, 7, val); break;
+      default:
+                     break;
+   }
 #endif /* HAVE_C68K */
 }
 
@@ -354,7 +323,7 @@ void m68000_set_reg(int regnum, UINT32 val)
 STATE_SAVE( m68000 )
 {
 #if defined (HAVE_CYCLONE)
-// empty
+/* empty */
 #elif defined (HAVE_C68K)
 	int i;
 	UINT32 pc = C68k_Get_Reg(&C68K, C68K_PC);
@@ -382,7 +351,7 @@ STATE_SAVE( m68000 )
 STATE_LOAD( m68000 )
 {
 #if defined (HAVE_CYCLONE)
-// empty
+/* empty */
 #elif defined (HAVE_C68K)
 	int i;
 	UINT32 pc;

@@ -1,9 +1,9 @@
-#ifndef winx1_timer_h
-#define winx1_timer_h
+#ifndef WINX1_TIMER_H
+#define WINX1_TIMER_H
 
 void Timer_Init(void);
 void Timer_Reset(void);
 WORD Timer_GetCount(void);
 void Timer_SetCount(WORD);
 
-#endif //winx1_timer_h
+#endif /* WINX1_TIMER_H */

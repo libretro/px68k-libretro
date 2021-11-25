@@ -1,8 +1,7 @@
-// ---------------------------------------------------------------------------------------
-//  FDC.C - Floppy Disk Controller (uPD72065)
-//  ToDo : 未実装コマンド、胡散臭い部分（多数）の見直し、DMACとの連携部の見直し
-//    D88でのエラー処理とかマシになったはず……でもその分汚い……
-// ---------------------------------------------------------------------------------------
+/*  FDC.C - Floppy Disk Controller (uPD72065)
+ *  TODO/FIXME : 未実装コマンド、胡散臭い部分（多数）の見直し、DMACとの連携部の見直し 
+ *    D88でのエラー処理とかマシになったはず……でもその分汚い……
+ */
 
 #include "fdc.h"
 #include "fdd.h"
@@ -93,22 +92,14 @@ static FDC fdc;
 #define MF(p) ((p->us>>6)&1)
 #define MT(p) ((p->us>>7)&1)
 
-// -----------------------------------------------------------------------
-//   割り込みベクタ
-// -----------------------------------------------------------------------
 DWORD FASTCALL FDC_Int(BYTE irq)
 {
 	IRQH_IRQCallBack(irq);
 	if (irq==1)
 		return ((DWORD)IOC_IntVect);
-	else
-		return -1;
+   return -1;
 }
 
-
-// -----------------------------------------------------------------------
-//   初期化
-// -----------------------------------------------------------------------
 void FDC_Init(void)
 {
 	memset(&fdc, 0, sizeof(FDC));
@@ -127,10 +118,7 @@ static void FDC_SetInt(void)
 	if ( IOC_IntStat&4 ) IRQH_Int(1, &FDC_Int);
 }
 
-
-// -----------------------------------------------------------------------
-//   Excution Phase の終了
-// -----------------------------------------------------------------------
+/*   Excution Phase の終了 */
 void FDC_EPhaseEnd(void)
 {
 	FDCID id;
@@ -354,7 +342,6 @@ static void FDC_NextTrack(void)
 	FDC_ExecCmd();
 }
 
-
 static void FDC_WriteBuffer(void)
 {
 	FDCPRM0* prm0 = (FDCPRM0*)fdc.PrmBuf;
@@ -432,10 +419,7 @@ static void FDC_WriteBuffer(void)
 	}
 }
 
-
-// -----------------------------------------------------------------------
-//   I/O Read
-// -----------------------------------------------------------------------
+/*   I/O Read */
 BYTE FASTCALL FDC_Read(DWORD adr)
 {
 	BYTE ret = 0x00;
@@ -462,54 +446,51 @@ BYTE FASTCALL FDC_Read(DWORD adr)
 	return ret;
 }
 
-
-// -----------------------------------------------------------------------
-//   I/O Write
-// -----------------------------------------------------------------------
+/*   I/O Write */
 void FASTCALL FDC_Write(DWORD adr, BYTE data)
 {
-	if ( adr==0xe94003 ) {
-		if ( fdc.bufnum ) {                 // WriteData
-			fdc.DataBuf[fdc.wrptr++] = data;
-			if ( fdc.wrptr>=fdc.bufnum ) {
-				FDC_WriteBuffer();
-				fdc.wrptr = 0;
-			}
-		} else {
-			if ( fdc.wrnum ) {          // Writing params
-				fdc.PrmBuf[fdc.wrptr++] = data;
-				fdc.wrnum--;
-			} else {                    // Command start
-				fdc.cmd = data&0x1f;
-				fdc.rdptr = 0;
-				fdc.wrptr = 0;
-				fdc.rdnum = 0;
-				fdc.wrnum = CMD_TABLE[fdc.cmd];
-				fdc.PrmBuf[fdc.wrptr++] = data;
-			}
-			if ( !fdc.wrnum ) {
-				fdc.wrptr = 0;
-				fdc.rdnum = DAT_TABLE[fdc.cmd];
-				fdc.st1 = 0;
-				fdc.st2 = 0;
-				if ( (fdc.cmd==17)||(fdc.cmd==25)||(fdc.cmd==29) ) fdc.st2 |= 8;
-				FDC_ExecCmd();
-			}
-		}
-	} else if ( adr==0xe94005 ) {
-		if ( (fdc.ctrl&0x01)&&(!(data&0x01)) ) {	// Drive0 control (Down edge)
-			if ( fdc.ctrl&0x20 ) FDD_EjectFD(0);
-			FDD_SetEMask(0, (fdc.ctrl&0x40)?1:0);
-			FDD_SetBlink(0, (fdc.ctrl&0x80)?1:0);
-		}
-		if ( (fdc.ctrl&0x02)&&(!(data&0x02)) ) {	// Drive1 control (Down edge)
-			if ( fdc.ctrl&0x20 ) FDD_EjectFD(1);
-			FDD_SetEMask(1, (fdc.ctrl&0x40)?1:0);
-			FDD_SetBlink(1, (fdc.ctrl&0x80)?1:0);
-		}
-		fdc.ctrl = data;
-	} else if ( adr==0xe94007 ) {
-		fdc.drv = (data&0x80)?(data&3):(-1);
-		FDD_SetAccess(fdc.drv);
-	}
+   if ( adr==0xe94003 ) {
+      if ( fdc.bufnum ) {                 // WriteData
+         fdc.DataBuf[fdc.wrptr++] = data;
+         if ( fdc.wrptr>=fdc.bufnum ) {
+            FDC_WriteBuffer();
+            fdc.wrptr = 0;
+         }
+      } else {
+         if ( fdc.wrnum ) {          // Writing params
+            fdc.PrmBuf[fdc.wrptr++] = data;
+            fdc.wrnum--;
+         } else {                    // Command start
+            fdc.cmd = data&0x1f;
+            fdc.rdptr = 0;
+            fdc.wrptr = 0;
+            fdc.rdnum = 0;
+            fdc.wrnum = CMD_TABLE[fdc.cmd];
+            fdc.PrmBuf[fdc.wrptr++] = data;
+         }
+         if ( !fdc.wrnum ) {
+            fdc.wrptr = 0;
+            fdc.rdnum = DAT_TABLE[fdc.cmd];
+            fdc.st1 = 0;
+            fdc.st2 = 0;
+            if ( (fdc.cmd==17)||(fdc.cmd==25)||(fdc.cmd==29) ) fdc.st2 |= 8;
+            FDC_ExecCmd();
+         }
+      }
+   } else if ( adr==0xe94005 ) {
+      if ( (fdc.ctrl&0x01)&&(!(data&0x01)) ) {	// Drive0 control (Down edge)
+         if ( fdc.ctrl&0x20 ) FDD_EjectFD(0);
+         FDD_SetEMask(0, (fdc.ctrl&0x40)?1:0);
+         FDD_SetBlink(0, (fdc.ctrl&0x80)?1:0);
+      }
+      if ( (fdc.ctrl&0x02)&&(!(data&0x02)) ) {	// Drive1 control (Down edge)
+         if ( fdc.ctrl&0x20 ) FDD_EjectFD(1);
+         FDD_SetEMask(1, (fdc.ctrl&0x40)?1:0);
+         FDD_SetBlink(1, (fdc.ctrl&0x80)?1:0);
+      }
+      fdc.ctrl = data;
+   } else if ( adr==0xe94007 ) {
+      fdc.drv = (data&0x80)?(data&3):(-1);
+      FDD_SetAccess(fdc.drv);
+   }
 }

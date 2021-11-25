@@ -35,67 +35,43 @@
 
 #include "dosio.h"
 
-#ifdef __LIBRETRO__
 extern char slash;
-#endif
 
 static char	curpath[MAX_PATH+32] = "";
 static LPSTR	curfilep = curpath;
 
-void
-dosio_init(void)
-{
+void dosio_init(void) { }
+void dosio_term(void) { }
 
-	/* Nothing to do. */
+FILEH file_open(LPSTR filename)
+{
+   FILEH ret = CreateFile(filename, GENERIC_READ | GENERIC_WRITE,
+         0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+   if (ret == (FILEH)INVALID_HANDLE_VALUE)
+   {
+      ret = CreateFile(filename, GENERIC_READ,
+            0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+      if (ret == (FILEH)INVALID_HANDLE_VALUE)
+         return (FILEH)FALSE;
+   }
+   return ret;
 }
 
-void
-dosio_term(void)
+FILEH file_create(LPSTR filename, int ftype)
 {
-
-	/* Nothing to do. */
-}
-
-/* ファイル操作 */
-FILEH
-file_open(LPSTR filename)
-{
-	FILEH	ret;
-
-	ret = CreateFile(filename, GENERIC_READ | GENERIC_WRITE,
-	    0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-	if (ret == (FILEH)INVALID_HANDLE_VALUE) {
-		ret = CreateFile(filename, GENERIC_READ,
-		    0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-		if (ret == (FILEH)INVALID_HANDLE_VALUE)
-			return (FILEH)FALSE;
-	}
-	return ret;
-}
-
-FILEH
-file_create(LPSTR filename, int ftype)
-{
-	FILEH	ret;
-
-	(void)ftype;
-
-	ret = CreateFile(filename, GENERIC_READ | GENERIC_WRITE,
+	FILEH ret = CreateFile(filename, GENERIC_READ | GENERIC_WRITE,
 	    0, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 	if (ret == (FILEH)INVALID_HANDLE_VALUE)
 		return (FILEH)FALSE;
 	return ret;
 }
 
-DWORD
-file_seek(FILEH handle, long pointer, short mode)
+DWORD file_seek(FILEH handle, long pointer, short mode)
 {
-
 	return SetFilePointer(handle, pointer, 0, mode);
 }
 
-DWORD
-file_lread(FILEH handle, void *data, DWORD length)
+DWORD file_lread(FILEH handle, void *data, DWORD length)
 {
 	DWORD	readsize;
 
@@ -104,136 +80,116 @@ file_lread(FILEH handle, void *data, DWORD length)
 	return readsize;
 }
 
-DWORD
-file_lwrite(FILEH handle, void *data, DWORD length)
+DWORD file_lwrite(FILEH handle, void *data, DWORD length)
 {
 	DWORD	writesize;
-
 	if (WriteFile(handle, data, length, &writesize, NULL) == 0)
 		return 0;
 	return writesize;
 }
 
-WORD
-file_read(FILEH handle, void *data, WORD length)
+WORD file_read(FILEH handle, void *data, WORD length)
 {
 	DWORD	readsize;
-
 	if (ReadFile(handle, data, length, &readsize, NULL) == 0)
 		return 0;
 	return (WORD)readsize;
 }
 
-short
-file_close(FILEH handle)
+int16_t file_close(FILEH handle)
 {
-
 	FAKE_CloseHandle(handle);
 	return 0;
 }
 
-short
-file_attr(LPSTR filename)
+int16_t file_attr(LPSTR filename)
 {
-
-	return (short)GetFileAttributes(filename);
+	return (int16_t)GetFileAttributes(filename);
 }
 
-
-							// カレントファイル操作
-void
-file_setcd(LPSTR exename)
+void file_setcd(LPSTR exename)
 {
-
 	strncpy(curpath, exename, sizeof(curpath));
 	plusyen(curpath, sizeof(curpath));
 	curfilep = curpath + strlen(exename) + 1;
 	*curfilep = '\0';
 }
 
-FILEH
-file_open_c(LPSTR filename)
+FILEH file_open_c(LPSTR filename)
 {
-
 	strncpy(curfilep, filename, MAX_PATH - (curfilep - curpath));
 	return file_open(curpath);
 }
 
-FILEH
-file_create_c(LPSTR filename, int ftype)
+FILEH file_create_c(LPSTR filename, int ftype)
 {
-
 	strncpy(curfilep, filename, MAX_PATH - (curfilep - curpath));
 	return file_create(curpath, ftype);
 }
 
-short
-file_attr_c(LPSTR filename)
+int16_t file_attr_c(LPSTR filename)
 {
-
 	strncpy(curfilep, filename, MAX_PATH - (curfilep - curpath));
 	return file_attr(curpath);
 }
 
-LPSTR
-getFileName(LPSTR filename)
+LPSTR getFileName(LPSTR filename)
 {
 	LPSTR p, q;
-
 	for (p = q = filename; *p != '\0'; p++)
 		if (*p == slash/*'/'*/)
 			q = p + 1;
 	return q;
 }
 
-int
-kanji1st(LPSTR str, int pos)
+int kanji1st(LPSTR str, int pos)
 {
 	int	ret = 0;
 	BYTE	c;
 
-	for (; pos > 0; pos--) {
-		c = (BYTE)str[pos];
-		if (!((0x81 <= c && c <= 0x9f) || (0xe0 <= c && c <= 0xfc)))
-			break;
-		ret ^= 1;
-	}
+	for (; pos > 0; pos--)
+   {
+      c = (BYTE)str[pos];
+      if (!((0x81 <= c && c <= 0x9f) || (0xe0 <= c && c <= 0xfc)))
+         break;
+      ret ^= 1;
+   }
 	return ret;
 }
 
-int
-kanji2nd(LPSTR str, int pos)
+int kanji2nd(LPSTR str, int pos)
 {
 	int	ret = 0;
 	BYTE	c;
 
-	while (pos-- > 0) {
-		c = (BYTE)str[pos];
-		if (!((0x81 <= c && c <= 0x9f) || (0xe0 <= c && c <= 0xfc)))
-			break;
-		ret ^= 1;
-	}
+	while (pos-- > 0)
+   {
+      c = (BYTE)str[pos];
+      if (!((0x81 <= c && c <= 0x9f) || (0xe0 <= c && c <= 0xfc)))
+         break;
+      ret ^= 1;
+   }
 	return ret;
 }
 
 
-int
-ex_a2i(LPSTR str, int min, int max)
+int ex_a2i(LPSTR str, int min, int max)
 {
 	int	ret = 0;
 	char	c;
 
-	if (str == NULL)
+	if (!str)
 		return(min);
 
-	for (;;) {
-		c = *str++;
-		if (c == ' ')
-			continue;
-		if ((c < '0') || (c > '9'))
-			break;
-		ret = ret * 10 + (c - '0');
-	}
+	for (;;)
+   {
+      c = *str++;
+      if (c == ' ')
+         continue;
+      if ((c < '0') || (c > '9'))
+         break;
+      ret = ret * 10 + (c - '0');
+   }
 
 	if (ret < min)
 		return min;
@@ -242,26 +198,25 @@ ex_a2i(LPSTR str, int min, int max)
 	return ret;
 }
 
-void
-cutyen(LPSTR str)
+void cutyen(LPSTR str)
 {
-	int pos = strlen(str) - 1;
+	size_t pos = strlen(str) - 1;
 
-	if ((pos > 0) && (str[pos] == slash/*'/'*/))
+	if ((pos > 0) && (str[pos] == slash))
 		str[pos] = '\0';
 }
 
-void
-plusyen(LPSTR str, int len)
+void plusyen(LPSTR str, int len)
 {
-	int	pos = strlen(str);
+	size_t pos = strlen(str);
 
-	if (pos) {
-		if (str[pos-1] == slash/*'/'*/)
-			return;
-	}
+	if (pos)
+   {
+      if (str[pos-1] == slash)
+         return;
+   }
 	if ((pos + 2) >= len)
 		return;
-	str[pos++] = slash/*'/'*/;
-	str[pos] = '\0';
+	str[pos++] = slash;
+	str[pos]   = '\0';
 }
