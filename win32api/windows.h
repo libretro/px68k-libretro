@@ -30,9 +30,6 @@ typedef	unsigned int	DWORD;
 #endif
 
 typedef	int		BOOL;
-typedef	WORD		WPARAM;
-typedef	DWORD		LPARAM;
-typedef	LONG		LRESULT;
 
 typedef	void		VOID;
 typedef	void		*PVOID;

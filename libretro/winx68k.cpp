@@ -50,18 +50,12 @@ extern "C" {
 int rfd_sock;
 #endif
 
-#define	APPNAME	"Keropi"
-
 extern	WORD	BG_CHREND;
 extern	WORD	BG_BGTOP;
 extern	WORD	BG_BGEND;
 extern	BYTE	BG_CHRSIZE;
 
-const	BYTE	PrgName[] = "Keropi";
-const	BYTE	PrgTitle[] = APPNAME;
-
 char	winx68k_dir[MAX_PATH];
-char	winx68k_ini[MAX_PATH];
 
 WORD	VLINE_TOTAL = 567;
 DWORD	VLINE = 0;
@@ -510,11 +504,12 @@ extern "C" int pmain(int argc, char *argv[])
 
 	LoadConfig();
 
-	if (!WinDraw_MenuInit()) {
-		WinX68k_Cleanup();
-		WinDraw_Cleanup();
-		return 1;
-	}
+	if (!WinDraw_MenuInit())
+   {
+      WinX68k_Cleanup();
+      WinDraw_Cleanup();
+      return 1;
+   }
 
 	SoundSampleRate = Config.SampleRate;
 
@@ -540,25 +535,29 @@ extern "C" int pmain(int argc, char *argv[])
 
 	Keyboard_Init(); //before moving to WinDraw_Init()
 
-	if (!WinDraw_Init()) {
-		WinDraw_Cleanup();
-		Error("Error: Can't init screen.\n");
-		return 1;
-	}
+	if (!WinDraw_Init())
+   {
+      WinDraw_Cleanup();
+      Error("Error: Can't init screen.\n");
+      return 1;
+   }
 
-	if ( SoundSampleRate ) {
-		ADPCM_Init(SoundSampleRate);
-		OPM_Init(4000000/*3579545*/, SoundSampleRate);
+   if ( SoundSampleRate )
+   {
+      ADPCM_Init(SoundSampleRate);
+      OPM_Init(4000000/*3579545*/, SoundSampleRate);
 #ifndef	NO_MERCURY
-		Mcry_Init(SoundSampleRate, winx68k_dir);
+      Mcry_Init(SoundSampleRate, winx68k_dir);
 #endif
-	} else {
-		ADPCM_Init(100);
-		OPM_Init(4000000/*3579545*/, 100);
+   }
+   else
+   {
+      ADPCM_Init(100);
+      OPM_Init(4000000/*3579545*/, 100);
 #ifndef	NO_MERCURY
-		Mcry_Init(100, winx68k_dir);
+      Mcry_Init(100, winx68k_dir);
 #endif
-	}
+   }
 
 	FDD_Init();
 	SysPort_Init();
@@ -611,8 +610,8 @@ extern "C" int pmain(int argc, char *argv[])
 		send_keycode(b, 1);\
 }
 
-extern "C" void handle_retrok(){
-
+extern "C" void handle_retrok(void)
+{
 #if 0
 	int key_shift,key_control,key_alt;
 
@@ -637,15 +636,21 @@ extern "C" void handle_retrok(){
 
 	if(Core_Key_State[RETROK_F12] && Core_Key_State[RETROK_F12]!=Core_old_Key_State[RETROK_F12]  )
 	{
-		if (menu_mode == menu_out) {
-			oldrw=retrow;oldrh=retroh;
-			retroh=600;retrow=800;
-			CHANGEAV=1;
-			menu_mode = menu_enter;
-			DSound_Stop();
-		} else {
-			CHANGEAV=1;
-			retrow=oldrw;retroh=oldrh;
+		if (menu_mode == menu_out)
+      {
+         oldrw     = retrow;
+         oldrh     = retroh;
+         retroh    = 600;
+         retrow    = 800;
+         CHANGEAV  = 1;
+         menu_mode = menu_enter;
+         DSound_Stop();
+      }
+      else
+      {
+			CHANGEAV  = 1;
+			retrow    = oldrw;
+         retroh    = oldrh;
 			DSound_Play();
 			menu_mode = menu_out;
 		}

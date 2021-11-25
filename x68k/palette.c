@@ -11,14 +11,14 @@
 #include	"m68000.h"
 #include	"palette.h"
 
-	BYTE	Pal_Regs[1024];
-	WORD	TextPal[256];
-	WORD	GrphPal[256];
-	WORD	Pal16[65536];
-	WORD	Ibit;				// 半透明処理とかで使うかも〜
+BYTE	Pal_Regs[1024];
+WORD	TextPal[256];
+WORD	GrphPal[256];
+WORD	Pal16[65536];
+WORD	Ibit;				// 半透明処理とかで使うかも〜
 
-	WORD	Pal_HalfMask, Pal_Ix2;
-	WORD	Pal_R, Pal_G, Pal_B;		// 画面輝度変更時用
+WORD	Pal_HalfMask, Pal_Ix2;
+WORD	Pal_R, Pal_G, Pal_B;		// 画面輝度変更時用
 
 // ----- DDrawの16ビットモードの色マスクからX68k→Win用の変換テーブルを作る -----
 // X68kは「GGGGGRRRRRBBBBBI」の構造。Winは「RRRRRGGGGGGBBBBB」の形が多いみたい。が、
@@ -29,10 +29,11 @@ void Pal_SetColor(void)
 	WORD R[5] = {0, 0, 0, 0, 0};
 	WORD G[5] = {0, 0, 0, 0, 0};
 	WORD B[5] = {0, 0, 0, 0, 0};
-	int r, g, b, i;
-
-	r = g = b = 5;
-	Pal_R = Pal_G = Pal_B = 0;
+	int i;
+	int r    = 5;
+   int g    = 5;
+   int b    = 5;
+	Pal_R    = Pal_G = Pal_B = 0;
 	TempMask = 0;				// 使われているビットをチェック（Iビット用）
 	for (bit=0x8000; bit; bit>>=1)
 	{					// 各色毎に左（上位）から5ビットずつ拾う
@@ -74,18 +75,8 @@ void Pal_SetColor(void)
 	Pal_HalfMask = ~(B[0] | R[0] | G[0] | Ibit);
 	Pal_Ix2 = Ibit << 1;
 
-/*
-	// どーしても変そうなら、これを入れるか…32bit拡張めんどくさいし（汗
-	if (Ibit==0x8000)			// Ibitが最上位ビットだったら、青の最下位と入れ替え
-	{
-		Ibit = B[0];
-		B[0] = 0;			// 青は4bitになっちゃうけど我慢して ^^;
-		Pal_HalfMask = ~(B[1] | R[0] | G[0] | Ibit | 0x8000);
-		Pal_Ix2 = Ibit << 1;
-	}
-*/
-						// X68kのビット配置に合わせてテーブル作成
-						// すっげ〜手際が悪いね（汗
+   // X68kのビット配置に合わせてテーブル作成
+   // すっげ〜手際が悪いね（汗
 	for (i=0; i<65536; i++)
 	{
 		bit = 0;
@@ -143,7 +134,8 @@ void FASTCALL Pal_Write(DWORD adr, BYTE data)
 	if (adr>=0xe82400) return;
 
 	adr -= 0xe82000;
-	if (Pal_Regs[adr] == data) return;
+	if (Pal_Regs[adr] == data)
+      return;
 
 	if (adr<0x200)
 	{

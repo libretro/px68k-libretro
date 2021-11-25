@@ -1,11 +1,13 @@
-#ifndef _winx68k_adpcm_h
-#define _winx68k_adpcm_h
+#ifndef _WINX68K_ADPCM_H
+#define _WINX68K_ADPCM_H
+
+#include <stdint.h> 
 
 extern BYTE ADPCM_Clock;
 extern DWORD ADPCM_ClockRate;
 
 void FASTCALL ADPCM_PreUpdate(DWORD clock);
-void FASTCALL ADPCM_Update(signed short *buffer, DWORD length, int rate, BYTE *pbsp, BYTE *pbep);
+void FASTCALL ADPCM_Update(int16_t *buffer, DWORD length, int rate, BYTE *pbsp, BYTE *pbep);
 
 void FASTCALL ADPCM_Write(DWORD adr, BYTE data);
 BYTE FASTCALL ADPCM_Read(DWORD adr);

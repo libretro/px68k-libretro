@@ -12,14 +12,13 @@
 #include	"m68000.h"
 #include	"tvram.h"
 
-	BYTE	TVRAM[0x80000];
-	BYTE	TextDrawWork[1024*1024];
-	BYTE	TextDirtyLine[1024];
+BYTE	TVRAM[0x80000];
+BYTE	TextDrawWork[1024*1024];
+BYTE	TextDirtyLine[1024];
 
-	BYTE	TextDrawPattern[2048*4];
+BYTE	TextDrawPattern[2048*4];
 
-//	WORD	Text_LineBuf[1024];	// →BGのを使うように変更
-	BYTE	Text_TrFlag[1024];
+BYTE	Text_TrFlag[1024];
 
 INLINE void TVRAM_WriteByteMask(DWORD adr, BYTE data);
 
@@ -140,75 +139,6 @@ void FASTCALL TVRAM_Write(DWORD adr, BYTE data)
 			TVRAM_WriteByte(adr, data);
 		}
 	}
-#ifdef USE_ASM
-	_asm {
-		push	edi
-		push	esi
-
-		mov	eax, adr
-		mov	esi, eax
-		and	esi, 01ffffh		; TVRAM Adr
-		mov	edi, eax
-		and	edi, 01ff80h		; 下位7bitマスク
-		shl	edi, 3
-		and	eax, 07fh
-		xor	al, 1
-		shl	eax, 3
-		add	edi, eax		; edi = workadr
-
-		xor	eax, eax
-
-		mov	al, byte ptr TVRAM[esi+60000h]
-		mov	ecx, dword ptr (TextDrawPattern+6144)[eax*8]
-		mov	edx, dword ptr (TextDrawPattern+6144)[eax*8+4]
-		mov	al, byte ptr TVRAM[esi+40000h]
-		or	ecx, dword ptr (TextDrawPattern+4096)[eax*8]
-		or	edx, dword ptr (TextDrawPattern+4096)[eax*8+4]
-		mov	al, byte ptr TVRAM[esi+20000h]
-		or	ecx, dword ptr (TextDrawPattern+2048)[eax*8]
-		or	edx, dword ptr (TextDrawPattern+2048)[eax*8+4]
-		mov	al, byte ptr TVRAM[esi]
-		or	ecx, dword ptr TextDrawPattern[eax*8]
-		or	edx, dword ptr TextDrawPattern[eax*8+4]
-		mov	dword ptr TextDrawWork[edi], ecx
-		mov	dword ptr (TextDrawWork+4)[edi], edx
-
-		pop	esi
-		pop	edi
-	}
-#elif defined(USE_GAS) && defined(__i386__)
-	asm (
-		"mov	%0, %%eax;"
-		"mov	%%eax, %%esi;"
-		"and	$0x1ffff, %%esi;"	/* TVRAM Adr */
-		"mov	%%eax, %%edi;"
-		"and	$0x1ff80, %%edi;"	/* 下位7bitマスク */
-		"shl	$3, %%edi;"
-		"and	$0x7f, %%eax;"
-		"xor	$1, %%al;"
-		"shl	$3, %%eax;"
-		"add	%%eax, %%edi;"		/* edi = workadr */
-
-		"xor	%%eax, %%eax;"
-
-		"mov	TVRAM + 0x60000(%%esi), %%al;"
-		"mov	TextDrawPattern + 6144(, %%eax, 8), %%ecx;"
-		"mov	TextDrawPattern + 6144 + 4(, %%eax, 8), %%edx;"
-		"mov	TVRAM + 0x40000(%%esi), %%al;"
-		"or	TextDrawPattern + 4096(, %%eax, 8), %%ecx;"
-		"or	TextDrawPattern + 4096 + 4(, %%eax, 8), %%edx;"
-		"mov	TVRAM + 0x20000(%%esi), %%al;"
-		"or	TextDrawPattern + 2048(, %%eax, 8), %%ecx;"
-		"or	TextDrawPattern + 2048 + 4(, %%eax, 8), %%edx;"
-		"mov	TVRAM(%%esi), %%al;"
-		"or	TextDrawPattern(, %%eax, 8), %%ecx;"
-		"or	TextDrawPattern + 4(, %%eax, 8), %%edx;"
-		"mov	%%ecx, TextDrawWork(%%edi);"
-		"mov	%%edx, TextDrawWork + 4(%%edi);"
-	: /* output: nothing */
-	: "m" (adr)
-	: "ax", "cx", "dx", "si", "di", "memory");
-#else /* !USE_ASM && !(USE_GAS && __i386__) */
 	{
 		DWORD *ptr = (DWORD *)TextDrawPattern;
 		DWORD tvram_addr = adr & 0x1ffff;
@@ -235,7 +165,6 @@ void FASTCALL TVRAM_Write(DWORD adr, BYTE data)
 		*((DWORD *)&TextDrawWork[workadr]) = t0;
 		*(((DWORD *)(&TextDrawWork[workadr])) + 1) = t1;
 	}
-#endif	/* USE_ASM */
 }
 
 
@@ -246,76 +175,6 @@ void FASTCALL TVRAM_RCUpdate(void)
 {
 	DWORD adr = ((DWORD)CRTC_Regs[0x2d]<<9);
 
-#ifdef USE_ASM
-	_asm
-	{
-		push	edi
-		push	esi
-		mov	esi, adr
-		mov	edi, esi
-		shl	edi, 3
-		mov	esi, adr
-		mov	cx, 512
-		xor	eax, eax
-	rcu_mainloop:
-		xor	esi, 1
-		mov	al, byte ptr TVRAM[esi+60000h]
-		mov	ebx, dword ptr (TextDrawPattern+6144)[eax*8]
-		mov	edx, dword ptr (TextDrawPattern+6144)[eax*8+4]
-		mov	al, byte ptr TVRAM[esi+40000h]
-		or	ebx, dword ptr (TextDrawPattern+4096)[eax*8]
-		or	edx, dword ptr (TextDrawPattern+4096)[eax*8+4]
-		mov	al, byte ptr TVRAM[esi+20000h]
-		or	ebx, dword ptr (TextDrawPattern+2048)[eax*8]
-		or	edx, dword ptr (TextDrawPattern+2048)[eax*8+4]
-		mov	al, byte ptr TVRAM[esi]
-		or	ebx, dword ptr TextDrawPattern[eax*8]
-		or	edx, dword ptr TextDrawPattern[eax*8+4]
-		mov	dword ptr TextDrawWork[edi], ebx
-		add	edi, 4
-		mov	dword ptr TextDrawWork[edi], edx
-		add	edi, 4
-		xor	esi, 1
-		inc	esi
-		dec	cx
-		jnz	rcu_mainloop
-//		loop	rcu_mainloop
-		pop	esi
-		pop	edi
-	}
-#elif defined(USE_GAS) && defined(__i386__)
-	asm (
-		"mov	%0, %%esi;"
-		"mov	%%esi, %%edi;"
-		"shl	$3, %%edi;"
-		"mov	%0, %%esi;"
-		"mov	$512, %%cx;"
-		"xor	%%eax, %%eax;"
-	".rcu_mainloop:"
-		"xor	$1, %%esi;"
-		"mov	TVRAM + 0x60000(%%esi), %%al;"
-		"mov	TextDrawPattern + 6144(, %%eax, 8), %%ebx;"
-		"mov	TextDrawPattern + 6144 + 4(, %%eax, 8), %%edx;"
-		"mov	TVRAM + 0x40000(%%esi), %%al;"
-		"or	TextDrawPattern + 4096(, %%eax, 8), %%ebx;"
-		"or	TextDrawPattern + 4096 + 4(, %%eax, 8), %%edx;"
-		"mov	TVRAM + 0x20000(%%esi), %%al;"
-		"or	TextDrawPattern + 2048(, %%eax, 8), %%ebx;"
-		"or	TextDrawPattern + 2048 + 4(, %%eax, 8), %%edx;"
-		"mov	TVRAM(%%esi), %%al;"
-		"or	TextDrawPattern(, %%eax, 8), %%ebx;"
-		"or	TextDrawPattern + 4(, %%eax, 8), %%edx;"
-		"mov	%%ebx, TextDrawWork(%%edi);"
-		"add	$4, %%edi;"
-		"mov	%%edx, TextDrawWork(%%edi);"
-		"add	$4, %%edi;"
-		"xor	$1, %%esi;"
-		"inc	%%esi;"
-		"loop	.rcu_mainloop;"
-	: /* output: nothing */
-	: "m" (adr)
-	: "ax", "bx", "cx", "dx", "si", "di", "memory");
-#else /* !USE_ASM && !(USE_GAS && __i386__) */
 	/* XXX: BUG */
 	DWORD *ptr = (DWORD *)TextDrawPattern;
 	DWORD *wptr = (DWORD *)(TextDrawWork + (adr << 3));
@@ -346,7 +205,6 @@ void FASTCALL TVRAM_RCUpdate(void)
 		*wptr++ = t0;
 		*wptr++ = t1;
 	}
-#endif	/* USE_ASM */
 }
 
 // -----------------------------------------------------------------------
@@ -354,176 +212,6 @@ void FASTCALL TVRAM_RCUpdate(void)
 // -----------------------------------------------------------------------
 void FASTCALL Text_DrawLine(int opaq)
 {
-#ifdef USE_ASM
-	__asm {
-		push	edi
-		or	ecx, ecx		//ecx = opaq
-		jz	tdlnotopaq
-		mov	edi, 0
-		mov	edx, VLINE
-		mov	al, CRTC_Regs[0x29]
-		and	al, 1ch
-		cmp	al, 1ch
-		jne	textlinenotspecial
-		shl	edx, 1
-	textlinenotspecial:
-		add	edx, TextScrollY
-		and	edx, 1023
-		shl	edx, 10
-		mov	ebx, TextScrollX
-		and	ebx, 1023
-		add	edx, ebx
-		xor	bx, 1023
-		inc	bx
-		mov	ecx, TextDotX
-	looptextline:
-		movzx	eax, byte ptr TextDrawWork[edx]
-		mov	byte ptr (Text_TrFlag+16)[edi], 0
-		and	al, 15
-		jz	textline_skip
-		mov	byte ptr (Text_TrFlag+16)[edi], 1
-	textline_skip:
-		mov	ax, word ptr TextPal[eax*2]
-		mov	word ptr (BG_LineBuf+32)[edi*2], ax
-		inc	edi
-		inc	edx
-		dec	bx
-		jz	endtextline
-		loop	looptextline
-		jmp	finishtextline
-	endtextline:
-		dec	cx
-		jz	finishtextline
-		mov	ax, word ptr TextPal[0]
-	endtextlineloop:
-		mov	word ptr (BG_LineBuf+32)[edi*2], ax
-		mov	byte ptr (Text_TrFlag+16)[edi], 0
-		inc	edi
-		loop	endtextlineloop
-		jmp	finishtextline
-
-
-	tdlnotopaq:
-		mov	edi, 0
-		mov	edx, VLINE
-		mov	al, CRTC_Regs[0x29]
-		and	al, 1ch
-		cmp	al, 1ch
-		jne	notextlinenotspecial
-		shl	edx, 1
-	notextlinenotspecial:
-		add	edx, TextScrollY
-		and	edx, 1023
-		shl	edx, 10
-		mov	ebx, TextScrollX
-		and	ebx, 1023
-		add	edx, ebx
-		xor	bx, 1023
-		inc	bx
-		mov	ecx, TextDotX
-	nolooptextline:
-		movzx	eax, byte ptr TextDrawWork[edx]
-		and	al, 15
-		jz	notextline_skip
-		or	byte ptr (Text_TrFlag+16)[edi], 1
-		mov	ax, word ptr TextPal[eax*2]
-		mov	word ptr (BG_LineBuf+32)[edi*2], ax
-	notextline_skip:
-		inc	edi
-		inc	edx
-		dec	bx
-		jz	finishtextline
-		loop	nolooptextline
-
-	finishtextline:
-		pop	edi
-	}
-#elif defined(USE_GAS) && defined(__i386__)
-	asm (
-		"mov	%0, %%ecx;"
-		"or	%%ecx, %%ecx;"
-		"jz	.tdlnotopaq;"
-		"mov	$0, %%edi;"
-		"mov	(%1), %%edx;"
-		"mov	(%2), %%al;"
-		"and	$0x1c, %%al;"
-		"cmp	$0x1c, %%al;"
-		"jne	.textlinenotspecial;"
-		"shl	$1, %%edx;"
-	".textlinenotspecial:"
-		"add	(%3), %%edx;"
-		"and	$1023, %%edx;"
-		"shl	$10, %%edx;"
-		"mov	(%4), %%ebx;"
-		"and	$1023, %%ebx;"
-		"add	%%ebx, %%edx;"
-		"xor	$1023, %%bx;"
-		"inc	%%bx;"
-		"mov	(%6), %%ecx;"
-	".looptextline:"
-		"movzbl	TextDrawWork(%%edx), %%eax;"
-		"movb	$0, Text_TrFlag + 16(%%edi);"
-		"and	$15, %%al;"
-		"jz	.textline_skip;"
-		"movb	$1, Text_TrFlag + 16(%%edi);"
-	".textline_skip:"
-		"mov	TextPal(, %%eax, 2), %%ax;"
-		"mov	%%ax, BG_LineBuf + 32(, %%edi, 2);"
-		"inc	%%edi;"
-		"inc	%%edx;"
-		"dec	%%bx;"
-		"jz	.endtextline;"
-		"loop	.looptextline;"
-		"jmp	.finishtextline;"
-	".endtextline:"
-		"dec	%%cx;"
-		"jz	.finishtextline;"
-		"mov	(%5), %%ax;"
-	".endtextlineloop:"
-		"mov	%%ax, BG_LineBuf + 32(, %%edi, 2);"
-		"movb	$0, Text_TrFlag + 16(%%edi);"
-		"inc	%%edi;"
-		"loop	.endtextlineloop;"
-		"jmp	.finishtextline;"
-
-	".tdlnotopaq:"
-		"mov	$0, %%edi;"
-		"mov	(%1), %%edx;"
-		"mov	(%2), %%al;"
-		"and	$0x1c, %%al;"
-		"cmp	$0x1c, %%al;"
-		"jne	.notextlinenotspecial;"
-		"shl	$1, %%edx;"
-	".notextlinenotspecial:"
-		"add	(%3), %%edx;"
-		"and	$1023, %%edx;"
-		"shl	$10, %%edx;"
-		"mov	(%4), %%ebx;"
-		"and	$1023, %%ebx;"
-		"add	%%ebx, %%edx;"
-		"xor	$1023, %%bx;"
-		"inc	%%bx;"
-		"mov	(%6), %%ecx;"
-	".nolooptextline:"
-		"movzbl	TextDrawWork(%%edx), %%eax;"
-		"and	$15, %%al;"
-		"jz	.notextline_skip;"
-		"orb	$1, Text_TrFlag + 16(%%edi);"
-		"mov	TextPal(, %%eax, 2), %%ax;"
-		"mov	%%ax, BG_LineBuf + 32(, %%edi, 2);"
-	".notextline_skip:"
-		"inc	%%edi;"
-		"inc	%%edx;"
-		"dec	%%bx;"
-		"jz	.finishtextline;"
-		"loop	.nolooptextline;"
-
-	".finishtextline:"
-	: /* output: nothing */
-	: "m" (opaq), "g" (VLINE), "g" (CRTC_Regs[0x29]),
-	  "g" (TextScrollY), "g" (TextScrollX), "g" (TextPal[0]), "g" (TextDotX)
-	: "ax", "bx", "cx", "dx", "si", "di", "memory");
-#else /* !USE_ASM && !(USE_GAS && __i386__) */
 	DWORD addr;
 	DWORD x, y;
 	DWORD off = 16;
@@ -560,5 +248,4 @@ void FASTCALL Text_DrawLine(int opaq)
 			}
 		}
 	}
-#endif	/* USE_ASM */
 }

@@ -202,35 +202,34 @@ WinDraw_Redraw(void)
 	TVRAM_SetAllDirty();
 }
 
-
 extern int retrow,retroh,CHANGEAV;
 
 void FASTCALL WinDraw_Draw(void)
 {
-	static int oldtextx = -1, oldtexty = -1;
+   static int oldtextx = -1, oldtexty = -1;
 
-	if (oldtextx != TextDotX)
+   if (oldtextx != TextDotX)
    {
       oldtextx = TextDotX;
       CHANGEAV=1;
    }
-	if (oldtexty != TextDotY)
+   if (oldtexty != TextDotY)
    {
       oldtexty = TextDotY;
       CHANGEAV=1;
    }
 
-	if(CHANGEAV==1)
+   if(CHANGEAV==1)
    {
       retrow=TextDotX;
       retroh=TextDotY;
    }
 
-	videoBuffer = (uint16_t*)ScrBuf;
+   videoBuffer = (uint16_t*)ScrBuf;
 
-	if (!Draw_DrawFlag/* && is_installed_idle_process()*/)
-		return;
-	Draw_DrawFlag = 0;
+   if (!Draw_DrawFlag)
+      return;
+   Draw_DrawFlag = 0;
 }
 
 #define WD_MEMCPY(src) memcpy(&ScrBuf[adr], (src), TextDotX * 2)

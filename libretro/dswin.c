@@ -23,6 +23,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <stdint.h>
 #include	"windows.h"
 #include	"common.h"
 #include	"dswin.h"
@@ -31,15 +32,15 @@
 #include	"mercury.h"
 #include	"fmg_wrap.h"
 
-short	playing = FALSE;
+int16_t	playing          = FALSE;
 
 #define PCMBUF_SIZE 2*2*48000
 BYTE pcmbuffer[PCMBUF_SIZE];
-BYTE *pcmbufp = pcmbuffer;
-BYTE *pbsp = pcmbuffer;
-BYTE *pbrp = pcmbuffer, *pbwp = pcmbuffer;
-BYTE *pbep = &pcmbuffer[PCMBUF_SIZE];
-DWORD ratebase = 22050;
+BYTE *pcmbufp          = pcmbuffer;
+BYTE *pbsp             = pcmbuffer;
+BYTE *pbrp             = pcmbuffer, *pbwp = pcmbuffer;
+BYTE *pbep             = &pcmbuffer[PCMBUF_SIZE];
+DWORD ratebase         = 22050;
 long DSound_PreCounter = 0;
 BYTE rsndbuf[PCMBUF_SIZE];
 
@@ -71,22 +72,22 @@ DSound_Init(unsigned long rate, unsigned long buflen)
 	return TRUE;
 }
 
-void
-DSound_Play(void)
+void DSound_Play(void)
 {
-   	if (audio_fd >= 0) {
-		ADPCM_SetVolume((BYTE)Config.PCM_VOL);
-		OPM_SetVolume((BYTE)Config.OPM_VOL);	
-	}
+   if (audio_fd >= 0)
+   {
+      ADPCM_SetVolume((BYTE)Config.PCM_VOL);
+      OPM_SetVolume((BYTE)Config.OPM_VOL);	
+   }
 }
 
-void
-DSound_Stop(void)
+void DSound_Stop(void)
 {
-   	if (audio_fd >= 0) {
-		ADPCM_SetVolume(0);
-		OPM_SetVolume(0);	
-	}
+   if (audio_fd >= 0)
+   {
+      ADPCM_SetVolume(0);
+      OPM_SetVolume(0);	
+   }
 }
 
 int
@@ -104,12 +105,8 @@ static void sound_send(int length)
 {
    int rate = 0;
 
-   ADPCM_Update((short *)pbwp, length, rate, pbsp, pbep);
-   OPM_Update((short *)pbwp, length, rate, pbsp, pbep);
-#ifndef	NO_MERCURY
-   //Mcry_Update((short *)pcmbufp, length);
-#endif
-
+   ADPCM_Update((int16_t *)pbwp, length, rate, pbsp, pbep);
+   OPM_Update((int16_t *)pbwp, length, rate, pbsp, pbep);
    pbwp += length * sizeof(WORD) * 2;
    if (pbwp >= pbep)
       pbwp = pbsp + (pbwp - pbep);
@@ -146,13 +143,11 @@ static void FASTCALL DSound_Send(int length)
 	sound_send(length);
 }
 
-int
-audio_samples_avail()
+int audio_samples_avail(void)
 {
    if (pbrp <= pbwp)
       return (pbwp - pbrp) / 4;
-   else
-      return (pbep - pbrp) / 4 + (pbwp - pbsp) / 4;
+   return (pbep - pbrp) / 4 + (pbwp - pbsp) / 4;
 }
 
 void

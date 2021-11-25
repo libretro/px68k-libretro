@@ -2,6 +2,8 @@
 //  SASI.C - Shugart Associates System Interface (SASI HDD)
 // ---------------------------------------------------------------------------------------
 
+#include <stdint.h>
+
 #include "common.h"
 #include "fileio.h"
 #include "prop.h"
@@ -19,7 +21,7 @@ BYTE SASI_Cmd[6];
 BYTE SASI_CmdPtr = 0;
 WORD SASI_Device = 0;
 BYTE SASI_Unit = 0;
-short SASI_BufPtr = 0;
+int16_t SASI_BufPtr = 0;
 BYTE SASI_RW = 0;
 BYTE SASI_Stat = 0;
 BYTE SASI_Mes = 0;
@@ -69,7 +71,7 @@ void SASI_Init(void)
 // -----------------------------------------------------------------------
 //   し−く（リード時）
 // -----------------------------------------------------------------------
-short SASI_Seek(void)
+int16_t SASI_Seek(void)
 {
 	FILEH fp;
 	memset(SASI_Buf, 0, 256);
@@ -98,10 +100,9 @@ short SASI_Seek(void)
 // -----------------------------------------------------------------------
 //   しーく（ライト時）
 // -----------------------------------------------------------------------
-short SASI_Flush(void)
-{	FILEH fp;
-
-	fp = File_Open(Config.HDImage[SASI_Device*2+SASI_Unit]);
+int16_t SASI_Flush(void)
+{
+	FILEH fp = File_Open(Config.HDImage[SASI_Device*2+SASI_Unit]);
 	if (!fp) return -1;
 	if (File_Seek(fp, SASI_Sector<<8, FSEEK_SET)!=(SASI_Sector<<8))
 	{
@@ -125,7 +126,7 @@ short SASI_Flush(void)
 BYTE FASTCALL SASI_Read(DWORD adr)
 {
 	BYTE ret = 0;
-	short result;
+	int16_t result;
 
 	if (adr==0xe96003)
 	{
@@ -207,7 +208,7 @@ BYTE FASTCALL SASI_Read(DWORD adr)
 //   - 06h（フォーマット？）。論理ブロック指定あり（21hおきに指定している）。ブロック数のとこは6が指定されている。
 void SASI_CheckCmd(void)
 {
-	short result;
+	int16_t result;
 	SASI_Unit = (SASI_Cmd[1]>>5)&1;			// X68kでは、ユニット番号は0か1しか取れない
 
 	switch(SASI_Cmd[0])
@@ -313,7 +314,7 @@ void SASI_CheckCmd(void)
 // -----------------------------------------------------------------------
 void FASTCALL SASI_Write(DWORD adr, BYTE data)
 {
-	short result;
+	int16_t result;
 	int i;
 	BYTE bit;
 
@@ -337,14 +338,10 @@ void FASTCALL SASI_Write(DWORD adr, BYTE data)
 			SASI_CmdPtr = 0;
 		}
 		else
-		{
 			SASI_Phase = 0;
-		}
 	}
 	else if ( (adr==0xe96003)&&(SASI_Phase==1) )
-	{
 		SASI_Phase++;
-	}
 	else if (adr==0xe96005)						// SASI Reset
 	{
 		SASI_Phase = 0;
@@ -396,9 +393,7 @@ void FASTCALL SASI_Write(DWORD adr, BYTE data)
 		{
 			SASI_SenseStatPtr++;
 			if (SASI_SenseStatPtr==10)			// コマンド発行終了
-			{
 				SASI_Phase = 4;
-			}
 		}
 		if (SASI_Phase==4)
 		{

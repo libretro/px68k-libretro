@@ -39,11 +39,7 @@ extern "C" {
 
 #define C68K_BYTE_SWAP_OPT
 
-#ifdef WORDS_BIGENDIAN
-#define C68K_BIG_ENDIAN
-#endif
-
-#ifdef C68K_BIG_ENDIAN
+#ifdef MSB_FIRST
  #define BYTE_OFF 3
  #define WORD_OFF 1
 #else

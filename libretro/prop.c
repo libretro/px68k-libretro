@@ -58,7 +58,6 @@ Win68Conf ConfBk;
 #endif
 
 extern char filepath[MAX_PATH];
-extern char winx68k_ini[MAX_PATH];
 extern int winx, winy;
 extern char joyname[2][MAX_PATH];
 extern char joybtnname[2][MAX_BUTTON][MAX_PATH];
@@ -66,77 +65,8 @@ extern BYTE joybtnnum[2];
 
 #define CFGLEN MAX_PATH
 
-#if 0
-static long solveHEX(char *str) {
-
-	long	ret;
-	int		i;
-	char	c;
-
-	ret = 0;
-	for (i=0; i<8; i++) {
-		c = *str++;
-		if ((c >= '0') && (c <= '9')) {
-			c -= '0';
-		}
-		else if ((c >= 'A') && (c <= 'F')) {
-			c -= '7';
-		}
-		else if ((c >= 'a') && (c <= 'f')) {
-			c -= 'W';
-		}
-		else {
-			break;
-		}
-		ret <<= 4;
-		ret += (long) c;
-	}
-	return(ret);
-}
-#endif
-
-static char *makeBOOL(BYTE value) {
-
-	if (value) {
-		return("true");
-	}
-	return("false");
-}
-
-static BYTE Aacmp(char *cmp, char *str) {
-
-	char	p;
-
-	while(*str) {
-		p = *cmp++;
-		if (!p) {
-			break;
-		}
-		if (p >= 'a' && p <= 'z') {
-			p -= 0x20;
-		}
-		if (p != *str++) {
-			return(-1);
-		}
-	}
-	return(0);
-}
-
-static BYTE solveBOOL(char *str) {
-
-	if ((!Aacmp(str, "TRUE")) || (!Aacmp(str, "ON")) ||
-		(!Aacmp(str, "+")) || (!Aacmp(str, "1")) ||
-		(!Aacmp(str, "ENABLE"))) {
-		return(1);
-	}
-	return(0);
-}
-
-#ifdef __LIBRETRO__
 extern char retro_system_conf[512];
 extern char slash;
-
-#endif
 
 int
 set_modulepath(char *path, size_t len)
@@ -144,7 +74,6 @@ set_modulepath(char *path, size_t len)
 	struct stat sb;
 	char *homepath;
         strcpy(path,retro_system_conf);
-        sprintf(winx68k_ini, "%s%cconfig",retro_system_conf,slash);
         return 0;
 }
 

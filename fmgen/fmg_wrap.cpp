@@ -167,7 +167,7 @@ void FASTCALL OPM_Write(DWORD adr, BYTE data)
 }
 
 
-void OPM_Update(short *buffer, int length, int rate, BYTE *pbsp, BYTE *pbep)
+void OPM_Update(int16_t *buffer, int length, int rate, BYTE *pbsp, BYTE *pbep)
 {
 	if ( (!juliet_YM2151IsEnable())||(!Config.SoundROMEO) )
 		if ( opm ) opm->Mix((FM::Sample*)buffer, length, rate, pbsp, pbep);
@@ -335,7 +335,7 @@ void FASTCALL M288_Write(DWORD adr, BYTE data)
 }
 
 
-void M288_Update(short *buffer, int length)
+void M288_Update(int16_t *buffer, int length)
 {
 	if ( ymf288a ) ymf288a->Mix((FM::Sample*)buffer, length);
 	if ( ymf288b ) ymf288b->Mix((FM::Sample*)buffer, length);

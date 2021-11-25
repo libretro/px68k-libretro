@@ -32,11 +32,8 @@ extern	DWORD	VLINE;
 extern	DWORD	vline;
 
 extern	char	winx68k_dir[MAX_PATH];
-extern	char	winx68k_ini[MAX_PATH];
 extern	int	BIOS030Flag;
 extern	BYTE	FrameChanged;
-
-extern const BYTE PrgTitle[];
 
 #if defined(ANDROID) || TARGET_OS_IPHONE
 extern int realdisp_w, realdisp_h;
@@ -58,7 +55,6 @@ void exec_app_retro();
 #endif
 #include <signal.h>
 
-BOOL is_installed_idle_process(void);
 void install_idle_process(void);
 void uninstall_idle_process(void);
 

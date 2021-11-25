@@ -138,7 +138,8 @@ void MFP_Init(void)
 		0x0d, 0xc8, 0x14, 0x00, 0x88, 0x01, 0x81, 0x00
 	};
 	memcpy(MFP, initregs, 24);
-	for (i=0; i<4; i++) Timer_Tick[i] = 0;
+	for (i=0; i<4; i++)
+      Timer_Tick[i] = 0;
 }
 
 

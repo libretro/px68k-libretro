@@ -84,7 +84,7 @@ extern void TRACE(int,c68k_struc*,int,int);
 #define READ_WORD_F(A, D)           \
     D = CPU->Read_Word(A) & 0xFFFF;
 
-#ifdef C68K_BIG_ENDIAN
+#ifdef MSB_FIRST
     #define READ_LONG_F(A, D)           \
     D = CPU->Read_Word((A)) << 16;   \
     D |= CPU->Read_Word((A) + 2) & 0xFFFF;
@@ -108,7 +108,7 @@ extern void TRACE(int,c68k_struc*,int,int);
 #define READSX_WORD_F(A, D)             \
     D = (s32)(s16)CPU->Read_Word(A);
     
-#ifdef C68K_BIG_ENDIAN
+#ifdef MSB_FIRST
     #define READSX_LONG_F(A, D)         \
     D = CPU->Read_Word((A)) << 16;   \
     D |= CPU->Read_Word((A) + 2) & 0xFFFF;
@@ -132,7 +132,7 @@ extern void TRACE(int,c68k_struc*,int,int);
 #define WRITE_WORD_F(A, D)      \
     CPU->Write_Word(A, D);
 
-#ifdef C68K_BIG_ENDIAN
+#ifdef MSB_FIRST
     #define WRITE_LONG_F(A, D)              \
     CPU->Write_Word((A), (D) >> 16);     \
     CPU->Write_Word((A) + 2, (D) & 0xFFFF);
@@ -157,7 +157,7 @@ extern void TRACE(int,c68k_struc*,int,int);
     D = (u16)CPU->Read_Word(CPU->A[7]); \
     CPU->A[7] += 2;
 
-#ifdef C68K_BIG_ENDIAN
+#ifdef MSB_FIRST
     #define PUSH_32_F(D)                        \
     CPU->A[7] -= 4;                             \
     CPU->Write_Word(CPU->A[7] + 2, (D) & 0xFFFF);  \
@@ -201,7 +201,7 @@ extern void TRACE(int,c68k_struc*,int,int);
     else adr += (s32)((s16)(CPU->D[ext >> 12]));        \
 }
 
-#ifndef C68K_BIG_ENDIAN
+#ifndef MSB_FIRST
 #ifdef C68K_BYTE_SWAP_OPT
     #undef FETCH_LONG
     #define FETCH_LONG          \
