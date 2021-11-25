@@ -67,17 +67,11 @@ WORD	VLINE_TOTAL = 567;
 DWORD	VLINE = 0;
 DWORD	vline = 0;
 
-extern	int	SplashFlag;
-
 BYTE DispFrame = 0;
 DWORD SoundSampleRate;
 
 unsigned int hTimerID = 0;
 DWORD TimerICount = 0;
-extern DWORD timertick;
-
-BYTE ForceDebugMode = 0;
-DWORD skippedframes = 0;
 
 static int ClkUsed = 0;
 static int FrameSkipCount = 0;
@@ -522,7 +516,6 @@ extern "C" int pmain(int argc, char *argv[])
 		return 1;
 	}
 
-	SplashFlag = 20;
 	SoundSampleRate = Config.SampleRate;
 
 	StatBar_Show(Config.WindowFDDStat);
@@ -530,19 +523,20 @@ extern "C" int pmain(int argc, char *argv[])
 	WinDraw_ChangeMode(FALSE);
 
 	WinUI_Init();
-	WinDraw_StartupScreen();
 
-	if (!WinX68k_Init()) {
-		WinX68k_Cleanup();
-		WinDraw_Cleanup();
-		return 1;
-	}
+	if (!WinX68k_Init())
+   {
+      WinX68k_Cleanup();
+      WinDraw_Cleanup();
+      return 1;
+   }
 
-	if (!WinX68k_LoadROMs()) {
-		WinX68k_Cleanup();
-		WinDraw_Cleanup();
-		exit (1);
-	}
+	if (!WinX68k_LoadROMs())
+   {
+      WinX68k_Cleanup();
+      WinDraw_Cleanup();
+      exit (1);
+   }
 
 	Keyboard_Init(); //before moving to WinDraw_Init()
 
@@ -781,104 +775,95 @@ extern "C" void handle_retrok(){
 
 }
 
-extern "C" void exec_app_retro(){
+extern "C" void exec_app_retro()
+{
+   int i;
+   static int mbL = 0, mbR = 0;
+   int menu_key_down;
 
-	int menu_key_down;
-	//while (1) {
-		// OPM_RomeoOut(Config.BufferSize * 5);
-		if (menu_mode == menu_out
-		    && (Config.AudioDesyncHack ||
-                        Config.NoWaitMode || Timer_GetCount())) {
-			WinX68k_Exec();
+   if (menu_mode == menu_out
+         && (Config.AudioDesyncHack ||
+            Config.NoWaitMode || Timer_GetCount()))
+   {
+      WinX68k_Exec();
+   }
 
-			if (SplashFlag) {
-				SplashFlag--;
-				if (SplashFlag == 0)
-					WinDraw_HideSplash();
-			}
-		}
+   menu_key_down = -1;
 
-		menu_key_down = -1;
- 		//end_loop=1;
+   int mouse_x   = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_X);
+   int mouse_y   = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_Y);
 
-		static int mbL = 0, mbR = 0;
+   Mouse_Event(0, mouse_x, mouse_y);
 
-	      	int mouse_x = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_X);
-		int mouse_y = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_Y);
+   int mouse_l    = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_LEFT);
+   int mouse_r    = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_RIGHT);
 
-     		Mouse_Event(0, mouse_x, mouse_y);
+   if(mbL==0 && mouse_l){
+      mbL=1;
+      Mouse_Event(1,1.0,0);
+   }
+   else if(mbL==1 && !mouse_l)
+   {
+      mbL=0;
+      Mouse_Event(1,0,0);
+   }
+   if(mbR==0 && mouse_r){
+      mbR=1;
+      Mouse_Event(2,1.0,0);
+   }
+   else if(mbR==1 && !mouse_r)
+   {
+      mbR=0;
+      Mouse_Event(2,0,0);
+   }
 
-		int mouse_l    = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_LEFT);
-		int mouse_r    = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_RIGHT);
+   for(i=0;i<320;i++)
+      Core_Key_State[i]=input_state_cb(0, RETRO_DEVICE_KEYBOARD, 0,i) ? 0x80: 0;
 
-  	        if(mbL==0 && mouse_l){
-      			mbL=1;
-			Mouse_Event(1,1.0,0);
-		}
-   		else if(mbL==1 && !mouse_l)
-   		{
-   			mbL=0;
-			Mouse_Event(1,0,0);
-		}
-  	        if(mbR==0 && mouse_r){
-      			mbR=1;
-			Mouse_Event(2,1.0,0);
-		}
-   		else if(mbR==1 && !mouse_r)
-   		{
-   			mbR=0;
-			Mouse_Event(2,0,0);
-		}
+   Core_Key_State[RETROK_XFX] = 0;
 
-  		int i;
+   if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_L2))	//Joypad Key for Menu
+      Core_Key_State[RETROK_F12] = 0x80;
 
-   		for(i=0;i<320;i++)
-      			Core_Key_State[i]=input_state_cb(0, RETRO_DEVICE_KEYBOARD, 0,i) ? 0x80: 0;
+   if (Config.joy1_select_mapping)
+      if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_SELECT))	//Joypad Key for Mapping
+         Core_Key_State[RETROK_XFX] = 0x80;
 
-      	Core_Key_State[RETROK_XFX] = 0;
+   if(memcmp( Core_Key_State,Core_old_Key_State , sizeof(Core_Key_State) ) )
+      handle_retrok();
 
-   		if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_L2))	//Joypad Key for Menu
-				Core_Key_State[RETROK_F12] = 0x80;
+   memcpy(Core_old_Key_State,Core_Key_State , sizeof(Core_Key_State) );
 
-		if (Config.joy1_select_mapping)
-			if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_SELECT))	//Joypad Key for Mapping
-				Core_Key_State[RETROK_XFX] = 0x80;
+   if (menu_mode != menu_out)
+   {
+      int ret;
 
-		if(memcmp( Core_Key_State,Core_old_Key_State , sizeof(Core_Key_State) ) )
-			handle_retrok();
+      keyb_in = 0;
+      if (Core_Key_State[RETROK_RIGHT] || Core_Key_State[RETROK_PAGEDOWN])
+         keyb_in |= JOY_RIGHT;
+      if (Core_Key_State[RETROK_LEFT] || Core_Key_State[RETROK_PAGEUP])
+         keyb_in |= JOY_LEFT;
+      if (Core_Key_State[RETROK_UP])
+         keyb_in |= JOY_UP;
+      if (Core_Key_State[RETROK_DOWN])
+         keyb_in |= JOY_DOWN;
+      if (Core_Key_State[RETROK_z] || Core_Key_State[RETROK_RETURN])
+         keyb_in |= JOY_TRG1;
+      if (Core_Key_State[RETROK_x] || Core_Key_State[RETROK_BACKSPACE])
+         keyb_in |= JOY_TRG2;
 
-   		memcpy(Core_old_Key_State,Core_Key_State , sizeof(Core_Key_State) );
+      Joystick_Update(TRUE, menu_key_down, 0);
 
-		if (menu_mode != menu_out) {
-			int ret;
-
-			keyb_in = 0;
-			if (Core_Key_State[RETROK_RIGHT] || Core_Key_State[RETROK_PAGEDOWN])
-				keyb_in |= JOY_RIGHT;
-			if (Core_Key_State[RETROK_LEFT] || Core_Key_State[RETROK_PAGEUP])
-				keyb_in |= JOY_LEFT;
-			if (Core_Key_State[RETROK_UP])
-				keyb_in |= JOY_UP;
-			if (Core_Key_State[RETROK_DOWN])
-				keyb_in |= JOY_DOWN;
-			if (Core_Key_State[RETROK_z] || Core_Key_State[RETROK_RETURN])
-				keyb_in |= JOY_TRG1;
-			if (Core_Key_State[RETROK_x] || Core_Key_State[RETROK_BACKSPACE])
-				keyb_in |= JOY_TRG2;
-
-			Joystick_Update(TRUE, menu_key_down, 0);
-
-			ret = WinUI_Menu(menu_mode == menu_enter);
-			menu_mode = menu_in;
-			if (ret == WUM_MENU_END) {
-				DSound_Play();
-				menu_mode = menu_out;
-			} else if (ret == WUM_EMU_QUIT) {
-				 end_loop=1;
-			}
-		}
-
-	//}
+      ret       = WinUI_Menu(menu_mode == menu_enter);
+      menu_mode = menu_in;
+      if (ret == WUM_MENU_END)
+      {
+         DSound_Play();
+         menu_mode = menu_out;
+      }
+      else if (ret == WUM_EMU_QUIT)
+         end_loop=1;
+   }
 }
 
 extern "C" void end_loop_retro(void)

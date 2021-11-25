@@ -147,47 +147,45 @@ void MFP_Init(void)
 // -----------------------------------------------------------------------
 BYTE FASTCALL MFP_Read(DWORD adr)
 {
-	BYTE reg;
-	BYTE ret = 0;
-	int hpos;
-
-	if (adr>0xe8802f) return ret;		// ばすえらー？
+	if (adr > 0xe8802f)
+      return 0;		// ばすえらー？
 
 	if (adr&1)
 	{
-		reg=(BYTE)((adr&0x3f)>>1);
+      int hpos;
+      BYTE ret = 0;
+		BYTE reg = (BYTE)((adr&0x3f)>>1);
+
 		switch(reg)
-		{
-		case MFP_GPIP:
-			if ( (vline>=CRTC_VSTART)&&(vline<CRTC_VEND) )
-				ret = 0x13;
-			else
-				ret = 0x03;
-			hpos = (int)(ICount%HSYNC_CLK);
-			if ( (hpos>=((int)CRTC_Regs[5]*HSYNC_CLK/CRTC_Regs[1]))&&(hpos<((int)CRTC_Regs[7]*HSYNC_CLK/CRTC_Regs[1])) )
-				ret &= 0x7f;
-			else
-				ret |= 0x80;
-			if (vline!=CRTC_IntLine)
-				ret |= 0x40;
-			break;
-		case MFP_UDR:
-			ret = LastKey;
-			KeyIntFlag = 0;
-			break;
-		case MFP_RSR:
-			if (KeyBufRP!=KeyBufWP)
-				ret = MFP[reg] & 0x7f;
-			else
-				ret = MFP[reg] | 0x80;
-			break;
-		default:
-			ret = MFP[reg];
-		}
+      {
+         case MFP_GPIP:
+            if ( (vline>=CRTC_VSTART)&&(vline<CRTC_VEND) )
+               ret = 0x13;
+            else
+               ret = 0x03;
+            hpos = (int)(ICount%HSYNC_CLK);
+            if ( (hpos>=((int)CRTC_Regs[5]*HSYNC_CLK/CRTC_Regs[1]))&&(hpos<((int)CRTC_Regs[7]*HSYNC_CLK/CRTC_Regs[1])) )
+               ret &= 0x7f;
+            else
+               ret |= 0x80;
+            if (vline!=CRTC_IntLine)
+               ret |= 0x40;
+            break;
+         case MFP_UDR:
+            ret        = LastKey;
+            KeyIntFlag = 0;
+            break;
+         case MFP_RSR:
+            if (KeyBufRP!=KeyBufWP)
+               return (MFP[reg] & 0x7f);
+            return (MFP[reg] | 0x80);
+         default:
+            return MFP[reg];
+      }
 		return ret;
 	}
-	else
-		return 0xff;
+
+   return 0xff;
 }
 
 
@@ -196,85 +194,84 @@ BYTE FASTCALL MFP_Read(DWORD adr)
 // -----------------------------------------------------------------------
 void FASTCALL MFP_Write(DWORD adr, BYTE data)
 {
-	BYTE reg;
-	if (adr>0xe8802f) return;
-	if (adr&1)
-	{
-		reg=(BYTE)((adr&0x3f)>>1);
+	if (adr>0xe8802f)
+      return;
 
-		switch(reg)
-		{
-		case MFP_IERA:
-		case MFP_IERB:
-			MFP[reg] = data;
-			MFP[reg+2] &= data;  // 禁止されたものはIPRA/Bを落とす
-			MFP_RecheckInt();
-			break;
-		case MFP_IPRA:
-		case MFP_IPRB:
-		case MFP_ISRA:
-		case MFP_ISRB:
-			MFP[reg] &= data;
-			MFP_RecheckInt();
-			break;
-		case MFP_IMRA:
-		case MFP_IMRB:
-			MFP[reg] = data;
-			MFP_RecheckInt();
-			break;
-		case MFP_TSR:
-			MFP[reg] = data|0x80; // Txは常にEnableに
-			break;
-		case MFP_TADR:
-			Timer_Reload[0] = MFP[reg] = data;
-			break;
-		case MFP_TACR:
-			MFP[reg] = data;
-			break;
-		case MFP_TBDR:
-			Timer_Reload[1] = MFP[reg] = data;
-			break;
-		case MFP_TBCR:
-			MFP[reg] = data;
-			if ( MFP[reg]&0x10 ) Timer_TBO = 0;
-			break;
-		case MFP_TCDR:
-			Timer_Reload[2] = MFP[reg] = data;
-			break;
-		case MFP_TDDR:
-			Timer_Reload[3] = MFP[reg] = data;
-			break;
-		case MFP_TCDCR:
-			MFP[reg] = data;
-			break;
-		case MFP_UDR:
-			break;
-		default:
-			MFP[reg] = data;
-		}
-	}
+	if (adr&1)
+   {
+      BYTE reg = (BYTE)((adr&0x3f)>>1);
+
+      switch (reg)
+      {
+         case MFP_IERA:
+         case MFP_IERB:
+            MFP[reg] = data;
+            MFP[reg+2] &= data;  // 禁止されたものはIPRA/Bを落とす
+            MFP_RecheckInt();
+            break;
+         case MFP_IPRA:
+         case MFP_IPRB:
+         case MFP_ISRA:
+         case MFP_ISRB:
+            MFP[reg] &= data;
+            MFP_RecheckInt();
+            break;
+         case MFP_IMRA:
+         case MFP_IMRB:
+            MFP[reg] = data;
+            MFP_RecheckInt();
+            break;
+         case MFP_TSR:
+            MFP[reg] = data|0x80; // Txは常にEnableに
+            break;
+         case MFP_TADR:
+            Timer_Reload[0] = MFP[reg] = data;
+            break;
+         case MFP_TACR:
+            MFP[reg] = data;
+            break;
+         case MFP_TBDR:
+            Timer_Reload[1] = MFP[reg] = data;
+            break;
+         case MFP_TBCR:
+            MFP[reg] = data;
+            if ( MFP[reg]&0x10 ) Timer_TBO = 0;
+            break;
+         case MFP_TCDR:
+            Timer_Reload[2] = MFP[reg] = data;
+            break;
+         case MFP_TDDR:
+            Timer_Reload[3] = MFP[reg] = data;
+            break;
+         case MFP_TCDCR:
+            MFP[reg] = data;
+            break;
+         case MFP_UDR:
+            break;
+         default:
+            MFP[reg] = data;
+      }
+   }
 }
 
-
-short timertrace = 0;
-//static int TimerACounted = 0;
 // -----------------------------------------------------------------------
 //   たいまの時間を進める（も少し奇麗に書き直そう……）
 // -----------------------------------------------------------------------
 void FASTCALL MFP_Timer(long clock)
 {
-	if ( (!(MFP[MFP_TACR]&8))&&(MFP[MFP_TACR]&7) ) {
-		int t = Timer_Prescaler[MFP[MFP_TACR]&7];
-		Timer_Tick[0] += clock;
-		while ( Timer_Tick[0]>=t ) {
-			Timer_Tick[0] -= t;
-			MFP[MFP_TADR]--;
-			if ( !MFP[MFP_TADR] ) {
-				MFP[MFP_TADR] = Timer_Reload[0];
-				MFP_Int(2);
-			}
-		}
-	}
+	if ( (!(MFP[MFP_TACR]&8))&&(MFP[MFP_TACR]&7) )
+   {
+      int t = Timer_Prescaler[MFP[MFP_TACR]&7];
+      Timer_Tick[0] += clock;
+      while ( Timer_Tick[0]>=t ) {
+         Timer_Tick[0] -= t;
+         MFP[MFP_TADR]--;
+         if ( !MFP[MFP_TADR] ) {
+            MFP[MFP_TADR] = Timer_Reload[0];
+            MFP_Int(2);
+         }
+      }
+   }
 
 	if ( MFP[MFP_TBCR]&7 ) {
 		int t = Timer_Prescaler[MFP[MFP_TBCR]&7];

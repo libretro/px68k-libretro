@@ -16,10 +16,7 @@ typedef signed short	SHORT;
 typedef	signed int	INT;
 typedef	signed long	LONG;
 
-typedef	unsigned char	UCHAR;
-typedef	unsigned short	USHORT;
 typedef	unsigned int	UINT;
-typedef	unsigned long	ULONG;
 
 #ifdef HAVE_C68k
 #include "/m68000/c68k/core.h"
@@ -73,10 +70,6 @@ typedef	void *		DRAWITEMSTRUCT;
 
 #ifndef	MAX_PATH
 #define	MAX_PATH	MAXPATHLEN
-#endif
-
-#ifndef	AVE
-#define	AVE(a, b)	(((a)+(b))/2)
 #endif
 
 /*
