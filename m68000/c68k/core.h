@@ -140,53 +140,11 @@ typedef signed long long s64;
 #define MAX(a,b)  ((a) > (b) ? (a) : (b))
 
 /*
- * BSWAP16(x) swaps two bytes in a 16-bit value (AABB -> BBAA) or adjacent
- * bytes in a 32-bit value (AABBCCDD -> BBAADDCC).
- *
- * BSWAP32(x) reverses four bytes in a 32-bit value (AABBCCDD -> DDCCBBAA).
- *
- * WSWAP32(x) swaps two 16-bit words in a 32-bit value (AABBCCDD -> CCDDAABB).
- *
  * Any of these can be left undefined if there is no platform-specific
  * optimization for them; the defaults below will then be used instead.
  */
 
-#ifdef PSP
-# define BSWAP16(x)  ((typeof(x)) __builtin_allegrex_wsbh((x)))
-# define BSWAP16L(x)  BSWAP16(x)
-# define BSWAP32(x)  ((typeof(x)) __builtin_allegrex_wsbw((x)))
-# define WSWAP32(x)  ((typeof(x)) __builtin_allegrex_rotr((x), 16))
-#endif
-
-#ifdef __GNUC__
-#ifdef HAVE_BUILTIN_BSWAP16
-# define BSWAP16(x)  ((__builtin_bswap16((x) >> 16) << 16) | __builtin_bswap16((x)))
-# define BSWAP16L(x) (__builtin_bswap16((x)))
-#endif
-# define BSWAP32(x)  (__builtin_bswap32((x)))
-#endif
-
-#ifdef _MSC_VER
-# define BSWAP16(x)  ((_byteswap_ushort((x) >> 16) << 16) | _byteswap_ushort((x)))
-# define BSWAP16L(x) (_byteswap_ushort((x)))
-# define BSWAP32(x)  (_byteswap_ulong((x)))
-# define WSWAP32(x)  (_lrotr((x), 16))
-#endif
-
 /* Defaults: */
-
-#ifndef BSWAP16
-# define BSWAP16(x)  (((u32)(x)>>8 & 0x00FF00FF) | ((u32)(x) & 0x00FF00FF) << 8)
-#endif
-#ifndef BSWAP16L
-# define BSWAP16L(x)  (((u16)(x)>>8 & 0xFF) | ((u16)(x) & 0xFF) << 8)
-#endif
-#ifndef BSWAP32
-# define BSWAP32(x)  ((u32)(x)>>24 | ((u32)(x)>>8 & 0xFF00) | ((u32)(x) & 0xFF00)<<8 | (u32)(x)<<24)
-#endif
-#ifndef WSWAP32
-# define WSWAP32(x)  ((u32)(x)>>16 | (u32)(x)<<16)
-#endif
 
 #ifdef __GNUC__
 

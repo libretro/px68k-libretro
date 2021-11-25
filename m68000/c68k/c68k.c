@@ -205,10 +205,8 @@ void C68k_Write_Long(c68k_struc *cpu, u32 adr, u32 data)
 
 void C68k_Set_Fetch(c68k_struc *cpu, u32 low_adr, u32 high_adr, pointer fetch_adr)
 {
-    u32 i, j;
-
-    i = (low_adr >> C68K_FETCH_SFT) & C68K_FETCH_MASK;
-    j = (high_adr >> C68K_FETCH_SFT) & C68K_FETCH_MASK;
+    u32 i = (low_adr >> C68K_FETCH_SFT) & C68K_FETCH_MASK;
+    u32 j = (high_adr >> C68K_FETCH_SFT) & C68K_FETCH_MASK;
     fetch_adr -= i << C68K_FETCH_SFT;
     while (i <= j) cpu->Fetch[i++] = fetch_adr;
 }
