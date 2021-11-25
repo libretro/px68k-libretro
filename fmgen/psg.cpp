@@ -1,8 +1,6 @@
-// ---------------------------------------------------------------------------
-//	PSG Sound Implementation
-//	Copyright (C) cisc 1997, 1999.
-// ---------------------------------------------------------------------------
-//	$fmgen-Id: psg.cpp,v 1.10 2002/05/15 21:38:01 cisc Exp $
+/*	PSG Sound Implementation
+ *	Copyright (C) cisc 1997, 1999.
+ */
 
 #include "common.h"
 #include "fmgen_types.h"
@@ -11,9 +9,6 @@
 #include "misc.h"
 #include "psg.h"
 
-// ---------------------------------------------------------------------------
-//	コンストラクタ・デストラクタ
-//
 PSG::PSG()
 {
 	SetVolume(0);
@@ -27,29 +22,22 @@ PSG::~PSG()
 
 }
 
-// ---------------------------------------------------------------------------
-//	PSG を初期化する(RESET) 
-//
 void PSG::Reset()
 {
-	for (int i=0; i<14; i++)
+   unsigned i;
+	for (i=0; i<14; i++)
 		SetReg(i, 0);
 	SetReg(7, 0xff);
 	SetReg(14, 0xff);
 	SetReg(15, 0xff);
 }
 
-// ---------------------------------------------------------------------------
-//	クロック周波数の設定
-//
 void PSG::SetClock(int clock, int rate)
 {
+	int tmp;
 	tperiodbase = int((1 << toneshift ) / 4.0 * clock / rate);
 	eperiodbase = int((1 << envshift  ) / 4.0 * clock / rate);
 	nperiodbase = int((1 << noiseshift) / 4.0 * clock / rate);
-	
-	// 各データの更新
-	int tmp;
 	tmp = ((reg[0] + reg[1] * 256) & 0xfff);
 	speriod[0] = tmp ? tperiodbase / tmp : tperiodbase;
 	tmp = ((reg[2] + reg[3] * 256) & 0xfff);
@@ -62,9 +50,6 @@ void PSG::SetClock(int clock, int rate)
 	eperiod = tmp ? eperiodbase / tmp : eperiodbase * 2;
 }
 
-// ---------------------------------------------------------------------------
-//	ノイズテーブルを作成する
-//
 void PSG::MakeNoiseTable()
 {
 	if (!noisetable[0])
@@ -83,14 +68,11 @@ void PSG::MakeNoiseTable()
 	}
 }
 
-// ---------------------------------------------------------------------------
-//	出力テーブルを作成
-//	素直にテーブルで持ったほうが省スペース。
-//
 void PSG::SetVolume(int volume)
 {
+   int i;
 	double base = 0x4000 / 3.0 * pow(10.0, volume / 40.0);
-	for (int i=31; i>=2; i--)
+	for (i=31; i>=2; i--)
 	{
 		EmitTable[i] = int(base);
 		base /= 1.189207115;
@@ -104,14 +86,12 @@ void PSG::SetVolume(int volume)
 
 void PSG::SetChannelMask(int c)
 { 
+   int i;
 	mask = ~c;
-	for (int i=0; i<3; i++)
+	for (i=0; i<3; i++)
 		olevel[i] = mask & (1 << i) ? EmitTable[(reg[8+i] & 15) * 2 + 1] : 0;
 }
 
-// ---------------------------------------------------------------------------
-//	エンベロープ波形テーブル
-//
 void PSG::MakeEnvelopTable()
 {
 	// 0 lo  1 up 2 down 3 hi
@@ -137,11 +117,6 @@ void PSG::MakeEnvelopTable()
 	}
 }
 
-// ---------------------------------------------------------------------------
-//	PSG のレジスタに値をセットする
-//	regnum		レジスタの番号 (0 - 15)
-//	data		セットする値
-//
 void PSG::SetReg(uint regnum, uint8 data)
 {
 	if (regnum < 0x10)
@@ -200,9 +175,6 @@ void PSG::SetReg(uint regnum, uint8 data)
 	}
 }
 
-// ---------------------------------------------------------------------------
-//
-//
 inline void PSG::StoreSample(Sample& dest, int32 data)
 {
 	if (sizeof(Sample) == 2)
@@ -211,11 +183,6 @@ inline void PSG::StoreSample(Sample& dest, int32 data)
 		dest += data;
 }
 
-// ---------------------------------------------------------------------------
-//	PCM データを吐き出す(2ch)
-//	dest		PCM データを展開するポインタ
-//	nsamples	展開する PCM のサンプル数
-//
 void PSG::Mix(Sample* dest, int nsamples)
 {
 	uint8 chenable[3], nenable[3];
@@ -356,9 +323,6 @@ void PSG::Mix(Sample* dest, int nsamples)
 	}
 }
 
-// ---------------------------------------------------------------------------
-//	テーブル
-//
 uint	PSG::noisetable[noisetablesize] = { 0, };
-int		PSG::EmitTable[0x20] = { -1, };
-uint	PSG::enveloptable[16][64] = { 0, };
+int	PSG::EmitTable[0x20]            = { -1, };
+uint	PSG::enveloptable[16][64]       = { 0, };
