@@ -276,7 +276,6 @@ WinX68k_Cleanup(void)
 // -----------------------------------------------------------------------------------
 void WinX68k_Exec(void)
 {
-	//char *test = NULL;
 	int clk_total, clkdiv, usedclk, hsync, clk_next, clk_count, clk_line=0;
 	int KeyIntCnt = 0, MouseIntCnt = 0;
 	DWORD t_start = timeGetTime(), t_end;
@@ -884,7 +883,6 @@ extern "C" void end_loop_retro(void)
    Joystick_Cleanup();
    SRAM_Cleanup();
    FDD_Cleanup();
-   //CDROM_Cleanup();
    MIDI_Cleanup();
    DSound_Cleanup();
    WinX68k_Cleanup();
