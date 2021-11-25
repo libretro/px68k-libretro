@@ -14,7 +14,7 @@ extern	WORD	BG_BG0TOP;
 extern	WORD	BG_BG1TOP;
 extern	long	BG_HAdjust;
 extern	long	BG_VLINE;
-extern	DWORD	VLINEBG;
+extern	long	VLINEBG;
 
 extern	BYTE	Sprite_DrawWork[1024*1024];
 extern	WORD	BG_LineBuf[1600];

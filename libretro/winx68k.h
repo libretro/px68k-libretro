@@ -28,8 +28,8 @@ extern int rfd_sock;
 extern	BYTE*	FONT;
 
 extern	WORD	VLINE_TOTAL;
-extern	DWORD	VLINE;
-extern	DWORD	vline;
+extern	long	VLINE;
+extern	long	vline;
 
 extern	char	winx68k_dir[MAX_PATH];
 extern	int	BIOS030Flag;

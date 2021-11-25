@@ -57,8 +57,8 @@ extern	BYTE	BG_CHRSIZE;
 char	winx68k_dir[MAX_PATH];
 
 WORD	VLINE_TOTAL = 567;
-DWORD	VLINE = 0;
-DWORD	vline = 0;
+long	VLINE = 0;
+long	vline = 0;
 
 BYTE DispFrame = 0;
 DWORD SoundSampleRate;
@@ -344,7 +344,7 @@ void WinX68k_Exec(void)
 			if ( (vline>=CRTC_VSTART)&&(vline<CRTC_VEND) )
 				VLINE = ((vline-CRTC_VSTART)*CRTC_VStep)/2;
 			else
-				VLINE = (DWORD)-1;
+				VLINE = -1;
 			if ( (!(MFP[MFP_AER]&0x40))&&(vline==CRTC_IntLine) )
 				MFP_Int(1);
 			if ( MFP[MFP_AER]&0x10 ) {

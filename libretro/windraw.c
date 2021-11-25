@@ -881,15 +881,15 @@ static WORD jis2idx(WORD jc)
 #define MENU_WIDTH 800
 
 // fs : font size : 16 or 24
-// 半角文字の場合は16bitの上位8bitにデータを入れておくこと
-// (半角or全角の判断ができるように)
-static DWORD get_font_addr(WORD sjis, int fs)
+// sjis : 1 byte charactor is store hight byte in 16bit
+// (become judgment easy , 1byte or 2byte code.)
+static long get_font_addr(WORD sjis, int fs)
 {
 	WORD jis, j_idx;
 	BYTE jhi;
 	int fsb; // file size in bytes
 
-	// 半角文字
+	// 1 byte code
 	if (isHankaku(sjis >> 8))
    {
       switch (fs)
@@ -905,7 +905,7 @@ static DWORD get_font_addr(WORD sjis, int fs)
       }
    }
 
-	// 全角文字
+	// 2 byte code
 	if (fs == 16)
 		fsb = 2 * 16;
 	else if (fs == 24)
@@ -917,9 +917,9 @@ static DWORD get_font_addr(WORD sjis, int fs)
 	j_idx = (DWORD)jis2idx(jis);
 	jhi   = (BYTE)(jis >> 8);
 
-	if (jhi >= 0x21 && jhi <= 0x28) // 非漢字
+	if (jhi >= 0x21 && jhi <= 0x28) // JIS non KANJI
 		return  ((fs == 16)? 0x0 : 0x40000) + j_idx * fsb;
-	else if (jhi >= 0x30 && jhi <= 0x74) // 第一水準/第二水準
+	else if (jhi >= 0x30 && jhi <= 0x74) // JIS KANJI 1st and 2nd level
 		return  ((fs == 16)? 0x5e00 : 0x4d380) + j_idx * fsb;
    return -1;
 }
@@ -930,19 +930,19 @@ static void set_mcolor(WORD c)
 	p6m.mcolor = c;
 }
 
-// mbcolor = 0 なら透明色とする
+// mbcolor = 0  (set clear color)
 static void set_mbcolor(WORD c)
 {
 	p6m.mbcolor = c;
 }
 
-// グラフィック座標
+// set Graphic location
 static void set_mlocate(int x, int y)
 {
 	p6m.ml_x = x, p6m.ml_y = y;
 }
 
-// キャラクタ文字の座標 (横軸は1座標が半角文字幅になる)
+// set text location (x is 1byte width unit)
 static void set_mlocateC(int x, int y)
 {
 	p6m.ml_x = x * p6m.mfs / 2, p6m.ml_y = y * p6m.mfs;
@@ -965,9 +965,9 @@ static WORD *get_ml_ptr()
 	return p6m.mlp;
 }
 
-// ・半角文字の場合は16bitの上位8bitにデータを入れておくこと
-//   (半角or全角の判断ができるように)
-// ・表示した分cursorは先に移動する
+// 1 byte charactor is store hight byte in 16bit(WORD)
+// (become judgment easy , 1byte or 2byte code.)
+// after draw char , cursor pointer is up.
 static void draw_char(WORD sjis)
 {
 	BYTE c;
@@ -975,12 +975,12 @@ static void draw_char(WORD sjis)
 	int i, j, k, wc, w;
 	int h   = p6m.mfs;
 	WORD *p = get_ml_ptr();
-	DWORD f = get_font_addr(sjis, h);
+	long f = get_font_addr(sjis, h);
 
 	if (f < 0)
 		return;
 
-	// h=8は半角のみ
+	// h=8(1 byte code)
 	w = (h == 8)? 8 : (isHankaku(sjis >> 8)? h / 2 : h);
 
 	for (i = 0; i < h; i++) {
