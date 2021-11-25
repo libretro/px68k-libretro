@@ -25,6 +25,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <stdint.h>
+
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/types.h>
@@ -32,10 +34,13 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#ifdef _WIN32
+#include <direct.h>
+#else
 #include <unistd.h>
+#endif
 
 #include "windows.h"
-
 
 /*-----
  *
@@ -69,15 +74,12 @@ enum {
 	HTYPE_CONSOLE,
 	HTYPE_KEY,
 };
-#ifdef _WIN32
-typedef unsigned int u_int;
-#define bzero(s,d) memset(s,0,d)
-#endif
+
 struct internal_handle {
 	void	*p;
-	u_int	flags;
+	uint32_t flags;
 	size_t	psize;
-	u_int	refcount;
+	uint32_t refcount;
 	int	type;
 };
 
