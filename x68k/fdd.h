@@ -1,5 +1,5 @@
-#ifndef _winx68k_fdd
-#define _winx68k_fdd
+#ifndef _WINX68K_FDD
+#define _WINX68K_FDD
 
 #include "common.h"
 
@@ -43,5 +43,3 @@ void FDD_SetBlink(int drive, int blink);
 extern int FDD_IsReading;
 
 #endif
-
-

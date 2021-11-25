@@ -1,5 +1,5 @@
-#ifndef _winx68k_xdf
-#define _winx68k_xdf
+#ifndef _WINX68K_XDF
+#define _WINX68K_XDF
 
 void XDF_Init(void);
 void XDF_Cleanup(void);

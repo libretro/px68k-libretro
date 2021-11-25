@@ -1,5 +1,5 @@
-#ifndef _winx68k_gvram
-#define _winx68k_gvram
+#ifndef _WINX68K_GVRAM
+#define _WINX68K_GVRAM
 
 #include "common.h"
 

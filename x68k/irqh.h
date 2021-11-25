@@ -1,5 +1,5 @@
-#ifndef _winx68k_irqh
-#define _winx68k_irqh
+#ifndef _WINX68K_IRQH
+#define _WINX68K_IRQH
 
 #include "common.h"
 

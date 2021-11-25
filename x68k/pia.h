@@ -1,5 +1,5 @@
-#ifndef _winx68k_pia
-#define _winx68k_pia
+#ifndef _WINX68K_PIA
+#define _WINX68K_PIA
 
 #include "common.h"
 

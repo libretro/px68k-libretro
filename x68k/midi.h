@@ -1,5 +1,5 @@
-#ifndef _winx68k_midi
-#define _winx68k_midi
+#ifndef _WINX68K_MIDI
+#define _WINX68K_MIDI
 
 #include "common.h"
 

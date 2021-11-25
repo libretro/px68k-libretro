@@ -1,5 +1,5 @@
-#ifndef _winx68k_d88
-#define _winx68k_d88
+#ifndef _WINX68K_D88
+#define _WINX68K_D88
 
 typedef struct {			// Header Part (size:2B0h)
 	BYTE	fd_name[17];		// Disk Name

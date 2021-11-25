@@ -1,5 +1,5 @@
-#ifndef _winx68k_crtc
-#define _winx68k_crtc
+#ifndef _WINX68K_CRTC
+#define _WINX68K_CRTC
 
 #include "common.h"
 

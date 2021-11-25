@@ -1,5 +1,5 @@
-#ifndef _winx68k_mercury_h
-#define _winx68k_mercury_h
+#ifndef _WINX68K_MERCURY_H
+#define _WINX68K_MERCURY_H
 
 extern BYTE Mcry_LRTiming;
 
@@ -19,4 +19,3 @@ int Mcry_IsReady(void);
 void FASTCALL Mcry_Int(void);
 
 #endif
-

@@ -1,5 +1,5 @@
-#ifndef _x68k_rtc
-#define _x68k_rtc
+#ifndef _X68K_RTC
+#define _X68K_RTC
 
 void RTC_Init(void);
 BYTE FASTCALL RTC_Read(DWORD adr);

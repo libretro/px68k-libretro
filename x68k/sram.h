@@ -1,5 +1,5 @@
-#ifndef _winx68k_sram
-#define _winx68k_sram
+#ifndef _WINX68K_SRAM
+#define _WINX68K_SRAM
 
 #include "common.h"
 
@@ -13,4 +13,3 @@ BYTE FASTCALL SRAM_Read(DWORD adr);
 void FASTCALL SRAM_Write(DWORD adr, BYTE data);
 
 #endif
-

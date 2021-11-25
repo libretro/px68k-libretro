@@ -1,5 +1,5 @@
-#ifndef _winx68k_pal
-#define _winx68k_pal
+#ifndef _WINX68K_PAL
+#define _WINX68K_PAL
 
 #include "common.h"
 
@@ -18,4 +18,3 @@ void Pal_ChangeContrast(int num);
 extern WORD Ibit, Pal_HalfMask, Pal_Ix2;
 
 #endif
-

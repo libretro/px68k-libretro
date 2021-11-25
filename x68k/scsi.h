@@ -1,5 +1,5 @@
-#ifndef _winx68k_scsi
-#define _winx68k_scsi
+#ifndef _WINX68K_SCSI
+#define _WINX68K_SCSI
 
 #include "common.h"
 

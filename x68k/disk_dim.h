@@ -1,5 +1,5 @@
-#ifndef _winx68k_dim
-#define _winx68k_dim
+#ifndef _WINX68K_DIM
+#define _WINX68K_DIM
 
 void DIM_Init(void);
 void DIM_Cleanup(void);

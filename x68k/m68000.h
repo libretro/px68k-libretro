@@ -1,5 +1,5 @@
-#ifndef _winx68k_m68000
-#define _winx68k_m68000
+#ifndef _WINX68K_M68000
+#define _WINX68K_M68000
 
 #include "common.h"
 
@@ -46,4 +46,4 @@ typedef struct
 
 extern m68k_regs regs;
 
-#endif //_winx68k_m68000__
+#endif /* _WINX68K_M68000 */

@@ -1,5 +1,5 @@
-#ifndef _winx68k_mfp
-#define _winx68k_mfp
+#ifndef _WINX68K_MFP
+#define _WINX68K_MFP
 
 #include "common.h"
 
@@ -30,10 +30,8 @@ extern	BYTE MFP[24];
 #define MFP_TSR		22
 #define MFP_UDR		23
 
-//extern long Timer_Prescaler[8];
 extern long Timer_Count[4];
 extern BYTE LastKey;
-//extern BYTE KeyReadFlag;
 
 void MFP_Init(void);
 BYTE FASTCALL MFP_Read(DWORD adr);
@@ -42,4 +40,4 @@ void FASTCALL MFP_Timer(long clock);
 void FASTCALL MFP_TimerA(void);
 void MFP_Int(int irq);
 
-#endif //_winx68k_mfp
+#endif /*_WINX68K_MFP */

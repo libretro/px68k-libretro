@@ -1,5 +1,5 @@
-#ifndef _winx68k_bg
-#define _winx68k_bg
+#ifndef _WINX68K_BG
+#define _WINX68K_BG
 
 #include "common.h"
 

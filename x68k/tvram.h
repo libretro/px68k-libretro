@@ -1,5 +1,5 @@
-#ifndef _winx68k_tvram
-#define _winx68k_tvram
+#ifndef _WINX68K_TVRAM
+#define _WINX68K_TVRAM
 
 #include "common.h"
 

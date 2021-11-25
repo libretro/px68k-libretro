@@ -1,5 +1,5 @@
-#ifndef _winx68k_ioc
-#define _winx68k_ioc
+#ifndef _WINX68K_IOC
+#define _WINX68K_IOC
 
 #include "common.h"
 

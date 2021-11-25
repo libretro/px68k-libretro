@@ -1,5 +1,5 @@
-#ifndef _winx68k_sysport
-#define _winx68k_sysport
+#ifndef _WINX68K_SYSPORT
+#define _WINX68K_SYSPORT
 
 #include "common.h"
 

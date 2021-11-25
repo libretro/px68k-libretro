@@ -13,5 +13,5 @@ void FDC_EPhaseEnd(void);
 void FDC_SetForceReady(int n);
 int FDC_IsDataReady(void);
 
-#endif //_WINX68K_FDC
+#endif /* _WINX68K_FDC */
 
