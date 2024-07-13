@@ -291,10 +291,24 @@ void midi_out_short_msg(size_t msg)
 {
    if (libretro_supports_midi_output && midi_cb.output_enabled())
    {
-      midi_cb.write(msg         & 0xFF, 0); /* status byte */
-      midi_cb.write((msg >> 8)  & 0xFF, 0); /* note no. */
-      midi_cb.write((msg >> 16) & 0xFF, 0); /* velocity */
-      midi_cb.write((msg >> 24) & 0xFF, 0); /* none */
+      switch (msg & 0xf0)
+      {
+      case 0x80:
+      case 0x90:
+      case 0xa0:
+      case 0xb0:
+      case 0xe0:
+         midi_cb.write(msg & 0xff, 0);
+         midi_cb.write((msg >> 8) & 0xff, 0);
+         midi_cb.write((msg >> 16) & 0xff, 0);
+         break;
+      case 0xc0:
+      case 0xd0:
+         midi_cb.write(msg & 0xff, 0);
+         midi_cb.write((msg >> 8) & 0xff, 0);
+         midi_cb.write(0, 0);
+         break;
+      }
    }
 }
 
