@@ -6,7 +6,7 @@
 #include "prop.h"
 #include "winx68k.h"
 #include "../libretro/dosio.h"
-#include "../libretro/mmsystem.h"
+#include "../libretro/x68kmmsystem.h"
 #include "x68kmemory.h"
 #include "irqh.h"
 #include "midi.h"
@@ -189,7 +189,7 @@ static void MIDI_Sendexclusive(uint8_t *excv, size_t length)
 }
 
 /*
- *   りせっと〜
+ *   りせっと~
  */
 void MIDI_Reset(void)
 {
@@ -273,7 +273,7 @@ void MIDI_Message(uint8_t mes)
 		case MIDI_CONTINUE:
 		case MIDI_STOP:
 		case MIDI_ACTIVESENSE:
-		case MIDI_SYSTEMRESET: /* 一応イリーガル〜 */
+		case MIDI_SYSTEMRESET: /* 一応イリーガル~ */
 			return;
 	}
 

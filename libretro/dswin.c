@@ -24,7 +24,7 @@
  */
 
 #include        <stdint.h>
-#include	"windows.h"
+#include	"x68kwindows.h"
 #include	"common.h"
 #include	"dswin.h"
 #include	"prop.h"

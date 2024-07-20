@@ -1,18 +1,12 @@
 #ifndef _LIBRETRO_WINX68K_COMMON_H
 #define _LIBRETRO_WINX68K_COMMON_H
 
-#ifdef _WIN32
-#include "windows.h"
-#endif
-
 #include <string.h>
 
-#ifndef _WIN32
-#include "windows.h"
-#endif
-
-#include "libretro.h"
+#include <libretro.h>
 extern retro_log_printf_t log_cb;
+
+#include "x68kwindows.h"
 
 #undef FASTCALL
 #define FASTCALL
