@@ -6,7 +6,7 @@
 #include "prop.h"
 #include "winx68k.h"
 #include "../libretro/dosio.h"
-#include "../libretro/x68kmmsystem.h"
+#include "../libretro/midiout.h"
 #include "x68kmemory.h"
 #include "irqh.h"
 #include "midi.h"
