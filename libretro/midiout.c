@@ -1,12 +1,26 @@
 #include <libretro.h>
 #include <stdint.h>
+
 #include "x68k/midi.h"
-#include "midiout.h"
 #include "prop.h"
 
-extern struct retro_midi_interface midi_cb;
-extern retro_environment_t environ_cb;
+#include "midiout.h"
+#include "midiout_winmm.h"
+
+#define MIDI_LIBRETRO 0
+#define MIDI_WINMM    1
+
 extern int libretro_supports_midi_output;
+
+static int midi_driver = MIDI_LIBRETRO;
+
+/* TODO: Make this proper menu label
+ * for winmm midi driver backup. A value if 0 will mostly mean to use
+ * Microsoft GS Synthesizer. 1/2 means other synths depending on which synth was loaded first.
+ */
+static int midi_winmm_port = 0;
+
+/* libretro midi interface */
 
 static void libretro_send_short_msg(uint32_t msg)
 {
@@ -28,14 +42,13 @@ static void libretro_send_long_msg(const uint8_t *msg, size_t len)
    }
 }
 
-static int libretro_open(void **phmo)
+static int libretro_open(void)
 {
    if (libretro_supports_midi_output && midi_cb.output_enabled())
    {
-      *phmo = &midi_cb;
-      return 0;
+      return 1;
    }
-   return 1;
+   return 0;
 }
 
 static int libretro_flush(void)
@@ -55,29 +68,96 @@ static int libretro_init(void)
 
 /* midi interface */
 
-void midi_out_short_msg(size_t msg)
+void midi_out_short_msg(uint32_t msg)
 {
-   libretro_send_short_msg(msg);
+   switch (midi_driver)
+   {
+#ifdef _WIN32
+   case MIDI_WINMM:
+      winmm_send_short_msg(msg);
+      break;
+#endif
+
+   default:
+      libretro_send_short_msg(msg);
+      break;
+   }
 }
 
-void midi_out_long_msg(uint8_t *s, size_t len)
+void midi_out_long_msg(uint8_t *msg, size_t len)
 {
-   libretro_send_long_msg(s, len);
+   switch (midi_driver)
+   {
+#ifdef _WIN32
+   case MIDI_WINMM:
+      winmm_send_long_msg(msg, len);
+      break;
+#endif
+
+   default:
+      libretro_send_long_msg(msg, len);
+      break;
+   }
 }
 
-int midi_out_open(void **phmo)
+int midi_out_open(void)
 {
-   return libretro_open(phmo);
+   switch (midi_driver)
+   {
+#ifdef _WIN32
+   case MIDI_WINMM:
+      log_cb(RETRO_LOG_INFO, "midi port: %s\n", winmm_device_name(midi_winmm_port));
+      return winmm_device_open(midi_winmm_port);
+#endif
+
+   default:
+      return libretro_open();
+   }
+}
+
+void midi_out_close(void)
+{
+   switch (midi_driver)
+   {
+#ifdef _WIN32
+   case MIDI_WINMM:
+      winmm_device_close();
+      break;
+#endif
+
+   default:
+      break;
+   }
 }
 
 void midi_out_flush(void)
 {
-   libretro_flush();
+   switch (midi_driver)
+   {
+#ifdef _WIN32
+   case MIDI_WINMM:
+      break;
+#endif
+
+   default:
+      libretro_flush();
+      break;
+   }
 }
 
 void midi_interface_init(void)
 {
-   libretro_init();
+   switch (midi_driver)
+   {
+#ifdef _WIN32
+   case MIDI_WINMM:
+      break;
+#endif
+   
+   default:
+      libretro_init();
+      break;
+   }
 }
 
 /* midi core options */
@@ -86,10 +166,29 @@ void update_variable_midi_interface(int running)
 {
    struct retro_variable var;
 
+   var.key = "px68k_midi_driver";
+   var.value = NULL;
+
+   if (!running && environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (!strcmp(var.value, "libretro"))
+         midi_driver = MIDI_LIBRETRO;
+      else if (!strcmp(var.value, "winmm"))
+         midi_driver = MIDI_WINMM;
+   }
+
+   var.key = "px68k_winmm_midi_port";
+   var.value = NULL;
+
+   if (!running && environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      midi_winmm_port = atoi(var.value);
+   }
+
    var.key = "px68k_midi_output";
    var.value = NULL;
 
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   if (!running && environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
       if (!strcmp(var.value, "disabled"))
          Config.MIDI_SW = 0;

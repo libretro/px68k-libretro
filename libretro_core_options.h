@@ -156,6 +156,36 @@ struct retro_core_option_definition option_defs_us[] = {
       "Default"
    },
    {
+      "px68k_midi_driver",
+      "MIDI Driver (Restart)",
+      "The Libretro driver sends MIDI through the frontend. You need to configure your MIDI output there.",
+      {
+         { "libretro", "Libretro"},
+#ifdef _WIN32
+         { "winmm",  "Windows MIDI"},
+#endif
+         { NULL,       NULL },
+      },
+      "libretro"
+   },
+#ifdef _WIN32
+   {
+      "px68k_winmm_midi_port",
+      "Windows MIDI Port (Restart)",
+      "Windows MIDI port to use for output.",
+      {
+         { "0", "none"},
+         { "1", "none"},
+         { "2", "none"},
+         { "3", "none"},
+         { "4", "none"},
+         { "5", "none"},
+         { NULL,       NULL },
+      },
+      "0"
+   },
+#endif
+   {
       "px68k_midi_output",
       "MIDI Output (Restart)",
       "Enable software MIDI.",

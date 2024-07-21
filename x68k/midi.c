@@ -33,6 +33,8 @@ enum {						/* 各機種リセット用に一応。 */
 	MIDI_XG
 };
 
+static char *midi_name = "midi";
+
 static void *hOut = NULL;
 static int		MIDI_CTRL;
 static int		MIDI_POS;
@@ -102,15 +104,15 @@ static uint8_t EXCV_XGRESET[] = { 0xf0, 0x43, 0x10, 0x4C, 0x00, 0x00, 0x7E, 0x00
 #define MIDI_SONGPOS		0xf2
 #define MIDI_SONGSELECT		0xf3
 #define	MIDI_TUNEREQUEST	0xf6
-#define	MIDI_EOX		0xf7
-#define	MIDI_TIMING		0xf8
-#define MIDI_START		0xfa
+#define	MIDI_EOX			0xf7
+#define	MIDI_TIMING			0xf8
+#define MIDI_START			0xfa
 #define MIDI_CONTINUE		0xfb
-#define	MIDI_STOP		0xfc
+#define	MIDI_STOP			0xfc
 #define	MIDI_ACTIVESENSE	0xfe
 #define	MIDI_SYSTEMRESET	0xff
 
-#define MIDIOUTS(a,b,c) (((size_t)c << 16) | ((size_t)b << 8) | (size_t)a)
+#define MIDIOUTS(a,b,c) (((uint32_t)c << 16) | ((uint32_t)b << 8) | (uint32_t)a)
 
 static uint32_t FASTCALL MIDI_Int(uint8_t irq)
 {
@@ -198,7 +200,7 @@ void MIDI_Reset(void)
 
 	if (hOut)
 	{
-		size_t msg;
+		uint32_t msg;
 		switch(MIDI_MODULE)
 		{
 			case MIDI_NOTUSED:
@@ -246,7 +248,9 @@ void MIDI_Init(void)
 
 	if (!hOut)
 	{
-		if (midi_out_open(&hOut) != 0)
+		if (midi_out_open())
+			hOut = midi_name;
+		else
 			hOut = NULL;
 	}
 }
@@ -256,6 +260,7 @@ void MIDI_Cleanup(void)
 	if (hOut)
 	{
 		MIDI_Reset();
+		midi_out_close();
 		hOut = NULL;
 	}
 }

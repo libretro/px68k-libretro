@@ -67,6 +67,7 @@ SOURCES_C 		+= \
 				$(CORE_DIR)/libretro/fake.c \
 				$(CORE_DIR)/libretro/peace.c \
 				$(CORE_DIR)/libretro/midiout.c \
+				$(CORE_DIR)/libretro/midiout_winmm.c \
 				$(CORE_DIR)/libretro.c
 
 SOURCES_CXX 	+= \
