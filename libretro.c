@@ -1097,26 +1097,33 @@ void retro_set_environment(retro_environment_t cb)
 #ifdef _WIN32
    {
       /* create midi port labels for winmm driver */
-      const char *default_value = "px68k_winmm_midi_port";
-      int i, x;
+      struct retro_core_option_definition *opts = option_defs_us;
+      bool found = false;
 
-      for (i = 0; i < sizeof(option_defs_us) / sizeof(option_defs_us[0]); i++)
+      while (opts->key && !found)
       {
-         if (option_defs_us[i].key)
+         const char *key = opts->key;
+         if (strcmp(key, "px68k_winmm_midi_port") == 0)
          {
-            if (strcmp(option_defs_us[i].key, default_value) == 0)
-            {
-               struct retro_core_option_value *values = option_defs_us[i].values;
-               int device_count = winmm_device_count();
-               for (x = 0; x < device_count; x++)
-               {
-                  values[x].label = winmm_device_name(x);
-               }
-               values[x].value = 0;
-               values[x].label = 0;
-               break;
-            }
+            found = true;
+            break;
          }
+         opts++;
+      }
+
+      if (found)
+      {
+         struct retro_core_option_value *values = opts->values;
+         int device_count = winmm_device_count();
+         int i;
+
+         for (i = 0; i < device_count; i++)
+         {
+            values[i].label = winmm_device_name(i);
+         }
+
+         values[i].value = 0;
+         values[i].label = 0;
       }
    }
 #endif
