@@ -42,10 +42,8 @@ void winmm_send_short_msg(uint32_t msg)
 {
     MMRESULT result;
 
-    while (midiOutUnprepareHeader(hOut, &hHdr, sizeof(hHdr)) == MIDIERR_STILLPLAYING)
-    {
-        ;
-    }
+    if (!hOut)
+        return;
 
     result = midiOutShortMsg(hOut, msg);
     if (result != MMSYSERR_NOERROR)
@@ -58,14 +56,8 @@ void winmm_send_long_msg(const uint8_t *msg, unsigned int length)
 {
     MMRESULT result;
 
-    if (WaitForSingleObject(hCallbackEvent, 2000) == WAIT_OBJECT_0)
-    {
-        result = midiOutUnprepareHeader(hOut, &hHdr, sizeof(MIDIHDR));
-        if (result != MMSYSERR_NOERROR)
-        {
-            midi_error("winmm_send_long_msg", result);
-        }
-    }
+    if (!hOut)
+        return;
 
     hHdr.lpData = (LPSTR)msg;
     hHdr.dwBufferLength = length;
@@ -85,6 +77,15 @@ void winmm_send_long_msg(const uint8_t *msg, unsigned int length)
     {
         midi_error("winmm_send_long_msg", result);
         return;
+    }
+
+    if (WaitForSingleObject(hCallbackEvent, 2000) == WAIT_OBJECT_0)
+    {
+        result = midiOutUnprepareHeader(hOut, &hHdr, sizeof(MIDIHDR));
+        if (result != MMSYSERR_NOERROR)
+        {
+            midi_error("winmm_send_long_msg", result);
+        }
     }
 }
 
@@ -130,6 +131,10 @@ int winmm_device_open(int device)
 void winmm_device_close(void)
 {
     MMRESULT result;
+
+    if (!hOut)
+        return;
+
     while (midiOutUnprepareHeader(hOut, &hHdr, sizeof(hHdr)) == MIDIERR_STILLPLAYING)
     {
         ;
@@ -145,6 +150,8 @@ void winmm_device_close(void)
         midi_error("winmm_device_close", result);
     }
     CloseHandle(hCallbackEvent);
+    
+    hOut = NULL;
 }
 
 #endif /* _WIN32 */
