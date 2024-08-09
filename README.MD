@@ -12,7 +12,8 @@ First create a 'keropi' folder in retroarch system directory.
 put the x68000 bios files in.
 
 Then launch emulator with some content (dim|zip|img|d88|88d|hdm|dup|2hd|xdf|hdf)
-F12 to enter menu.
+12 or joypad L2 to enter menu.
+Touroku key via ScrollLock key or Joypad R2 to enable MIDI music when preseed in Wolfteam games.
 
 
 You can launch content with:
