@@ -80,7 +80,7 @@ void FASTCALL SysPort_Write(uint32_t adr, uint8_t data)
 			sysport.monitor = data;
 			break;
 		case 3:
-			data &= 0xe0;
+			data &= 0x0e;
 			sysport.keyctrl = data;
 			break;
 		case 6:
