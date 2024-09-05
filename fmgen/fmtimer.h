@@ -16,6 +16,7 @@ namespace FM
 	public:
 		void	Reset();
 		bool	Count(int32_t us);
+		int		StateAction(StateMem *st, int load, int data_only);
 	
 	protected:
 		virtual void SetStatus(uint32_t bit) = 0;
@@ -25,12 +26,13 @@ namespace FM
 		void	SetTimerA(uint32_t addr, uint32_t data);
 		void	SetTimerB(uint32_t data);
 		void	SetTimerControl(uint32_t data);
-		
+	
 		uint8_t	status;
 		uint8_t	regtc;
-	
+
 	private:
 		virtual void TimerA() {}
+
 		uint8_t	regta[2];
 		
 		int32_t	timera, timera_count;

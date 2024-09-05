@@ -14,5 +14,6 @@ void ADPCM_SetPan(int n);
 void ADPCM_SetClock(int n);
 
 void ADPCM_Init(void);
+int ADPCM_StateAction(StateMem *sm, int load, int data_only);
 
 #endif /* _WINX68K_ADPCM_H */

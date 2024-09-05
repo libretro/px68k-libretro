@@ -21,6 +21,31 @@ static uint8_t SCC_Vector    = 0;
 static uint8_t SCC_Dat[3]    = {0, 0, 0};
 static uint8_t SCC_DatNum    = 0;
 
+int SCC_StateAction(StateMem *sm, int load, int data_only)
+{
+	SFORMAT StateRegs[] = 
+	{
+		SFVAR(MouseX),
+		SFVAR(MouseY),
+		SFVAR(MouseSt),
+
+		SFVAR(SCC_RegNumA),
+		SFVAR(SCC_RegSetA),
+		SFARRAY(SCC_RegsB, 16),
+		SFVAR(SCC_RegNumB),
+		SFVAR(SCC_RegSetB),
+		SFVAR(SCC_Vector),
+		SFARRAY(SCC_Dat, 3),
+		SFVAR(SCC_DatNum),
+
+		SFEND
+	};
+
+	int ret = PX68KSS_StateAction(sm, load, data_only, StateRegs, "X68K_SCC", false);
+
+	return ret;
+}
+
 static uint32_t FASTCALL SCC_Int(uint8_t irq)
 {
    IRQH_IRQCallBack(irq);

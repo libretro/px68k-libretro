@@ -42,6 +42,7 @@ int  m68000_execute(int cycles);
 void m68000_set_irq_line(int irqline, int state);
 uint32_t  m68000_get_reg(int regnum);
 void m68000_set_reg(int regnum, uint32_t val);
+int m68000_StateAction(StateMem *sm, int load, int data_only);
 
 #ifdef SAVE_STATE
 STATE_SAVE( m68000 );

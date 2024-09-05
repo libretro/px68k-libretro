@@ -21,4 +21,6 @@ void FASTCALL BG_Write(uint32_t adr, uint8_t data);
 
 void FASTCALL BG_DrawLine(int opaq, int gd);
 
+int BG_StateAction(StateMem *sm, int load, int data_only);
+
 #endif /* _WINX68K_BG_H */

@@ -112,6 +112,45 @@ static uint8_t EXCV_XGRESET[] = { 0xf0, 0x43, 0x10, 0x4C, 0x00, 0x00, 0x7E, 0x00
 
 #define MIDIOUTS(a,b,c) (((size_t)c << 16) | ((size_t)b << 8) | (size_t)a)
 
+int MIDI_StateAction(StateMem *sm, int load, int data_only)
+{
+	SFORMAT StateRegs[] = 
+	{
+		SFVAR(MIDI_CTRL),
+		SFVAR(MIDI_POS),
+		SFVAR(MIDI_SYSCOUNT),
+
+		SFVAR(MIDI_LAST),
+		SFARRAY(MIDI_BUF, 1024),
+		SFARRAY(MIDI_EXCVBUF, 1024),
+
+		SFVAR(MIDI_RegHigh),
+		SFVAR(MIDI_Vector),
+		SFVAR(MIDI_IntEnable),
+		SFVAR(MIDI_IntVect),
+		SFVAR(MIDI_IntFlag),
+		SFVAR(MIDI_Buffered),
+		SFVAR(MIDI_BufTimer),
+		SFVAR(MIDI_R05),
+		SFVAR(MIDI_GTimerMax),
+		SFVAR(MIDI_MTimerMax),
+		SFVAR(MIDI_GTimerVal),
+		SFVAR(MIDI_MTimerVal),
+		SFVAR(MIDI_MODULE),
+
+		SFARRAY(DelayBuf, ((4 + 1) * MIDIDELAYBUF)),
+		SFVAR(DBufPtrW),
+		SFVAR(DBufPtrR),
+
+		SFEND
+	};
+
+	int ret = PX68KSS_StateAction(sm, load, data_only, StateRegs, "X68K_MIDI", false);
+
+	return ret;
+}
+
+
 static uint32_t FASTCALL MIDI_Int(uint8_t irq)
 {
 	IRQH_IRQCallBack(irq);

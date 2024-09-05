@@ -21,16 +21,37 @@ public:
 	virtual ~MyOPM() {}
 	void WriteIO(uint32_t adr, uint8_t data);
 	void Count2(uint32_t clock);
+
 private:
 	virtual void Intr(bool);
+
+public:
 	int CurReg;
 	uint32_t CurCount;
+
+	int StateAction(StateMem *sm, int load, int data_only);
 };
 
 
 MyOPM::MyOPM()
 {
 	CurReg = 0;
+}
+
+int MyOPM::StateAction(StateMem *sm, int load, int data_only)
+{
+	SFORMAT StateRegs[] =
+	{
+		SFVARN(CurReg, "CurReg"),
+		SFVARN(CurCount, "CurCount"),
+
+		SFEND
+	};
+
+	int ret = PX68KSS_StateAction(sm, load, data_only, StateRegs, "MYOPM", false);
+	ret &= FM::OPM::StateAction(sm, load, data_only);
+
+	return(1);
 }
 
 void MyOPM::WriteIO(uint32_t adr, uint8_t data)
@@ -52,7 +73,6 @@ void MyOPM::Intr(bool f)
 	if ( f ) ::MFP_Int(12);
 }
 
-
 void MyOPM::Count2(uint32_t clock)
 {
 	CurCount += clock;
@@ -60,8 +80,15 @@ void MyOPM::Count2(uint32_t clock)
 	CurCount %= 10;
 }
 
-
 static MyOPM* opm = NULL;
+
+int OPM_StateAction(StateMem *sm, int load, int data_only)
+{
+	if (opm)
+		return opm->StateAction(sm, load, data_only);
+
+	return 1;
+}
 
 int OPM_Init(int clock)
 {
@@ -121,7 +148,7 @@ void OPM_SetVolume(uint8_t vol)
 
 
 // ----------------------------------------------------------
-// ---------------------------- YMF288 (満開版ま〜きゅり〜)
+// ---------------------------- YMF288 (満開版ま~きゅり~)
 // ----------------------------------------------------------
 // TODO : ROMEOの288を叩くの
 

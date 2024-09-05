@@ -15,6 +15,7 @@ void Pal_Init(void);
 uint8_t FASTCALL Pal_Read(uint32_t adr);
 void FASTCALL Pal_Write(uint32_t adr, uint8_t data);
 void Pal_ChangeContrast(int num);
+int Pal_StateAction(StateMem *sm, int load, int data_only);
 
 extern uint16_t Ibit, Pal_HalfMask, Pal_Ix2;
 

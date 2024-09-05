@@ -14,10 +14,29 @@
 
 uint8_t	GVRAM[0x80000];
 uint16_t	Grp_LineBuf[1024];
-uint16_t	Grp_LineBufSP[1024];		/* ¿ü¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿å¿¿ */
+uint16_t	Grp_LineBufSP[1024];		/* ¿?¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿å¿¿ */
 uint16_t	Grp_LineBufSP2[1024];		/* ¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿å¿¿¿¿¿¿¿¿¿¿¿¿å¿¿¿¿¿ */
 static uint16_t	Grp_LineBufSP_Tr[1024];
 static uint16_t	Pal16Adr[256];			/* 16bit color ¿¿¿å¿¿¿¿¿¿¿¿¿¿ */
+
+int GVRAM_StateAction(StateMem *sm, int load, int data_only)
+{
+	SFORMAT StateRegs[] = 
+	{
+		SFARRAYN(GVRAM, 524288, "MEM_GVRAM"),
+		SFARRAY16(Grp_LineBuf, 1024),
+		SFARRAY16(Grp_LineBufSP, 1024),
+		SFARRAY16(Grp_LineBufSP2, 1024),
+		SFARRAY16(Grp_LineBufSP_Tr, 1024),
+		SFARRAY16(Pal16Adr, 256),
+
+		SFEND
+	};
+
+	int ret = PX68KSS_StateAction(sm, load, data_only, StateRegs, "X68K_GVRAM", false);
+
+	return ret;
+}
 
 #ifdef MSB_FIRST
 #define GET_WORD_W8(src) (*(uint16_t *)(src))
@@ -225,7 +244,7 @@ void FASTCALL GVRAM_Write(uint32_t adr, uint8_t data)
 
 
 /*
- *   ¿¿¿ä¿¿¿¿¿¿¿¿ñ¿¿¿¿¿¿¿¿¿¿¿¿
+ *   ¿¿¿ä¿¿¿¿¿¿¿¿?¿¿¿¿¿¿¿¿¿¿¿
  */
 void Grp_DrawLine16(void)
 {
@@ -513,7 +532,7 @@ void FASTCALL Grp_DrawLine4h(void)
 
 
 /*
- * --- ¿¿¿¿¿¿¿ü¿Pri¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿ ---
+ * --- ¿¿¿¿¿¿¿?¿Pri¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿ ---
  */
 void FASTCALL Grp_DrawLine16SP(void)
 {

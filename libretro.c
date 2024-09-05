@@ -781,12 +781,12 @@ static int WinX68k_Init(void)
 	MEM  = (uint8_t*)malloc(MEM_SIZE);
 	FONT = (uint8_t*)malloc(0xc0000);
 
-	if (MEM)
+   if (MEM)
 		memset(MEM, 0, MEM_SIZE);
 
 	if (MEM && FONT && IPL)
 	{
-	  	m68000_init();
+	  	/* m68000_init(); */
 		return 1;
 	}
 	return 0;
@@ -976,12 +976,17 @@ static int pmain(int argc, char *argv[])
    StatBar_Show(Config.WindowFDDStat);
    WinUI_Init();
 
+#if 0
+   /* TODO: CLean this up */
    if (!WinX68k_Init())
    {
       WinX68k_Cleanup();
       WinDraw_Cleanup();
       return 1;
    }
+#endif
+
+   m68000_init();
 
    if (!WinX68k_LoadROMs())
    {
@@ -995,7 +1000,10 @@ static int pmain(int argc, char *argv[])
    WinDraw_Init();
 
    ADPCM_Init();
+#if 0
+   /* TODO: CLean this up */
    OPM_Init(4000000/*3579545*/);
+#endif
 #ifndef	NO_MERCURY
    Mcry_Init(winx68k_dir);
 #endif
@@ -1093,7 +1101,7 @@ run_pmain:
 
    if (PARAMCOUNT)
       xargv_cmd[PARAMCOUNT - 2] = NULL;
-
+   
    return 0;
 }
 
@@ -1558,9 +1566,108 @@ static void setup_frame_time_cb(void)
 }
 
 /* TODO/FIXME - implement savestates */
-size_t retro_serialize_size(void) { return 0; }
-bool retro_serialize(void *data, size_t size) { return false; }
-bool retro_unserialize(const void *data, size_t size) { return false; }
+int StateAction(StateMem *sm, int load, int data_only)
+{
+   SFORMAT StateRegs[] =
+   {
+      SFARRAYN(MEM, MEM_SIZE, "RAM"),
+      SFARRAYN(SRAM, 16384, "SRAM"),
+      SFVAR(ICount),
+      SFVAR(ClkUsed),
+      SFVAR(VLINE),
+      SFVAR(VLINE_TOTAL),
+
+      SFVAR(tick),
+      SFVAR(timercnt),
+
+      SFEND
+   };
+
+   int ret = 0, count = 0;
+
+   ret = PX68KSS_StateAction(sm, load, data_only, StateRegs, "MAIN", false);
+   ret &= m68000_StateAction(sm, load, data_only);
+   ret &= GVRAM_StateAction(sm, load, data_only);
+   ret &= TVRAM_StateAction(sm, load, data_only);
+   ret &= CRTC_StateAction(sm, load, data_only);
+   ret &= Pal_StateAction(sm, load, data_only);
+   ret &= BG_StateAction(sm, load, data_only);
+   ret &= DMAC_StateAction(sm, load, data_only);
+   ret &= MFP_StateAction(sm, load, data_only);
+   ret &= IRQH_StateAction(sm, load, data_only);
+   ret &= SCC_StateAction(sm, load, data_only);
+   ret &= FDC_StateAction(sm, load, data_only);
+   ret &= FDD_StateAction(sm, load, data_only);
+   ret &= SASI_StateAction(sm, load, data_only);
+
+   ret &= RTC_StateAction(sm, load, data_only);
+   ret &= PIA_StateAction(sm, load, data_only);
+   ret &= SysPort_StateAction(sm, load, data_only);
+   ret &= IOC_StateAction(sm, load, data_only);
+   ret &= SRAM_StateAction(sm, load, data_only);
+
+   /* sound-related states */
+   ret &= dswin_StateAction(sm, load, data_only);
+   ret &= ADPCM_StateAction(sm, load, data_only);
+   ret &= MIDI_StateAction(sm, load, data_only);
+   ret &= OPM_StateAction(sm, load, data_only);
+
+   return ret;
+}
+
+size_t retro_serialize_size(void)
+{
+   StateMem st;
+
+   st.data           = NULL;
+   st.loc            = 0;
+   st.len            = 0;
+   st.malloced       = 0;
+   st.initial_malloc = 0;
+
+   if (!PX68KSS_SaveSM(&st, 0, 0, NULL, NULL, NULL))
+      return 0;
+
+   free(st.data);
+
+   return st.len;
+}
+
+bool retro_serialize(void *data, size_t size)
+{
+   StateMem st;
+   bool ret          = false;
+   uint8_t *_dat     = (uint8_t*)malloc(size);
+
+   if (!_dat)
+      return false;
+
+   st.data           = _dat;
+   st.loc            = 0;
+   st.len            = 0;
+   st.malloced       = size;
+   st.initial_malloc = 0;
+
+   ret = PX68KSS_SaveSM(&st, 0, 0, NULL, NULL, NULL);
+
+   memcpy(data, st.data, size);
+   free(st.data);
+
+   return ret;
+}
+
+bool retro_unserialize(const void *data, size_t size)
+{
+   StateMem st;
+
+   st.data           = (uint8_t*)data;
+   st.loc            = 0;
+   st.len            = size;
+   st.malloced       = 0;
+   st.initial_malloc = 0;
+
+   return PX68KSS_LoadSM(&st, 0, 0);
+}
 
 /* TODO/FIXME - implement cheats */
 void retro_cheat_reset(void) { }
@@ -1581,6 +1688,14 @@ bool retro_load_game(const struct retro_game_info *info)
       if (!retro_load_game_internal(RPATH))
          return false;
    }
+
+   /* alloc memory pointers */
+   if (!WinX68k_Init())
+      return false;
+   
+   /* alloc OPM-related pointers */
+   if (!OPM_Init(4000000/*3579545*/))
+      return false;
 
    return true;
 }

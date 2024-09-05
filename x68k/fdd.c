@@ -37,6 +37,26 @@ static int (*GetCurrentID[4])(int, FDCID*)                     = { 0, XDF_GetCur
 
 int FDD_IsReading                                              = 0;
 
+int FDD_StateAction(StateMem *sm, int load, int data_only)
+{
+	SFORMAT StateRegs[] = 
+	{
+		SFARRAY32(fdd.SetDelay, 4),
+		SFARRAY32(fdd.Types, 4),
+		SFARRAY32(fdd.ROnly, 4),
+		SFARRAY32(fdd.EMask, 4),
+		SFARRAY32(fdd.Blink, 4),
+
+		SFVAR(fdd.Access),
+
+		SFEND
+	};
+
+	int ret = PX68KSS_StateAction(sm, load, data_only, StateRegs, "X68K_FDD", false);
+
+	return ret;
+}
+
 static void ConvertCapital(char* buf)
 {
 	for ( ; *buf; buf++)

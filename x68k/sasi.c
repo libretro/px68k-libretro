@@ -26,6 +26,33 @@ static uint8_t SASI_Error        = 0;
 static uint8_t SASI_SenseStatBuf[4];
 static uint8_t SASI_SenseStatPtr = 0;
 
+int SASI_StateAction(StateMem *sm, int load, int data_only)
+{
+	SFORMAT StateRegs[] = 
+	{
+		SFARRAY(SASI_Cmd, 6),
+		SFARRAY(SASI_Buf, 256),
+		SFVAR(SASI_Phase),
+		SFVAR(SASI_Sector),
+		SFVAR(SASI_Blocks),
+		SFVAR(SASI_CmdPtr),
+		SFVAR(SASI_Device),
+		SFVAR(SASI_Unit),
+		SFVAR(SASI_BufPtr),
+		SFVAR(SASI_RW),
+		SFVAR(SASI_Stat),
+		SFVAR(SASI_Error),
+		SFARRAY(SASI_SenseStatBuf, 4),
+		SFVAR(SASI_SenseStatPtr),
+
+		SFEND
+	};
+
+	int ret = PX68KSS_StateAction(sm, load, data_only, StateRegs, "X68K_SASI", false);
+
+	return ret;
+}
+
 int SASI_IsReady(void)
 {
 	if ( (SASI_Phase==2)||(SASI_Phase==3)||(SASI_Phase==9) )

@@ -33,6 +33,8 @@ namespace FM
 		
 		void	SetVolume(int db);
 		void	SetChannelMask(uint32_t mask);
+
+		int		StateAction(StateMem *sm, int load, int data_only);
 		
 	private:
 		virtual void Intr(bool) {}

@@ -17,6 +17,23 @@ typedef struct {
 
 static PIA pia;
 
+int PIA_StateAction(StateMem *sm, int load, int data_only)
+{
+	SFORMAT StateRegs[] = 
+	{
+      SFVAR(pia.PortA),
+      SFVAR(pia.PortB),
+      SFVAR(pia.PortC),
+      SFVAR(pia.Ctrl),
+
+		SFEND
+	};
+
+	int ret = PX68KSS_StateAction(sm, load, data_only, StateRegs, "X68K_PIA", false);
+
+	return ret;
+}
+
 void PIA_Init(void)
 {
 	pia.PortA = 0xff;

@@ -37,6 +37,45 @@ uint8_t	CRTC_RCFlag[2] = {0, 0};
 int HSYNC_CLK = 324;
 extern int VID_MODE, CHANGEAV_TIMING;
 
+int CRTC_StateAction(StateMem *sm, int load, int data_only)
+{
+	SFORMAT StateRegs[] =
+	{
+		SFARRAY(CRTC_Regs, 48),
+		SFVAR(CRTC_Mode),
+		SFVAR(TextDotX),
+		SFVAR(TextDotY),
+		SFVAR(CRTC_VSTART),
+		SFVAR(CRTC_VEND),
+		SFVAR(CRTC_HSTART),
+		SFVAR(CRTC_HEND),
+		SFVAR(TextScrollX),
+		SFVAR(TextScrollY),
+		SFARRAY32(GrphScrollX, 4),
+		SFARRAY32(GrphScrollY, 4),
+
+		SFVAR(CRTC_FastClr),
+		SFVAR(CRTC_FastClrMask),
+		SFVAR(CRTC_IntLine),
+		SFVAR(CRTC_VStep),
+
+		SFARRAY(CRTC_RCFlag, 2),
+
+		SFVAR(HSYNC_CLK),
+
+      /* video control regs */
+      SFARRAY(VCReg0, 2),
+      SFARRAY(VCReg1, 2),
+      SFARRAY(VCReg2, 2),
+
+		SFEND
+	};
+
+	int ret = PX68KSS_StateAction(sm, load, data_only, StateRegs, "X68K_CRTC_VCTRL", false);
+
+	return ret;
+}
+
 void CRTC_RasterCopy(void)
 {
 	uint32_t line = (((uint32_t)CRTC_Regs[0x2d])<<2);

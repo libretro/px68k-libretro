@@ -39,5 +39,6 @@ void FASTCALL MFP_Write(uint32_t adr, uint8_t data);
 void FASTCALL MFP_Timer(int32_t clock);
 void FASTCALL MFP_TimerA(void);
 void MFP_Int(int irq);
+int MFP_StateAction(StateMem *sm, int load, int data_only);
 
 #endif /* _WINX68K_MFP_H */

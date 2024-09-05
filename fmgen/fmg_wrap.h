@@ -11,6 +11,7 @@ void FASTCALL OPM_Write(uint32_t r, uint8_t v);
 uint8_t FASTCALL OPM_Read(void);
 void FASTCALL OPM_Timer(uint32_t step);
 void OPM_SetVolume(uint8_t vol);
+int OPM_StateAction(StateMem *sm, int load, int data_only);
 
 int M288_Init(int clock, const char* path);
 void M288_Cleanup(void);

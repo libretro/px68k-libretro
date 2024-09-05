@@ -12,6 +12,24 @@ static uint8_t	RTC_Bank  = 0;
 static int RTC_Timer1    = 0;
 static int RTC_Timer16   = 0;
 
+int RTC_StateAction(StateMem *sm, int load, int data_only)
+{
+	SFORMAT StateRegs[] = 
+	{
+		SFARRAYN(RTC_Regs[0], 16, "RTCRegs0"),
+      SFARRAYN(RTC_Regs[1], 16, "RTCRegs1"),
+	   SFVAR(RTC_Bank), /* never changed since alarm is not implemented, but whatever */
+	   SFVAR(RTC_Timer1),
+	   SFVAR(RTC_Timer16),
+
+		SFEND
+	};
+
+	int ret = PX68KSS_StateAction(sm, load, data_only, StateRegs, "X68K_RTC", false);
+
+	return ret;
+}
+
 void RTC_Init(void)
 {
 	memset(&RTC_Regs[1][0], 0, 16);

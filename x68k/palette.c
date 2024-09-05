@@ -20,6 +20,23 @@ uint16_t	Ibit;
 uint16_t	Pal_HalfMask, Pal_Ix2;
 uint16_t	Pal_R, Pal_G, Pal_B;
 
+int Pal_StateAction(StateMem *sm, int load, int data_only)
+{
+	SFORMAT StateRegs[] =
+	{
+		SFARRAY(Pal_Regs, 1024),
+		SFARRAY16(TextPal, 256),
+		SFARRAY16(GrphPal, 256),
+		SFARRAY16(Pal16, 65536),
+
+		SFEND
+	};
+
+	int ret = PX68KSS_StateAction(sm, load, data_only, StateRegs, "X68K_Palette", false);
+
+	return ret;
+}
+
 void Pal_SetColor(void)
 {
 	int i;

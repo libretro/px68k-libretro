@@ -8,6 +8,9 @@
 #include <libretro.h>
 extern retro_log_printf_t log_cb;
 
+#include "state.h"
+#include "state_inline.h"
+
 #undef FASTCALL
 #define FASTCALL
 

@@ -5,7 +5,8 @@
 #include "crtc.h"
 #include "mfp.h"
 
-static uint32_t tick = 0;
+uint32_t tick = 0;
+uint32_t timercnt = 0;
 
 /* Get elapsed time from libretro frontend by way of its frame time callback,
  * if available. Only provides per frame granularity, enough for this case
@@ -27,7 +28,6 @@ void Timer_Init(void)
 
 uint16_t Timer_GetCount(void)
 {
-	static uint32_t timercnt = 0;
 	uint32_t ticknow   = timeGetUsec();
 	uint32_t dif       = ticknow-tick;
 	uint32_t TIMEBASE  = ((CRTC_Regs[0x29]&0x10)?VSYNC_HIGH:VSYNC_NORM);

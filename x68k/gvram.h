@@ -27,5 +27,6 @@ void FASTCALL Grp_DrawLine4hSP(void);
 void FASTCALL Grp_DrawLine8TR(int page, int opaq);
 void FASTCALL Grp_DrawLine8TR_GT(int page, int opaq);
 void FASTCALL Grp_DrawLine4TR(uint32_t page, int opaq);
+int GVRAM_StateAction(StateMem *sm, int load, int data_only);
 
 #endif /* _WINX68K_GVRAM_H */

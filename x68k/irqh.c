@@ -16,6 +16,20 @@ typedef int32_t  FASTCALL C68K_INT_CALLBACK(int32_t level);
 static uint8_t	IRQH_IRQ[8];
 static void	*IRQH_CallBack[8];
 
+int IRQH_StateAction(StateMem *sm, int load, int data_only)
+{
+	SFORMAT StateRegs[] = 
+	{
+		SFARRAY(IRQH_IRQ, 8),
+
+		SFEND
+	};
+
+	int ret = PX68KSS_StateAction(sm, load, data_only, StateRegs, "X68K_IRQH", false);
+
+	return ret;
+}
+
 void IRQH_Init(void)
 {
 	memset(IRQH_IRQ, 0, 8);

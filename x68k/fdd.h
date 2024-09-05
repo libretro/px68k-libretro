@@ -39,6 +39,7 @@ void FDD_SetReadOnly(int drv);
 void FDD_SetEMask(int drive, int emask);
 void FDD_SetAccess(int drive);
 void FDD_SetBlink(int drive, int blink);
+int FDD_StateAction(StateMem *sm, int load, int data_only);
 
 /* Misc: Used to trigger rumble when FDD is reading data.
  * Reset at every frame */

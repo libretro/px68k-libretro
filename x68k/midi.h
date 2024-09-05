@@ -13,5 +13,6 @@ void FASTCALL MIDI_Timer(uint32_t clk);
 int MIDI_SetMimpiMap(char *filename);
 int MIDI_EnableMimpiDef(int enable);
 void MIDI_DelayOut(unsigned int delay);
+int MIDI_StateAction(StateMem *sm, int load, int data_only);
 
 #endif /* _WINX68K_MIDI_H */

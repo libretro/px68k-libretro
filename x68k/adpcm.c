@@ -59,6 +59,45 @@ static int OutsIp[4];
 static int OutsIpR[4];
 static int OutsIpL[4];
 
+int ADPCM_StateAction(StateMem *sm, int load, int data_only)
+{
+	SFORMAT StateRegs[] = 
+	{
+		/* TODO: Some of the vars might not be necessary */
+		SFARRAY16(ADPCM_BufL, 96000),
+		SFARRAY16(ADPCM_BufR, 96000),
+
+		SFVAR(ADPCM_VolumeShift),
+		SFVAR(ADPCM_WrPtr),
+		SFVAR(ADPCM_RdPtr),
+
+		SFVAR(ADPCM_ClockRate),
+		SFVAR(ADPCM_Count),
+
+		SFVAR(ADPCM_Step),
+		SFVAR(ADPCM_Out),
+		SFVAR(ADPCM_Playing),
+		SFVAR(ADPCM_Clock),
+		SFVAR(ADPCM_PreCounter),
+		SFVAR(ADPCM_DifBuf),
+
+		SFVAR(ADPCM_Pan),
+		SFVAR(OldR),
+		SFVAR(OldL),
+		SFARRAY32(Outs, 8),
+		SFARRAY32(OutsIp, 4),
+		SFARRAY32(OutsIpR, 4),
+		SFARRAY32(OutsIpL, 4),
+
+		SFEND
+	};
+
+	int ret = PX68KSS_StateAction(sm, load, data_only, StateRegs, "X68K_ADPC", false);
+
+	return ret;
+}
+
+
 static void ADPCM_InitTable(void)
 {
 	int step, n;

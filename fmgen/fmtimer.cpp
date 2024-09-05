@@ -10,6 +10,27 @@
 
 using namespace FM;
 
+int Timer::StateAction(StateMem *sm, int load, int data_only)
+{
+	SFORMAT StateRegs[] =
+	{
+		SFVAR(status),
+		SFVAR(regtc),
+
+		SFVARN(regta[0], "regta0"),
+		SFVARN(regta[1], "regta1"),
+		SFVAR(timera),
+		SFVAR(timera_count),
+		SFVAR(timerb),
+		SFVAR(timerb_count),
+		SFVAR(timer_step),
+
+		SFEND
+	};
+
+	return PX68KSS_StateAction(sm, load, data_only, StateRegs, "TIMER", false);
+}
+
 // ---------------------------------------------------------------------------
 //	タイマー制御
 //

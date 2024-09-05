@@ -16,6 +16,24 @@ static uint8_t Timer_Reload[4]      = {0, 0, 0, 0};
 static int32_t Timer_Tick[4]        = {0, 0, 0, 0};
 static const int Timer_Prescaler[8] = {1, 10, 25, 40, 125, 160, 250, 500};
 
+int MFP_StateAction(StateMem *sm, int load, int data_only)
+{
+	SFORMAT StateRegs[] = 
+	{
+		SFARRAY(MFP, 24),
+	   SFVAR(LastKey),
+	   SFARRAY(Timer_Reload, 4),
+	   SFARRAY32(Timer_Tick, 4),
+
+		SFEND
+	};
+
+	int ret = PX68KSS_StateAction(sm, load, data_only, StateRegs, "X68K_MFP", false);
+
+	return ret;
+}
+
+
 uint32_t FASTCALL MFP_IntCallback(uint8_t irq)
 {
    uint8_t flag;

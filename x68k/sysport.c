@@ -18,6 +18,23 @@ typedef struct
 
 static SYSPORT sysport;
 
+int SysPort_StateAction(StateMem *sm, int load, int data_only)
+{
+	SFORMAT StateRegs[] = 
+	{
+		SFVAR(sysport.contrast),
+		SFVAR(sysport.monitor),
+		SFVAR(sysport.keyctrl),
+		SFVAR(sysport.cputype),
+
+		SFEND
+	};
+
+	int ret = PX68KSS_StateAction(sm, load, data_only, StateRegs, "X68K_SysPort", false);
+
+	return ret;
+}
+
 void SysPort_Init(void)
 {
 	static uint8_t cputype[] = {

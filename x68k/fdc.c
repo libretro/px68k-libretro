@@ -84,6 +84,40 @@ typedef struct {
 
 static FDC fdc;
 
+int FDC_StateAction(StateMem *sm, int load, int data_only)
+{
+	SFORMAT StateRegs[] = 
+	{
+		SFVAR(fdc.cmd),
+
+		SFVAR(fdc.cyl),
+		SFVAR(fdc.drv),
+		SFVAR(fdc.ready),
+		SFVAR(fdc.ctrl),
+		SFVAR(fdc.wexec),
+
+		SFVAR(fdc.rdptr),
+		SFVAR(fdc.wrptr),
+		SFVAR(fdc.rdnum),
+		SFVAR(fdc.wrnum),
+		SFVAR(fdc.bufnum),
+		SFVAR(fdc.st0),
+		SFVAR(fdc.st1),
+		SFVAR(fdc.st2),
+
+		SFARRAY(fdc.RspBuf, 10),
+		SFARRAY(fdc.PrmBuf, 10),
+		SFARRAY(fdc.DataBuf, 0x8000),
+		SFARRAY(fdc.ScanBuf, 0x8000),
+
+		SFEND
+	};
+
+	int ret = PX68KSS_StateAction(sm, load, data_only, StateRegs, "X68K_FDC", false);
+
+	return ret;
+}
+
 
 #define US(p) (p->us&3)
 #define HD(p) ((p->us>>2)&1)

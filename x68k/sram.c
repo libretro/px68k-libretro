@@ -13,6 +13,21 @@
 static int write_enabled = 0;
 uint8_t	SRAM[0x4000];
 
+int SRAM_StateAction(StateMem *sm, int load, int data_only)
+{
+	SFORMAT StateRegs[] = 
+	{
+		SFARRAYN(SRAM, 0x4000, "MEM_SRAM"),
+		SFVAR(write_enabled),
+
+		SFEND
+	};
+
+	int ret = PX68KSS_StateAction(sm, load, data_only, StateRegs, "X68K_SRAM", false);
+
+	return ret;
+}
+
 void SRAM_VirusCheck(void)
 {
 	if ( (cpu_readmem24_dword(0xed3f60)==0x60000002)

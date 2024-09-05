@@ -17,5 +17,6 @@ uint8_t FASTCALL TVRAM_Read(uint32_t adr);
 void FASTCALL TVRAM_Write(uint32_t adr, uint8_t data);
 void FASTCALL TVRAM_RCUpdate(void);
 void FASTCALL Text_DrawLine(int opaq);
+int TVRAM_StateAction(StateMem *sm, int load, int data_only);
 
 #endif /* _WINX68K_TVRAM_H */

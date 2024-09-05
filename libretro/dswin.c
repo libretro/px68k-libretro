@@ -41,6 +41,20 @@ uint8_t *pbsp = pcmbuffer;
 uint8_t *pbrp = pcmbuffer, *pbwp = pcmbuffer;
 uint8_t *pbep = &pcmbuffer[PCMBUF_SIZE];
 
+int dswin_StateAction(StateMem *sm, int load, int data_only)
+{
+	SFORMAT StateRegs[] = 
+	{
+		SFVAR(snd_precounter),
+
+		SFEND
+	};
+
+	int ret = PX68KSS_StateAction(sm, load, data_only, StateRegs, "X68K_DSND", false);
+
+	return ret;
+}
+
 void DSound_Play(void)
 {
 	ADPCM_SetVolume((uint8_t)Config.PCM_VOL);

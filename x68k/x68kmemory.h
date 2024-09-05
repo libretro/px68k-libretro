@@ -5,7 +5,7 @@
 #include "../libretro/common.h"
 
 extern	uint8_t*	IPL;
-extern	uint8_t*	MEM;
+extern	uint8_t*  	MEM;
 extern	uint8_t*	FONT;
 extern  uint8_t    SCSIIPL[0x2000];
 extern  uint8_t    SRAM[0x4000];

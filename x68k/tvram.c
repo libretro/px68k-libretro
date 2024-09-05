@@ -14,10 +14,29 @@
 uint8_t	TVRAM[0x80000];
 static uint8_t TextDrawWork[1024*1024];
 uint8_t	TextDirtyLine[1024];
+uint8_t	Text_TrFlag[1024];
 
+/* pattern table */
 static uint8_t TextDrawPattern[2048*4];
 
-uint8_t	Text_TrFlag[1024];
+int TVRAM_StateAction(StateMem *sm, int load, int data_only)
+{
+	SFORMAT StateRegs[] = 
+	{
+		SFARRAYN(TVRAM, 524288, "MEM_TVRAM"),
+		SFARRAY(TextDrawWork, (1024 * 1024)),
+		SFARRAY(TextDirtyLine, 1024),
+		SFARRAY(Text_TrFlag, 1024),
+
+		SFEND
+	};
+	int ret = PX68KSS_StateAction(sm, load, data_only, StateRegs, "X68K_TVRAM", false);
+
+	if (load)
+		TVRAM_SetAllDirty();
+
+	return ret;
+}
 
 void TVRAM_SetAllDirty(void) { memset(TextDirtyLine, 1, 1024); }
 void TVRAM_Cleanup(void)     { }

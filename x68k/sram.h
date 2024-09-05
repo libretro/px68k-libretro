@@ -14,5 +14,6 @@ void SRAM_WriteEnable(int enable);
 
 uint8_t FASTCALL SRAM_Read(uint32_t adr);
 void FASTCALL SRAM_Write(uint32_t adr, uint8_t data);
+int SRAM_StateAction(StateMem *sm, int load, int data_only);
 
 #endif /* _WINX68K_SRAM_H */

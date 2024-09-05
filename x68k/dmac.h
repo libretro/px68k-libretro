@@ -45,5 +45,6 @@ void FASTCALL DMA_Write(uint32_t adr, uint8_t data);
 
 int FASTCALL DMA_Exec(int ch);
 void DMA_Init(void);
+int DMAC_StateAction(StateMem *sm, int load, int data_only);
 
 #endif /* _WINX68K_DMAC_H */

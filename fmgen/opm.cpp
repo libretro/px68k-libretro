@@ -29,6 +29,59 @@ OPM::OPM()
 	}
 }
 
+int OPM::StateAction(StateMem *sm, int load, int data_only)
+{
+	SFORMAT OPMStateRegs[] =
+	{
+		SFVAR(fmvolume),
+		SFVAR(clock),
+		SFVAR(rate),
+
+		SFVAR(pmd),
+		SFVAR(amd),
+		SFVAR(lfocount),
+		SFVAR(lfodcount),
+
+		SFVAR(lfo_count_),
+		SFVAR(lfo_count_diff_),
+		SFVAR(lfo_step_),
+		SFVAR(lfo_count_prev_),
+
+		SFVAR(lfowaveform),
+		SFVAR(rateratio),
+		SFVAR(noise),
+		SFVAR(noisecount),
+		SFVAR(noisedelta),
+
+		SFVAR(lfofreq),
+		SFVAR(status),
+		SFVAR(reg01),
+
+		SFARRAY(kc, 8),
+		SFARRAY(kf, 8),
+		SFARRAY(pan, 8),
+
+		SFEND
+	};
+
+	int ret = Timer::StateAction(sm, load, data_only);
+
+	ret &= PX68KSS_StateAction(sm, load, data_only, OPMStateRegs, "OPM", false);
+
+	ret &= ch[0].StateAction(sm, load, data_only, "SCH0");
+	ret &= ch[1].StateAction(sm, load, data_only, "SCH1");
+	ret &= ch[2].StateAction(sm, load, data_only, "SCH2");
+	ret &= ch[3].StateAction(sm, load, data_only, "SCH3");
+	ret &= ch[4].StateAction(sm, load, data_only, "SCH4");
+	ret &= ch[5].StateAction(sm, load, data_only, "SCH5");
+	ret &= ch[6].StateAction(sm, load, data_only, "SCH6");
+	ret &= ch[7].StateAction(sm, load, data_only, "SCH7");
+
+	ret &= chip.StateAction(sm, load, data_only);
+
+	return ret;
+}
+
 // ---------------------------------------------------------------------------
 //	½é´ü²½
 //

@@ -222,6 +222,26 @@ void MakeLFOTable()
 	}
 }
 
+//
+//
+//
+int Chip::StateAction(StateMem *sm, int load, int data_only)
+{
+	SFORMAT ChipStateRegs[] =
+	{
+		SFVAR(ratio_),
+		SFVAR(aml_),
+		SFVAR(pml_),
+		SFVAR(pmv_),
+		SFVAR(optype_),
+		SFARRAY32(multable_, 4 * 16),
+
+		SFEND
+	};
+
+	return PX68KSS_StateAction(sm, load, data_only, ChipStateRegs, "CHIP", false);
+}
+
 
 // ---------------------------------------------------------------------------
 //	チップ内で共通な部分
@@ -265,6 +285,60 @@ void Chip::MakeTable()
 bool FM::Operator::tablehasmade = false;
 uint32_t FM::Operator::sinetable[1024];
 int32_t FM::Operator::cltable[FM_CLENTS];
+
+int Operator::StateAction(StateMem *sm, int load, int data_only, const char *sname)
+{
+	SFORMAT StateRegs[] =
+	{
+		SFVAR(out_),
+		SFVAR(out2_),
+		SFVAR(dp_),
+		SFVAR(detune_),
+		SFVAR(detune2_),
+		SFVAR(multiple_),
+		SFVAR(pg_count_),
+		SFVAR(pg_diff_),
+		SFVAR(pg_diff_lfo_),
+		SFVAR(type_),
+		SFVAR(bn_),
+		SFVAR(eg_level_),
+		SFVAR(eg_level_on_next_phase_),
+		SFVAR(eg_count_),
+		SFVAR(eg_count_diff_),
+		SFVAR(eg_out_),
+		SFVAR(tl_out_),
+		SFVAR(eg_rate_),
+		SFVAR(eg_curve_count_),
+		SFVAR(ssg_offset_),
+		SFVAR(ssg_vector_),
+		SFVAR(ssg_phase_),
+		SFVAR(key_scale_rate_),
+		SFVAR(eg_phase_),
+		SFVAR(ms_),
+		SFVAR(tl_),
+		SFVAR(tl_latch_),
+		SFVAR(ar_),
+		SFVAR(dr_),
+		SFVAR(sr_),
+		SFVAR(sl_),
+		SFVAR(rr_),
+		SFVAR(ks_),
+		SFVAR(ssg_type_),
+		SFVAR(keyon_),
+		SFVAR(amon_),
+		SFVAR(param_changed_),
+		SFVAR(mute_),
+
+		SFEND
+	};
+
+	int ret =  PX68KSS_StateAction(sm, load, data_only, StateRegs, sname, false);
+	
+	if (load)
+		ams_ = amtable[type_][amon_ ? (ms_ >> 4) & 3 : 0];
+	
+	return ret;
+}
 
 //	構築
 FM::Operator::Operator()
@@ -681,7 +755,6 @@ int Channel4::kftable[64];
 
 bool Channel4::tablehasmade = false;
 
-
 Channel4::Channel4()
 {
 	if (!tablehasmade)
@@ -689,6 +762,39 @@ Channel4::Channel4()
 
 	SetAlgorithm(0);
 	pms = pmtable[0][0];
+}
+
+int Channel4::StateAction(StateMem *sm, int load, int data_only, const char *sname)
+{
+	SFORMAT StateRegs[] =
+	{
+		SFVAR(fb),
+		SFVAR(algo_),
+		SFARRAY32(buf, 4),
+
+		SFEND
+	};
+
+	int ret = PX68KSS_StateAction(sm, load, data_only, StateRegs, sname, false);
+
+	for (int i = 0; i < 4; i++)
+	{
+		char tmpstr[10] = "x";
+		char tmpstr2[5] = "OPx";
+		tmpstr2[2] = '0' + i;
+		strcpy(tmpstr, sname);
+		strcat(tmpstr, tmpstr2);
+
+		ret &= op[i].StateAction(sm, load, data_only, tmpstr);
+	}
+
+	if (load)
+	{
+		SetAlgorithm(algo_);
+		pms = pmtable[op[0].type_][op[0].ms_ & 7];
+	}
+
+	return ret;
 }
 
 void Channel4::MakeTable()

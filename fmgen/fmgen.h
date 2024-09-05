@@ -32,7 +32,8 @@ namespace FM
 	//	Types ----------------------------------------------------------------
 	typedef int32_t ISample;
 
-	enum OpType { TYPE_N = 0, TYPE_M = 1 };
+	enum	OpType { TYPE_N = 0, TYPE_M = 1 };
+	enum	EGPhase { NEXT, ATTACK, DECAY, SUSTAIN, RELEASE, OFF };
 
 	void StoreSample(ISample& dest, int data);
 
@@ -75,6 +76,9 @@ namespace FM
 		void	Mute(bool);
 		
 		int	Out() { return out_; }
+
+		int StateAction(StateMem *sm, int load, int data_only, const char *sname);
+	
 	private:
 		Chip*	chip_;
 		ISample	out_, out2_;
@@ -92,8 +96,6 @@ namespace FM
 		int32_t		pg_diff_lfo_;	// Phase 差分値 >> x
 
 	//	Envelop Generator ---------------------------------------------------
-		enum	EGPhase { NEXT, ATTACK, DECAY, SUSTAIN, RELEASE, OFF };
-		
 		void	EGCalc();
 		void	EGStep();
 		void	ShiftPhase(EGPhase nextphase);
@@ -101,7 +103,7 @@ namespace FM
 		void	SetEGRate(uint32_t);
 		void	EGUpdate();
 		ISample LogToLin(uint32_t a);
-		
+
 		OpType		type_;		// OP の種類 (M, N...)
 		uint32_t	bn_;		// Block/Note
 		int		eg_level_;	// EG の出力値
@@ -182,6 +184,8 @@ namespace FM
 		void SetMS(uint32_t ms);
 		void Mute(bool);
 
+		int StateAction(StateMem *mem, int load, int data_only, const char *sname);
+	
 	private:
 		static const uint8_t fbtable[8];
 		uint32_t fb;
@@ -189,8 +193,9 @@ namespace FM
 		int*	 in[3];			// 各 OP の入力ポインタ
 		int*	 out[3];		// 各 OP の出力ポインタ
 		int*	 pms;
-		int	 algo_;
+		
 		Chip*	 chip_;
+		int	 algo_;
 
 		static void MakeTable();
 
@@ -217,6 +222,8 @@ namespace FM
 		uint32_t	GetPML() { return pml_; }
 		int		GetPMV() { return pmv_; }
 		uint32_t	GetRatio() { return ratio_; }
+
+		int StateAction(StateMem *sm, int load, int data_pnly);
 
 	private:
 		void	MakeTable();

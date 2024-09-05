@@ -34,6 +34,44 @@ uint16_t	BG_PriBuf[1600];
 
 uint32_t	VLINEBG = 0;
 
+int BG_StateAction(StateMem *sm, int load, int data_only)
+{
+	SFORMAT StateRegs[] = 
+	{
+		SFARRAY(BG, 0x8000),
+		SFARRAY(Sprite_Regs, 0x800),
+		SFARRAY(BG_Regs, 0x12),
+
+		SFVAR(BG_CHREND),
+		SFVAR(BG_BG0TOP),
+		SFVAR(BG_BG0END),
+		SFVAR(BG_BG1TOP),
+		SFVAR(BG_BG1END),
+		SFVAR(BG_CHRSIZE),
+		SFVAR(BG_AdrMask),
+		SFVAR(BG0ScrollX),
+		SFVAR(BG0ScrollY),
+		SFVAR(BG1ScrollX),
+		SFVAR(BG1ScrollY),
+
+		SFARRAY(BGCHR8, (8 * 8 * 256)),
+		SFARRAY(BGCHR16, (16 * 16 * 256)),
+		SFARRAY16(BG_PriBuf, 1600),
+		SFARRAY16(BG_LineBuf, 1600),
+
+		SFVAR(BG_HAdjust),
+		SFVAR(BG_VLINE),
+		SFVAR(VLINEBG),
+
+		SFEND
+	};
+
+	int ret = PX68KSS_StateAction(sm, load, data_only, StateRegs, "X68K_BG", false);
+
+	return ret;
+}
+
+
 void BG_Init(void)
 {
 	uint32_t i;

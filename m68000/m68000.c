@@ -22,6 +22,63 @@ struct Cyclone m68k;
 int m68000_ICountBk;
 int ICount;
 
+int m68000_StateAction(StateMem *sm, int load, int data_only)
+{
+	int ret = 0;
+	uint32_t pc = 0;
+	SFORMAT StateRegs[] = 
+	{
+		SFVARN(C68K.D[0], "D0"),
+		SFVARN(C68K.D[1], "D1"),
+		SFVARN(C68K.D[2], "D2"),
+		SFVARN(C68K.D[3], "D3"),
+		SFVARN(C68K.D[4], "D4"),
+		SFVARN(C68K.D[5], "D5"),
+		SFVARN(C68K.D[6], "D6"),
+		SFVARN(C68K.D[7], "D7"),
+
+		SFVARN(C68K.A[0], "A0"),
+		SFVARN(C68K.A[1], "A1"),
+		SFVARN(C68K.A[2], "A2"),
+		SFVARN(C68K.A[3], "A3"),
+		SFVARN(C68K.A[4], "A4"),
+		SFVARN(C68K.A[5], "A5"),
+		SFVARN(C68K.A[6], "A6"),
+		SFVARN(C68K.A[7], "A7"),
+
+		SFVARN(C68K.flag_C, "flag_C"),
+		SFVARN(C68K.flag_V, "flag_V"),
+		SFVARN(C68K.flag_notZ, "flag_notZ"),
+		SFVARN(C68K.flag_X, "flag_X"),
+		SFVARN(C68K.flag_I, "flag_I"),
+		SFVARN(C68K.flag_S, "flag_S"),
+
+		SFVARN(C68K.USP, "USP"),
+
+		SFVARN(pc, "PC"),
+
+		SFVARN(C68K.Status, "status"),
+		SFVARN(C68K.IRQLine, "IRQLine"),
+
+		SFVARN(C68K.CycleToDo, "CycleToDo"),
+		SFVARN(C68K.CycleIO, "CycleIO"),
+		SFVARN(C68K.CycleSup, "CycleSup"),
+		SFVARN(C68K.dirty1, "dirtyflag"),
+
+		SFEND
+	};
+
+	if (!load)
+		pc = m68000_get_reg(M68K_PC);
+
+	ret = PX68KSS_StateAction(sm, load, data_only, StateRegs, "X68K_CPU", false);
+
+	if (load)
+		m68000_set_reg(M68K_PC, pc);
+
+	return ret;
+}
+
 #if defined (HAVE_CYCLONE)
 
 unsigned int read8(unsigned int a) {

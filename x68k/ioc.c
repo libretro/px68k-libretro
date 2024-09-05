@@ -8,6 +8,21 @@
 uint8_t	IOC_IntStat = 0;
 uint8_t	IOC_IntVect = 0;
 
+int IOC_StateAction(StateMem *sm, int load, int data_only)
+{
+	SFORMAT StateRegs[] = 
+	{
+		SFVAR(IOC_IntStat),
+		SFVAR(IOC_IntVect),
+
+		SFEND
+	};
+
+	int ret = PX68KSS_StateAction(sm, load, data_only, StateRegs, "X68K_IOC", false);
+
+	return ret;
+}
+
 void IOC_Init(void)
 {
 	IOC_IntStat = 0;
