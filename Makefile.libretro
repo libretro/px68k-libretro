@@ -419,7 +419,6 @@ endif
 
 LDFLAGS +=  $(fpic) $(SHARED) $(EXTRA_LDF)
 FLAGS   += $(INCFLAGS)
-FLAGS   += -DC68K_NO_JUMP_TABLE
 
 WARNINGS :=
 

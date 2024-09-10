@@ -24,6 +24,7 @@ int ICount;
 
 int m68000_StateAction(StateMem *sm, int load, int data_only)
 {
+#ifdef HAVE_C68K
 	int ret = 0;
 	uint32_t pc = 0;
 	SFORMAT StateRegs[] = 
@@ -77,6 +78,101 @@ int m68000_StateAction(StateMem *sm, int load, int data_only)
 		m68000_set_reg(M68K_PC, pc);
 
 	return ret;
+#endif
+#ifdef HAVE_MUSASHI
+	int ret = 0;
+	uint32_t tmp32[20];
+
+	SFORMAT StateRegs[] =
+	{
+		SFVARN(tmp32[0], "M68K_REG_D0"),
+		SFVARN(tmp32[1], "M68K_REG_D1"),
+		SFVARN(tmp32[2], "M68K_REG_D2"),
+		SFVARN(tmp32[3], "M68K_REG_D3"),
+		SFVARN(tmp32[4], "M68K_REG_D4"),
+		SFVARN(tmp32[5], "M68K_REG_D5"),
+		SFVARN(tmp32[6], "M68K_REG_D6"),
+		SFVARN(tmp32[7], "M68K_REG_D7"),
+		SFVARN(tmp32[8], "M68K_REG_A0"),
+		SFVARN(tmp32[9], "M68K_REG_A1"),
+		SFVARN(tmp32[10], "M68K_REG_A2"),
+		SFVARN(tmp32[11], "M68K_REG_A3"),
+		SFVARN(tmp32[12], "M68K_REG_A4"),
+		SFVARN(tmp32[13], "M68K_REG_A5"),
+		SFVARN(tmp32[14], "M68K_REG_A6"),
+		SFVARN(tmp32[15], "M68K_REG_A7"),
+		SFVARN(tmp32[16], "M68K_REG_PC"),
+		SFVARN(tmp32[17], "M68K_REG_SR"),
+		SFVARN(tmp32[18], "M68K_REG_USP"),
+		SFVARN(tmp32[19], "M68K_REG_ISP"),
+
+		SFVAR(m68ki_cpu.c_flag),
+		SFVAR(m68ki_cpu.v_flag),
+		SFVAR(m68ki_cpu.not_z_flag),
+		SFVAR(m68ki_cpu.n_flag),
+		SFVAR(m68ki_cpu.x_flag),
+		SFVAR(m68ki_cpu.m_flag),
+		SFVAR(m68ki_cpu.s_flag),
+		
+		SFVAR(m68ki_cpu.int_level),
+		SFVAR(m68ki_cpu.stopped),
+		SFVAR(m68ki_remaining_cycles),
+
+		SFEND
+	};
+
+	if (!load)
+	{
+		tmp32[0] = m68k_get_reg(NULL, M68K_REG_D0);
+		tmp32[1] = m68k_get_reg(NULL, M68K_REG_D1);
+		tmp32[2] = m68k_get_reg(NULL, M68K_REG_D2);
+		tmp32[3] = m68k_get_reg(NULL, M68K_REG_D3);
+		tmp32[4] = m68k_get_reg(NULL, M68K_REG_D4);
+		tmp32[5] = m68k_get_reg(NULL, M68K_REG_D5);
+		tmp32[6] = m68k_get_reg(NULL, M68K_REG_D6);
+		tmp32[7] = m68k_get_reg(NULL, M68K_REG_D7);
+		tmp32[8] = m68k_get_reg(NULL, M68K_REG_A0);
+		tmp32[9] = m68k_get_reg(NULL, M68K_REG_A1);
+		tmp32[10] = m68k_get_reg(NULL, M68K_REG_A2);
+		tmp32[11] = m68k_get_reg(NULL, M68K_REG_A3);
+		tmp32[12] = m68k_get_reg(NULL, M68K_REG_A4);
+		tmp32[13] = m68k_get_reg(NULL, M68K_REG_A5);
+		tmp32[14] = m68k_get_reg(NULL, M68K_REG_A6);
+		tmp32[15] = m68k_get_reg(NULL, M68K_REG_A7);
+		tmp32[16] = m68k_get_reg(NULL, M68K_REG_PC);
+		tmp32[17] = m68k_get_reg(NULL, M68K_REG_SR);
+		tmp32[18] = m68k_get_reg(NULL, M68K_REG_USP);
+		tmp32[19] = m68k_get_reg(NULL, M68K_REG_ISP);
+	}
+
+	ret = PX68KSS_StateAction(sm, load, data_only, StateRegs, "MUSASHI_CPU", false);
+
+	if (load)
+	{
+		m68k_set_reg(M68K_REG_D0, tmp32[0]);
+		m68k_set_reg(M68K_REG_D1, tmp32[1]);
+		m68k_set_reg(M68K_REG_D2, tmp32[2]);
+		m68k_set_reg(M68K_REG_D3, tmp32[3]);
+		m68k_set_reg(M68K_REG_D4, tmp32[4]);
+		m68k_set_reg(M68K_REG_D5, tmp32[5]);
+		m68k_set_reg(M68K_REG_D6, tmp32[6]);
+		m68k_set_reg(M68K_REG_D7, tmp32[7]);
+		m68k_set_reg(M68K_REG_A0, tmp32[8]);
+		m68k_set_reg(M68K_REG_A1, tmp32[9]);
+		m68k_set_reg(M68K_REG_A2, tmp32[10]);
+		m68k_set_reg(M68K_REG_A3, tmp32[11]);
+		m68k_set_reg(M68K_REG_A4, tmp32[12]);
+		m68k_set_reg(M68K_REG_A5, tmp32[13]);
+		m68k_set_reg(M68K_REG_A6, tmp32[14]);
+		m68k_set_reg(M68K_REG_A7, tmp32[15]);
+		m68k_set_reg(M68K_REG_PC, tmp32[16]);
+		m68k_set_reg(M68K_REG_SR, tmp32[17]);
+		m68k_set_reg(M68K_REG_USP, tmp32[18]);
+		m68k_set_reg(M68K_REG_ISP, tmp32[19]);
+	};
+
+	return ret;
+#endif
 }
 
 #if defined (HAVE_CYCLONE)

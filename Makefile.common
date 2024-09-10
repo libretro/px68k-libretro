@@ -19,7 +19,7 @@ SOURCES_S 		+= \
 				$(CORE_DIR)/m68000/cyclone.s
 else
 ifeq ($(C68K),1)
-FLAGS 			+= -DHAVE_C68K
+FLAGS 			+= -DHAVE_C68K -DC68K_NO_JUMP_TABLE
 SOURCES_C 		+= \
 				$(CORE_DIR)/m68000/c68k/c68k.c \
 				$(CORE_DIR)/m68000/c68k/c68kexec.c
