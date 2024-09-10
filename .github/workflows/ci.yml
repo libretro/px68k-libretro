@@ -1,0 +1,16 @@
+name: PX68K CI
+on: [push, pull_request]
+jobs:
+  linux-c68k:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: build with c68k
+      run: make -j$(getconf _NPROCESSORS_ONLN) C68K=1
+
+  linux-musashi:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: build with musashi
+      run: make -j$(getconf _NPROCESSORS_ONLN) C68K=0
