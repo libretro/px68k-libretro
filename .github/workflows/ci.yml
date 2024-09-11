@@ -14,3 +14,13 @@ jobs:
     - uses: actions/checkout@v4
     - name: build with musashi
       run: make -j$(getconf _NPROCESSORS_ONLN) C68K=0
+
+  windows-c68k:
+    runs-on: windows-latest
+    steps:
+    - uses: msys2/setup-msys2@v2
+    - uses: actions/checkout@v4
+    - name: windows build with c68k
+      run: |
+        make -j$(getconf _NPROCESSORS_ONLN) C68K=1 clean
+        make -j$(getconf _NPROCESSORS_ONLN) C68K=1
