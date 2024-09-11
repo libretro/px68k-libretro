@@ -19,6 +19,18 @@ jobs:
     runs-on: windows-latest
     steps:
     - uses: msys2/setup-msys2@v2
+      with:
+        update: true
+        install: >-
+          base-devel
+          gcc
+          git
+          make
+          zip
+          mingw-w64-x86_64-toolchain
+          mingw-w64-x86_64-ntldd
+          mingw-w64-x86_64-zlib
+          mingw-w64-x86_64-pkg-config
     - uses: actions/checkout@v4
     - name: windows build with c68k
       shell: msys2 {0}
