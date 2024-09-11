@@ -21,6 +21,7 @@ jobs:
     - uses: msys2/setup-msys2@v2
     - uses: actions/checkout@v4
     - name: windows build with c68k
+      shell: msys2 {0}
       run: |
         make C68K=1 clean
         make C68K=1
