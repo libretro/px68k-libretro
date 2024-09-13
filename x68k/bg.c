@@ -1,3 +1,8 @@
+/*
+ *  BG.C - BG and sprites
+ *  TODO: Check transparent color processing (especially with Text)
+ */
+
 #include <string.h>
 
 #include "common.h"
@@ -148,7 +153,7 @@ void FASTCALL BG_Write(uint32_t adr, uint8_t data)
 	else if ((adr>=0xeb0800)&&(adr<0xeb0812))
 	{
 		adr -= 0xeb0800;
-		if (BG_Regs[adr]==data) return;	/* データに変化が無ければ帰る */
+		if (BG_Regs[adr]==data) return;	/* return if no data is changed */
 		BG_Regs[adr] = data;
 		switch(adr)
 		{
@@ -178,11 +183,11 @@ void FASTCALL BG_Write(uint32_t adr, uint8_t data)
 			break;
 
 		case 0x0d:
-			BG_HAdjust = ((int32_t)BG_Regs[0x0d] - (CRTC_HSTART + 4)) * 8; /* 水平方向は解像度による1/2はいらない？（Tetris） */
+			BG_HAdjust = ((int32_t)BG_Regs[0x0d] - (CRTC_HSTART + 4)) * 8; /* Isn't it necessary to divide the horizontal resolution by 1/2? (Tetris) */
 			TVRAM_SetAllDirty();
 			break;
 		case 0x0f:
-			BG_VLINE = ((int32_t)BG_Regs[0x0f] - CRTC_VSTART) / ((BG_Regs[0x11] & 4) ? 1 : 2); /* BGとその他がずれてる時の差分 */
+			BG_VLINE = ((int32_t)BG_Regs[0x0f] - CRTC_VSTART) / ((BG_Regs[0x11] & 4) ? 1 : 2); /* Difference when BG and other elements are misaligned */
 			TVRAM_SetAllDirty();
 			break;
 
@@ -200,8 +205,8 @@ void FASTCALL BG_Write(uint32_t adr, uint8_t data)
 				BG_CHREND = 0x2000;
 			BG_CHRSIZE = ((data&3)?16:8);
 			BG_AdrMask = ((data&3)?1023:511);
-			BG_HAdjust = ((int32_t)BG_Regs[0x0d] - (CRTC_HSTART + 4)) * 8; /* 水平方向は解像度による1/2はいらない？（Tetris） */
-			BG_VLINE   = ((int32_t)BG_Regs[0x0f] - CRTC_VSTART) / ((BG_Regs[0x11] & 4) ? 1 : 2); /* BGとその他がずれてる時の差分 */
+			BG_HAdjust = ((int32_t)BG_Regs[0x0d] - (CRTC_HSTART + 4)) * 8; /*Isn't it necessary to divide the horizontal resolution by 1/2? (Tetris) */
+			BG_VLINE   = ((int32_t)BG_Regs[0x0f] - CRTC_VSTART) / ((BG_Regs[0x11] & 4) ? 1 : 2); /* Difference when BG and other elements are misaligned */
 			break;
 		case 0x09:		/* BG Plane Cfg Changed */
 			TVRAM_SetAllDirty();
@@ -252,7 +257,7 @@ void FASTCALL BG_Write(uint32_t adr, uint8_t data)
 	else if ((adr>=0xeb8000)&&(adr<0xec0000))
 	{
 		adr -= 0xeb8000;
-		if (BG[adr]==data) return;			/* データに変化が無ければ帰る */
+		if (BG[adr]==data) return;			/* return if no data is changed */
 		BG[adr] = data;
 		if (adr<0x2000)
 		{
@@ -263,11 +268,11 @@ void FASTCALL BG_Write(uint32_t adr, uint8_t data)
 		BGCHR16[bg16chr]   = data>>4;
 		BGCHR16[bg16chr+1] = data&15;
 
-		if (adr<BG_CHREND)				/* パターンエリア */
+		if (adr<BG_CHREND)						/* pattern area */
 			TVRAM_SetAllDirty();
-		if ((adr>=BG_BG1TOP)&&(adr<BG_BG1END))	/* BG1 MAPエリア */
+		if ((adr>=BG_BG1TOP)&&(adr<BG_BG1END))	/* BG1 MAP Area */
 			TVRAM_SetAllDirty();
-		if ((adr>=BG_BG0TOP)&&(adr<BG_BG0END))	/* BG0 MAPエリア */
+		if ((adr>=BG_BG0TOP)&&(adr<BG_BG0END))	/* BG0 MAP Area */
 			TVRAM_SetAllDirty();
 	}
 }

@@ -169,6 +169,22 @@ void CRTC_Init(void)
 	TextScrollY = 0;
 }
 
+static void CRTC_ScreenChanged(void)
+{
+	if ((CRTC_Regs[0x29] & 0x14) == 0x10)
+	{
+		TextDotY /= 2;
+		CRTC_VStep = 1;
+	}
+	else if ((CRTC_Regs[0x29] & 0x14) == 0x04)
+	{
+		TextDotY *= 2;
+		CRTC_VStep = 4;
+	}
+	else
+		CRTC_VStep = 2;
+}
+
 uint8_t FASTCALL CRTC_Read(uint32_t adr)
 {
    uint8_t ret;
@@ -204,12 +220,20 @@ void FASTCALL CRTC_Write(uint32_t adr, uint8_t data)
       TVRAM_SetAllDirty();
       switch(reg)
       {
+         case 0x00:
+         case 0x01:
+            /* HTOTAL */
+            break;
+         case 0x02:
+         case 0x03:
+            /* HSYNC End */
+            break;
          case 0x04:
          case 0x05:
             CRTC_HSTART = (((uint16_t)CRTC_Regs[0x4] << 8) + CRTC_Regs[0x5]) & 1023;
             if (CRTC_HEND > CRTC_HSTART)
                TextDotX = (CRTC_HEND-CRTC_HSTART)*8;
-            BG_HAdjust = ((long)BG_Regs[0x0d]-(CRTC_HSTART+4))*8;				/* 水平方向は解像度による1/2はいらない？（Tetris） */
+            BG_HAdjust = ((long)BG_Regs[0x0d]-(CRTC_HSTART+4))*8;				/* Isn't it necessary to divide the horizontal resolution by 1/2? (Tetris) */
             break;
          case 0x06:
          case 0x07:
@@ -219,43 +243,25 @@ void FASTCALL CRTC_Write(uint32_t adr, uint8_t data)
             break;
          case 0x08:
          case 0x09:
-            VLINE_TOTAL = (((uint16_t)CRTC_Regs[8]<<8)+CRTC_Regs[9]);
+            VLINE_TOTAL = (((uint16_t)CRTC_Regs[8]<<8)+CRTC_Regs[9]) & 1023;
             HSYNC_CLK = ((CRTC_Regs[0x29]&0x10)?VSYNC_HIGH:VSYNC_NORM)/VLINE_TOTAL;
+            break;
+         case 0x0a:
+         case 0x0b:
+            /* VSYNC end */
             break;
          case 0x0c:
          case 0x0d:
             CRTC_VSTART = (((uint16_t)CRTC_Regs[0xc] << 8) + CRTC_Regs[0xd]) & 1023;
-            BG_VLINE = ((long)BG_Regs[0x0f]-CRTC_VSTART)/((BG_Regs[0x11]&4)?1:2);	/* BGとその他がずれてる時の差分 */
+            BG_VLINE = ((long)BG_Regs[0x0f]-CRTC_VSTART)/((BG_Regs[0x11]&4)?1:2);	/* Difference when BG and other elements are misaligned */
             TextDotY = CRTC_VEND-CRTC_VSTART;
-            if ((CRTC_Regs[0x29]&0x14)==0x10)
-            {
-               TextDotY/=2;
-               CRTC_VStep = 1;
-            }
-            else if ((CRTC_Regs[0x29]&0x14)==0x04)
-            {
-               TextDotY*=2;
-               CRTC_VStep = 4;
-            }
-            else
-               CRTC_VStep = 2;
+            CRTC_ScreenChanged();
             break;
          case 0x0e:
          case 0x0f:
             CRTC_VEND = (((uint16_t)CRTC_Regs[0xe] << 8) + CRTC_Regs[0xf]) & 1023;
             TextDotY = CRTC_VEND-CRTC_VSTART;
-            if ((CRTC_Regs[0x29]&0x14)==0x10)
-            {
-               TextDotY/=2;
-               CRTC_VStep = 1;
-            }
-            else if ((CRTC_Regs[0x29]&0x14)==0x04)
-            {
-               TextDotY*=2;
-               CRTC_VStep = 4;
-            }
-            else
-               CRTC_VStep = 2;
+            CRTC_ScreenChanged();
             break;
          case 0x28:
             TVRAM_SetAllDirty();
@@ -264,23 +270,11 @@ void FASTCALL CRTC_Write(uint32_t adr, uint8_t data)
             HSYNC_CLK = ((CRTC_Regs[0x29]&0x10)?VSYNC_HIGH:VSYNC_NORM)/VLINE_TOTAL;
             VID_MODE = !!(CRTC_Regs[0x29]&0x10);
             TextDotY = CRTC_VEND-CRTC_VSTART;
-            if ((CRTC_Regs[0x29]&0x14)==0x10)
-            {
-               TextDotY/=2;
-               CRTC_VStep = 1;
-            }
-            else if ((CRTC_Regs[0x29]&0x14)==0x04)
-            {
-               TextDotY*=2;
-               CRTC_VStep = 4;
-            }
-            else
-               CRTC_VStep = 2;
-            if (VID_MODE != old_vidmode)
-            {
-               old_vidmode = VID_MODE;
-               CHANGEAV_TIMING=1;
-            }
+            CRTC_ScreenChanged();
+            break;
+         case 0x10:
+         case 0x11:
+            /* EXT sync horizontal adjust */
             break;
          case 0x12:
          case 0x13:
@@ -329,9 +323,9 @@ void FASTCALL CRTC_Write(uint32_t adr, uint8_t data)
          case 0x2a:
          case 0x2b:
             break;
-         case 0x2c:				/* CRTC動作ポートのラスタコピーをONにしておいて（しておいたまま）、 */
-         case 0x2d:				/* Src/Dstだけ次々変えていくのも許されるらしい（ドラキュラとか） */
-            CRTC_RCFlag[reg-0x2c] = 1;	/* Dst変更後に実行される？ */
+         case 0x2c:				/* Turn on the raster copy of the CRTC operation port (and leave it on), */
+         case 0x2d:				/* Apparently it's also permissible to change only the Src/Dst (like Dracula) */
+            CRTC_RCFlag[reg-0x2c] = 1;	/* Is it executed after changing Dst? */
             if ((CRTC_Mode&8)&&/*(CRTC_RCFlag[0])&&*/(CRTC_RCFlag[1]))
             {
                CRTC_RasterCopy();
@@ -342,7 +336,7 @@ void FASTCALL CRTC_Write(uint32_t adr, uint8_t data)
       }
    }
    else if (adr==0xe80481)
-   {					/* CRTC動作ポート */
+   {					/* CRTC operation port */
       CRTC_Mode = (data|(CRTC_Mode&2));
       if (CRTC_Mode&8)
       {				/* Raster Copy */
@@ -350,10 +344,10 @@ void FASTCALL CRTC_Write(uint32_t adr, uint8_t data)
          CRTC_RCFlag[0] = 0;
          CRTC_RCFlag[1] = 0;
       }
-      if (CRTC_Mode&2)
+      if (CRTC_Mode&2) /* FastClear */
       {
          CRTC_FastClrLine = vline;
-         /* この時点のマスクが有効らしい（クォース） */
+         /* The mask at this point seems to be valid (quote) */
          CRTC_FastClrMask = FastClearMask[CRTC_Regs[0x2b]&15];
       }
    }

@@ -1,5 +1,6 @@
 /*
  *  TVRAM.C - Text VRAM
+ *  TODO: Transparent color processing and more
  */
 
 #include	"common.h"
@@ -48,7 +49,7 @@ void TVRAM_Init(void)
 	memset(TextDrawWork, 0, 1024*1024);
 	TVRAM_SetAllDirty();
 
-	memset(TextDrawPattern, 0, 2048*4); /* パターンテーブル初期化 */
+	memset(TextDrawPattern, 0, 2048*4);
 	for (i=0; i<256; i++)
 	{
 		for (j=0, bit=0x80; j<8; j++, bit>>=1)
@@ -99,7 +100,7 @@ void FASTCALL TVRAM_Write(uint32_t adr, uint8_t data)
 #ifndef MSB_FIRST
 	adr ^= 1;
 #endif
-	if (CRTC_Regs[0x2a]&1)
+	if (CRTC_Regs[0x2a]&1)			/* Concurrent access */
 	{
 		adr &= 0x1ffff;
 		if (CRTC_Regs[0x2a]&2)		/* Text Mask */
@@ -117,7 +118,7 @@ void FASTCALL TVRAM_Write(uint32_t adr, uint8_t data)
 			if (CRTC_Regs[0x2b]&0x80) TVRAM_WriteByte(adr+0x60000, data);
 		}
 	}
-	else
+	else							 /* single access */
 	{
 		if (CRTC_Regs[0x2a]&2)		/* Text Mask */
 			TVRAM_WriteByteMask(adr, data);

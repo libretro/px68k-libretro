@@ -1,5 +1,7 @@
 /*
  *  FDC.C - Floppy Disk Controller (uPD72065)
+ *  ToDo: Review of unimplemented commands, suspicious parts (numerous), review of the link with DMAC
+ *    The error handling in D88 should have gotten better... but it's also messy...
  */
 
 #include "fdc.h"
@@ -125,9 +127,6 @@ int FDC_StateAction(StateMem *sm, int load, int data_only)
 #define MF(p) ((p->us>>6)&1)
 #define MT(p) ((p->us>>7)&1)
 
-/*
- *   割り込みベクタ
- */
 uint32_t FASTCALL FDC_Int(uint8_t irq)
 {
 	IRQH_IRQCallBack(irq);
@@ -136,10 +135,6 @@ uint32_t FASTCALL FDC_Int(uint8_t irq)
 	return -1;
 }
 
-
-/*
- *   初期化
- */
 void FDC_Init(void)
 {
 	memset(&fdc, 0, sizeof(FDC));
@@ -160,7 +155,7 @@ static void FDC_SetInt(void)
 
 
 /*
- *   Excution Phase の終了
+ *   End of Execution Phase
  */
 static void FDC_EPhaseEnd(void)
 {
@@ -299,11 +294,11 @@ static void FDC_ExecCmd(void)
 		fdc.st0 = prm1->us&7;
 		fdc.cyl = 0;
 		if ( (!FDD_IsReady(fdc.drv))&&(!fdc.ready) ) {
-			fdc.st0 |= 0x48;		/* FDなし */
+			fdc.st0 |= 0x48;		/* no FD */
 		} else if ( (fdc.drv>=0)&&(fdc.drv<2) ) {
-			fdc.st0 |= 0x20;		/* FDあり、ドライブあり */
+			fdc.st0 |= 0x20;		/* with FD and drive */
 		} else {
-			fdc.st0 |= 0x50;		/* ドライブなし */
+			fdc.st0 |= 0x50;		/* no drive */
 		}
 		FDC_SetInt();
 		break;

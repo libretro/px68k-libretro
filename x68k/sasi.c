@@ -123,9 +123,6 @@ error:
 	return 0;
 }
 
-/*
- *   I/O Read
- */
 uint8_t FASTCALL SASI_Read(uint32_t adr)
 {
 	uint8_t ret = 0;
@@ -141,7 +138,7 @@ uint8_t FASTCALL SASI_Read(uint32_t adr)
 			ret |= 8;		/* C/D  */
 		if ((SASI_Phase==3)&&(SASI_RW))	/* SASI_RW=1:Read */
 			ret |= 4;		/* I/O */
-		if (SASI_Phase==9)		/* Phase=9:SenseStatus√Ê */
+		if (SASI_Phase==9)		/* Phase=9:SenseStatus‰∏≠ */
 			ret |= 4;		/* I/O */
 		if ((SASI_Phase==4)||(SASI_Phase==5))
 			ret |= 0x0c;		/* I/O & C/D */
@@ -180,14 +177,14 @@ uint8_t FASTCALL SASI_Read(uint32_t adr)
 			SASI_Phase++;
 		}
 		else if (SASI_Phase==5) /* MessagePhase */
-			SASI_Phase = 0;
-		else if (SASI_Phase==9)	/* DataPhase(SenseStat¿ÏÕ—) */
+			SASI_Phase = 0;		/* Just return 0. Return to BusFree */
+		else if (SASI_Phase==9)	/* DataPhase(SenseStatExclusive) */
 		{
 			ret = SASI_SenseStatBuf[SASI_SenseStatPtr++];
 			if (SASI_SenseStatPtr==4)
 			{
 				SASI_Error = 0;
-				SASI_Phase = 4;	/* StatusPhase§ÿ */
+				SASI_Phase = 4;	/* StatusPhase„Å∏ */
 			}
 		}
 		if (SASI_Phase==4)
@@ -202,6 +199,11 @@ uint8_t FASTCALL SASI_Read(uint32_t adr)
 	return ret;
 }
 
+/* Check the command. To be honest, the description in InsideX68k is not enough ^^;.
+* As for what is not described,
+* - C2h (initialization?). No parameters other than Unit. Write 10 pieces of data in DataPhase.
+* - 06h (format?). Logical block specified (specified every 21h). 6 is specified for the number of blocks.
+*/
 static void SASI_CheckCmd(void)
 {
 	int16_t result;
@@ -295,10 +297,6 @@ static void SASI_CheckCmd(void)
    }
 }
 
-
-/*
- *   I/O Write
- */
 void FASTCALL SASI_Write(uint32_t adr, uint8_t data)
 {
 	int16_t result;

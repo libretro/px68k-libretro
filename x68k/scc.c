@@ -1,5 +1,5 @@
 /*
- *  SCC.C - Z8530 SCC
+ *  SCC.C - Z8530 SCC (mouse only)
  */
 
 #include "common.h"
@@ -89,9 +89,6 @@ void SCC_Init(void)
 	SCC_DatNum = 0;
 }
 
-/*
- *   I/O Write
- */
 void FASTCALL SCC_Write(uint32_t adr, uint8_t data)
 {
 	if (adr>=0xe98008)
@@ -167,10 +164,6 @@ void FASTCALL SCC_Write(uint32_t adr, uint8_t data)
 	}
 }
 
-
-/*
- *   I/O Read
- */
 uint8_t FASTCALL SCC_Read(uint32_t adr)
 {
 	uint8_t ret = 0;

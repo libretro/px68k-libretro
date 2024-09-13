@@ -207,7 +207,7 @@ void FASTCALL MFP_Write(uint32_t adr, uint8_t data)
          case MFP_IERA:
          case MFP_IERB:
             MFP[reg]    = data;
-            MFP[reg+2] &= data;  /* 禁止されたものはIPRA/Bを落とす */
+            MFP[reg+2] &= data;  /* Prohibited items drop IPRA/B */
             MFP_RecheckInt();
             break;
          case MFP_IPRA:
@@ -235,7 +235,7 @@ void FASTCALL MFP_Write(uint32_t adr, uint8_t data)
             Timer_Reload[3] = MFP[reg] = data;
             break;
          case MFP_TSR:
-            MFP[reg] = data | 0x80; /* Txは常にEnableに */
+            MFP[reg] = data | 0x80; /* Tx is always enabled */
             break;
          case MFP_UDR:
             break;

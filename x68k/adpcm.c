@@ -267,9 +267,6 @@ void ADPCM_Update(int16_t *buffer, size_t length, uint8_t *pbsp, uint8_t *pbep)
       ADPCM_DifBuf += ADPCM_BufSize;
 }
 
-/*
- *   1nibble（4bit）をデコード
- */
 static INLINE void ADPCM_WriteOne(uint8_t val)
 {
    ADPCM_Out += dif_table[(ADPCM_Step << 4) + val];
@@ -358,12 +355,9 @@ void ADPCM_SetVolume(uint8_t vol)
 	if ( vol )
 		ADPCM_VolumeShift = (int)((double)16/pow(1.189207115, (16-vol)));
 	else
-		ADPCM_VolumeShift = 0; /* Mute */
+		ADPCM_VolumeShift = 0;
 }
 
-/*
- *   Panning
- */
 void ADPCM_SetPan(int n)
 {
 	if ( (ADPCM_Pan&0x0c)!=(n&0x0c) )
@@ -375,10 +369,6 @@ void ADPCM_SetPan(int n)
 	ADPCM_Pan = n;
 }
 
-
-/*
- *   Clock
- */
 void ADPCM_SetClock(int n)
 {
 	if ( (ADPCM_Clock&4)!=n )

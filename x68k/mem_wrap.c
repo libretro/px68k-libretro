@@ -78,7 +78,7 @@ uint8_t (*MemReadTable[])(uint32_t) = {
 	rm_font, rm_font, rm_font, rm_font, rm_font, rm_font, rm_font, rm_font,
 	rm_font, rm_font, rm_font, rm_font, rm_font, rm_font, rm_font, rm_font,
 	rm_font, rm_font, rm_font, rm_font, rm_font, rm_font, rm_font, rm_font,
-/* SCSI の場合は rm_buserr になる？ */
+	/* In the case of SCSI, will it be rm_buserr? */
 	rm_ipl, rm_ipl, rm_ipl, rm_ipl, rm_ipl, rm_ipl, rm_ipl, rm_ipl,
 	rm_ipl, rm_ipl, rm_ipl, rm_ipl, rm_ipl, rm_ipl, rm_ipl, rm_ipl,
 	rm_ipl, rm_ipl, rm_ipl, rm_ipl, rm_ipl, rm_ipl, rm_ipl, rm_ipl,
@@ -106,7 +106,7 @@ void (*MemWriteTable[])(uint32_t, uint8_t) = {
 	SRAM_Write, SRAM_Write, SRAM_Write, SRAM_Write, SRAM_Write, SRAM_Write, SRAM_Write, SRAM_Write,
 	wm_buserr, wm_buserr, wm_buserr, wm_buserr, wm_buserr, wm_buserr, wm_buserr, wm_buserr,
 	wm_buserr, wm_buserr, wm_buserr, wm_buserr, wm_buserr, wm_buserr, wm_buserr, wm_buserr,
-/* ROMエリアへの書きこみは全てバスエラー */
+	/* Any write to the ROM area results in a bus error */
 	wm_buserr, wm_buserr, wm_buserr, wm_buserr, wm_buserr, wm_buserr, wm_buserr, wm_buserr,
 	wm_buserr, wm_buserr, wm_buserr, wm_buserr, wm_buserr, wm_buserr, wm_buserr, wm_buserr,
 	wm_buserr, wm_buserr, wm_buserr, wm_buserr, wm_buserr, wm_buserr, wm_buserr, wm_buserr,

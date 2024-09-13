@@ -49,9 +49,7 @@ int Mcry_IsReady(void)
 	return (Mcry_SampleCnt > 0);
 }
 
-/*
- *   MPU経過クロック時間分だけデータをバッファに溜める
- */
+/* Store data in the buffer for the amount of MPU clock time elapsed */
 void FASTCALL Mcry_PreUpdate(uint32_t clock)
 {
 	Mcry_PreCounter += (Mcry_ClockRate*clock);
@@ -63,9 +61,7 @@ void FASTCALL Mcry_PreUpdate(uint32_t clock)
 	M288_Timer(clock);
 }
 
-/*
- *   DSoundからの要求分だけバッファを埋める
- */
+/* Fill the buffer as requested by DSound */
 void FASTCALL Mcry_Update(int16_t *buffer, size_t length)
 {
 	int data;
@@ -104,9 +100,7 @@ void FASTCALL Mcry_Update(int16_t *buffer, size_t length)
 	}
 }
 
-/*
- *   1回分（1Word x 2ch）のデータをバッファに書き出し
- */
+/* Write one chunk of data (1word x 2ch) to the buffer */
 static INLINE void Mcry_WriteOne(void)
 {
 	while (Mcry_Count<Mcry_SampleRate)
@@ -121,10 +115,6 @@ static INLINE void Mcry_WriteOne(void)
 	Mcry_SampleCnt--;
 }
 
-
-/*
- *   I/O Write
- */
 void FASTCALL Mcry_Write(uint32_t adr, uint8_t data)
 {
 	if ((adr == 0xecc080)||(adr == 0xecc081)||(adr == 0xecc000)||(adr == 0xecc001))	/* Data Port */
@@ -133,7 +123,7 @@ void FASTCALL Mcry_Write(uint32_t adr, uint8_t data)
 		if ( Mcry_Status&2 )
       {
          /* Stereo */
-         if (Mcry_LRTiming)		/* 右 */
+         if (Mcry_LRTiming)		/* Right */
          {
             if (!(Mcry_Status&8)) data=0;	/* R Mute */
             if (adr&1)			/* Low Byte */
@@ -145,7 +135,7 @@ void FASTCALL Mcry_Write(uint32_t adr, uint8_t data)
             else /* High Byte */
                Mcry_OutDataR = (Mcry_OutDataR&0x00ff)|((uint16_t)data<<8);
          }
-         else				/* 左 */
+         else				/* Left */
          {
             if (!(Mcry_Status&4)) data=0;	/* L Mute */
             if (adr&1)			/* Low Byte */
@@ -184,14 +174,10 @@ void FASTCALL Mcry_Write(uint32_t adr, uint8_t data)
 	}
 	else if ( adr== 0xecc0b1 ) /* Int Vector */
 		Mcry_Vector = data;
-	else if ( (adr>=0xecc0c0)&&(adr<=0xecc0c7)&&(adr&1) ) /* 満開版まーきゅりー OPN */
+	else if ( (adr>=0xecc0c0)&&(adr<=0xecc0c7)&&(adr&1) ) /* Full-bloom version of Mercury OPN */
 		M288_Write((uint8_t)((adr>>1)&3), data);
 }
 
-
-/*
- *   I/O Read
- */
 uint8_t FASTCALL Mcry_Read(uint32_t adr)
 {
 	uint8_t ret = 0;
@@ -206,16 +192,14 @@ uint8_t FASTCALL Mcry_Read(uint32_t adr)
 	}
 	else if ( adr== 0xecc0b1 ) /* Int Vector */
 		ret = Mcry_Vector;
-	else if ( (adr>=0xecc0c0)&&(adr<=0xecc0c7)&&(adr&1) ) /* 満開版まーきゅりー OPN */
+	else if ( (adr>=0xecc0c0)&&(adr<=0xecc0c7)&&(adr&1) ) /* Full-bloom version of Mercury OPN */
 		ret = M288_Read((uint8_t)((adr>>1)&3));
 	else if ( adr>=0xecc100 ) /* Bus Error? */
 		BusErrFlag = 1;
 	return ret;
 }
 
-/*
- *   再生クロック設定
- */
+/* Regenerated Clock Settings */
 void Mcry_SetClock(void)
 {
 	static int32_t Mcry_Clocks[8] = { 22050, 16000, 22050, 24000 };
@@ -227,7 +211,7 @@ void Mcry_SetClock(void)
 }
 
 /*
- *   ぼりゅーむ設定
+ *   Volume setting
  */
 void Mcry_SetVolume(uint8_t vol)
 {
@@ -242,7 +226,7 @@ void Mcry_SetVolume(uint8_t vol)
 }
 
 /*
- *   初期化~
+ *   Initialization~
  */
 void Mcry_Init(const char* path)
 {

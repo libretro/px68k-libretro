@@ -81,10 +81,10 @@ void FASTCALL RTC_Write(uint32_t adr, uint8_t data)
 {
 	if ( adr==0xe8a001 )
           return;
-	if ( adr==0xe8a01b )       /* Alarm/Timer Enable制御 */
+	if ( adr==0xe8a01b )       /* Alarm/Timer Enable control */
 		RTC_Regs[0][13] = RTC_Regs[1][13] = data & 0x0c;
-	else if ( adr==0xe8a01f ) /* Alarm端子出力制御 */
-		RTC_Regs[0][15] = RTC_Regs[1][15] = data & 0x0c; 
+	else if ( adr==0xe8a01f ) /* Alarm terminal output control */
+		RTC_Regs[0][15] = RTC_Regs[1][15] = data & 0x0c;
 }
 
 void RTC_Timer(int clock)

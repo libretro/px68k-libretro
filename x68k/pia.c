@@ -1,5 +1,5 @@
 /*
- *  PIA.C - uPD8255
+ *  PIA.C - uPD8255 (only the bare minimum)
  */
 
 #include "common.h"
