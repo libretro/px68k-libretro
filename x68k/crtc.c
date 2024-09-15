@@ -68,10 +68,25 @@ int CRTC_StateAction(StateMem *sm, int load, int data_only)
       SFARRAY(VCReg1, 2),
       SFARRAY(VCReg2, 2),
 
+      SFVAR(VID_MODE),
+
 		SFEND
 	};
 
-	int ret = PX68KSS_StateAction(sm, load, data_only, StateRegs, "X68K_CRTC_VCTRL", false);
+   int vidmode, ret; 
+   
+   if (load)
+      vidmode = VID_MODE;
+
+	ret = PX68KSS_StateAction(sm, load, data_only, StateRegs, "X68K_CRTC_VCTRL", false);
+
+   if (load)
+   {
+      if (vidmode != VID_MODE)
+      {
+         CHANGEAV_TIMING = 1;
+      }
+   }
 
 	return ret;
 }
