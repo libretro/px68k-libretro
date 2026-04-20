@@ -67,7 +67,7 @@ include:
   #################################### MISC ##################################
   # webOS 32-bit (LGTV)
   - project: 'libretro-infrastructure/ci-templates'
-    file: '/webos-make.yml
+    file: '/webos-make.yml'
 
 # Stages for building
 stages:
