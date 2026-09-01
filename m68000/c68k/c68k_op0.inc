@@ -8076,7 +8076,9 @@ case 0x0108:
 	PRE_IO;
 	READ_BYTE_F(adr + 0, res)
 	READ_BYTE_F(adr + 2, src)
-	*(uint16_t*)(&CPU->D[(Opcode >> 9) & 7]) = (res << 8) | (uint16_t)src;
+	/* MOVEP.W writes only the low word of Dx; use WORD_OFF so big-endian
+	 * hits the low half (offset 1) instead of the high half (offset 0). */
+	*(WORD_OFF + (uint16_t*)(&CPU->D[(Opcode >> 9) & 7])) = (res << 8) | (uint16_t)src;
 	POST_IO;
 }
 RET(24)

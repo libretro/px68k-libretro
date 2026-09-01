@@ -75,15 +75,23 @@ void SRAM_Init(void)
 
 void SRAM_Cleanup(void)
 {
-   int i;
    void *fp;
 
-   for (i=0; i<0x4000; i+=2)
+   /* sram.dat is stored in native 68000 word order (portable LE<->BE).  On
+    * little-endian the runtime SRAM[] is byte-swapped, so swap it back before
+    * writing; on big-endian SRAM[] is already native (see SRAM_Init), so the
+    * swap must be skipped or the persisted file ends up in the wrong order. */
+#ifndef MSB_FIRST
    {
-      uint8_t tmp = SRAM[i];
-      SRAM[i]     = SRAM[i+1];
-      SRAM[i+1]   = tmp;
+      int i;
+      for (i=0; i<0x4000; i+=2)
+      {
+         uint8_t tmp = SRAM[i];
+         SRAM[i]     = SRAM[i+1];
+         SRAM[i+1]   = tmp;
+      }
    }
+#endif
 
    if (!(fp = file_open_c("sram.dat")))
       if (!(fp = file_create_c("sram.dat")))
@@ -96,7 +104,15 @@ void SRAM_Cleanup(void)
 uint8_t FASTCALL SRAM_Read(uint32_t adr)
 {
 	adr &= 0xffff;
+	/* SRAM is stored natively on big-endian (SRAM_Init/SRAM_Write skip the
+	 * byte-swap there), so the read must NOT swap either.  The unconditional
+	 * adr^=1 here read the adjacent byte on big-endian -> Human68k saw a
+	 * word-swapped RAM size (2MB 0x00200000 -> 0x20000000 = 536MB) and other
+	 * corrupted SRAM config, breaking HDD-installed games that allocate from
+	 * the reported free memory. */
+#ifndef MSB_FIRST
 	adr ^= 1;
+#endif
 	if (adr<0x4000)
 		return SRAM[adr];
 	return 0xff;

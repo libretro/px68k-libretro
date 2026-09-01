@@ -3972,7 +3972,7 @@ case 0x4890:
 	{
 		if (res & 1)
 		{
-			WRITE_WORD_F(adr, *(uint16_t*)src)
+			WRITE_WORD_F(adr, *(WORD_OFF + (uint16_t*)src))
 			adr += 2;
 		}
 		src += 4;
@@ -4006,7 +4006,7 @@ case 0x48A0:
 		if (res & 1)
 		{
 			adr -= 2;
-			WRITE_WORD_F(adr, *(uint16_t*)src)
+			WRITE_WORD_F(adr, *(WORD_OFF + (uint16_t*)src))
 		}
 		src -= 4;
 	} while (res >>= 1);
@@ -4041,7 +4041,7 @@ case 0x48A8:
 	{
 		if (res & 1)
 		{
-			WRITE_WORD_F(adr, *(uint16_t*)src)
+			WRITE_WORD_F(adr, *(WORD_OFF + (uint16_t*)src))
 			adr += 2;
 		}
 		src += 4;
@@ -4076,7 +4076,7 @@ case 0x48B0:
 	{
 		if (res & 1)
 		{
-			WRITE_WORD_F(adr, *(uint16_t*)src)
+			WRITE_WORD_F(adr, *(WORD_OFF + (uint16_t*)src))
 			adr += 2;
 		}
 		src += 4;
@@ -4104,7 +4104,7 @@ case 0x48B8:
 	{
 		if (res & 1)
 		{
-			WRITE_WORD_F(adr, *(uint16_t*)src)
+			WRITE_WORD_F(adr, *(WORD_OFF + (uint16_t*)src))
 			adr += 2;
 		}
 		src += 4;
@@ -4132,7 +4132,7 @@ case 0x48B9:
 	{
 		if (res & 1)
 		{
-			WRITE_WORD_F(adr, *(uint16_t*)src)
+			WRITE_WORD_F(adr, *(WORD_OFF + (uint16_t*)src))
 			adr += 2;
 		}
 		src += 4;
@@ -4160,7 +4160,7 @@ case 0x48A7:
 		if (res & 1)
 		{
 			adr -= 2;
-			WRITE_WORD_F(adr, *(uint16_t*)src)
+			WRITE_WORD_F(adr, *(WORD_OFF + (uint16_t*)src))
 		}
 		src -= 4;
 	} while (res >>= 1);
