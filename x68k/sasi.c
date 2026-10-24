@@ -10,6 +10,7 @@
 #include "ioc.h"
 #include "sasi.h"
 #include "irqh.h"
+#include "../libretro/zipdisk.h"
 
 static uint8_t SASI_Buf[256];
 static uint8_t SASI_Phase        = 0;
@@ -88,6 +89,8 @@ static int16_t SASI_Seek(void)
 	void *fp;
 
 	memset(SASI_Buf, 0, 256);
+	if (px68k_is_zip_virtual_path(Config.HDImage[SASI_Device*2+SASI_Unit]))
+		return px68k_zip_hdd_sector_read(Config.HDImage[SASI_Device*2+SASI_Unit], SASI_Sector, SASI_Buf) ? 1 : -1;
 	if (!(fp = file_open(Config.HDImage[SASI_Device*2+SASI_Unit])))
 	{
 		memset(SASI_Buf, 0, 256);
@@ -108,7 +111,10 @@ error:
 
 static int16_t SASI_Flush(void)
 {
-	void *fp = file_open(Config.HDImage[SASI_Device*2+SASI_Unit]);
+	void *fp;
+	if (px68k_is_zip_virtual_path(Config.HDImage[SASI_Device*2+SASI_Unit]))
+		return px68k_zip_hdd_sector_write(Config.HDImage[SASI_Device*2+SASI_Unit], SASI_Sector, SASI_Buf) ? 1 : -1;
+	fp = file_open(Config.HDImage[SASI_Device*2+SASI_Unit]);
 	if (!fp) return -1;
 	if (file_seek(fp, SASI_Sector<<8, FSEEK_SET)!=(SASI_Sector<<8))
 		goto error;
