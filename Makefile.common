@@ -69,6 +69,7 @@ SOURCES_C 		+= \
 				$(CORE_DIR)/libretro/dosio.c \
 				$(CORE_DIR)/libretro/fake.c \
 				$(CORE_DIR)/libretro/peace.c \
+				$(CORE_DIR)/libretro/zipdisk.c \
 				$(CORE_DIR)/libretro/state.c \
 				$(CORE_DIR)/libretro.c
 

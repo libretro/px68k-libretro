@@ -17,6 +17,7 @@
 
 #include "libretro/winx68k.h"
 #include "libretro/dosio.h"
+#include "libretro/zipdisk.h"
 #include "libretro/dswin.h"
 #include "libretro/windraw.h"
 #include "libretro/joystick.h"
@@ -419,6 +420,24 @@ static bool get_eject_state(void)
    return !disk.inserted[disk.cur_drive];
 }
 
+/* Controls whether selecting a floppy inside an archive also inserts the
+ * following archive member into the other drive.
+ * 0 = Always, 1 = Boot Only, 2 = At Disk Change. */
+static int get_archive_floppy_mode(void)
+{
+   struct retro_variable var = { "px68k_archive_floppies", NULL };
+
+   if (environ_cb && environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (!strcmp(var.value, "Boot Only"))
+         return 1;
+      if (!strcmp(var.value, "At Disk Change"))
+         return 2;
+   }
+
+   return 0; /* Backwards-compatible default: Always */
+}
+
 static unsigned get_image_index(void)
 {
    return disk.index;
@@ -433,6 +452,72 @@ static bool set_image_index(unsigned index)
 static unsigned get_num_images(void)
 {
    return disk.total_images;
+}
+
+/* Keep the internal PX68K file menu and RetroArch Disk Control backed by the
+ * same ZIP member table. Disk Control's index represents a member in the
+ * archive, while the emulator has two independently mounted floppy drives. */
+void px68k_disk_menu_sync_zip(int slot, const char *member, int drive)
+{
+   char members[PX68K_ZIP_MAX_ENTRIES][PX68K_ZIP_NAME_MAX];
+   unsigned old_total = disk.total_images;
+   int count, selected = -1, i;
+
+   if (drive < 0 || drive > 1 || !member || !*member)
+      return;
+
+   count = px68k_zip_list_slot(slot, &members[0][0], sizeof(members[0]),
+         PX68K_ZIP_MAX_ENTRIES);
+   if (count <= 0)
+      return;
+
+   for (i = 0; i < count; i++)
+   {
+      if (!px68k_zip_make_virtual_path(slot, members[i], disk.path[i],
+               sizeof(disk.path[i])))
+      {
+         disk.path[i][0] = '\0';
+         disk.label[i][0] = '\0';
+         continue;
+      }
+      snprintf(disk.label[i], sizeof(disk.label[i]), "%s", members[i]);
+      if (!strcmp(members[i], member))
+         selected = i;
+   }
+   for (; i < (int)old_total && i < MAX_DISKS; i++)
+   {
+      disk.path[i][0] = '\0';
+      disk.label[i][0] = '\0';
+   }
+   disk.total_images = (unsigned)count;
+   if (selected < 0)
+      return;
+
+   disk.index = (unsigned)selected;
+   disk.cur_drive = (disk_drive)drive;
+   FDD_SetFD(drive, disk.path[selected], 0);
+   snprintf(Config.FDDImage[drive], sizeof(Config.FDDImage[drive]), "%s",
+         disk.path[selected]);
+   disk.inserted[drive] = true;
+
+   /* Boot Only pairs disks only during initial ZIP launch. For manual menu
+    * insertions, only Always and At Disk Change pair the following member. */
+   if (drive == FDD0 && get_archive_floppy_mode() != 1)
+   {
+      if (selected + 1 < count)
+      {
+         FDD_SetFD(FDD1, disk.path[selected + 1], 0);
+         snprintf(Config.FDDImage[FDD1], sizeof(Config.FDDImage[FDD1]), "%s",
+               disk.path[selected + 1]);
+         disk.inserted[FDD1] = true;
+      }
+      else
+      {
+         FDD_EjectFD(FDD1);
+         Config.FDDImage[FDD1][0] = '\0';
+         disk.inserted[FDD1] = false;
+      }
+   }
 }
 
 static bool add_image_index(void)
@@ -1637,8 +1722,8 @@ void retro_get_system_info(struct retro_system_info *info)
    info->library_name     = "PX68K";
    info->library_version  = PX68K_VERSION GIT_VERSION;
    info->need_fullpath    = true;
-   info->valid_extensions = "dim|img|d88|88d|hdm|dup|2hd|xdf|hdf|cmd|m3u";
-   info->block_extract    = false;
+   info->valid_extensions = "dim|img|d88|88d|hdm|dup|2hd|xdf|hdf|cmd|m3u|zip";
+   info->block_extract    = true; /* Keep ZIP archives intact so the core can enumerate/read members. */
 }
 
 
@@ -1803,8 +1888,52 @@ bool retro_load_game(const struct retro_game_info *info)
    {
       const char *full_path = info->path;
       no_content            = 0;
-      strcpy(RPATH, full_path);
       extract_directory(base_dir, info->path, sizeof(base_dir));
+      if (handle_extension((char*)full_path, "zip") || handle_extension((char*)full_path, "ZIP"))
+      {
+         char members[PX68K_ZIP_MAX_ENTRIES][PX68K_ZIP_NAME_MAX];
+         int count = px68k_zip_list(full_path, members);
+         int i;
+         if (count <= 0)
+         {
+            if (log_cb) log_cb(RETRO_LOG_ERROR, "[PX68K] ZIP contains no supported floppy images or could not be read.\n");
+            return false;
+         }
+         char cmdline[MAX_PATH * 2 + 32];
+
+         /* The ZIP is a multi-disk set, not a single floppy image. Build the
+          * same px68k command line that an M3U launch uses so pre_main() puts
+          * the first two members into FDD0 and FDD1 before the machine boots.
+          * Merely setting RPATH mounts only member 0 and leaves FDD1 empty. */
+         if (count > MAX_DISKS)
+            count = MAX_DISKS;
+         int archive_mode = get_archive_floppy_mode();
+         bool insert_second_at_boot = (archive_mode != 2);
+
+         disk.total_images = (unsigned)count;
+         disk.index = 0;
+         disk.inserted[0] = true;
+         disk.inserted[1] = (count > 1 && insert_second_at_boot);
+         for (i = 0; i < count; i++)
+         {
+            if (!px68k_zip_make_virtual_path(px68k_zip_current_slot(), members[i], disk.path[i], sizeof(disk.path[i])))
+            {
+               disk.path[i][0] = '\0';
+               continue;
+            }
+            snprintf(disk.label[i], sizeof(disk.label[i]), "%s", members[i]);
+         }
+         strncpy(RPATH, disk.path[0], sizeof(RPATH) - 1);
+         RPATH[sizeof(RPATH) - 1] = '\0';
+
+         if (count > 1 && insert_second_at_boot)
+            snprintf(cmdline, sizeof(cmdline), "px68k \"%s\" \"%s\"", disk.path[0], disk.path[1]);
+         else
+            snprintf(cmdline, sizeof(cmdline), "px68k \"%s\"", disk.path[0]);
+         parse_cmdline(cmdline);
+      }
+      else
+         snprintf(RPATH, sizeof(RPATH), "%s", full_path);
 
       if (!retro_load_game_internal(RPATH))
          return false;

@@ -288,6 +288,21 @@ struct retro_core_option_v2_definition option_defs_us[] = {
    },
 #endif
    {
+      "px68k_archive_floppies",
+      "Auto Insert Floppies from Archive",
+      NULL,
+      "Controls automatic insertion of the next floppy image when loading a ZIP archive.",
+      NULL,
+      "media",
+      {
+         { "Always",         NULL },
+         { "Boot Only",      NULL },
+         { "At Disk Change", NULL },
+         { NULL,              NULL },
+      },
+      "Always"
+   },
+   {
       "px68k_disk_drive",
       "Swap Disks on Drive",
       NULL,

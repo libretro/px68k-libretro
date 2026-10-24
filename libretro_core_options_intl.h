@@ -315,6 +315,21 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
    },
 #endif
    {
+      "px68k_archive_floppies",
+      "Insertion automatique des disquettes d'archive",
+      NULL,
+      "Contrôle l'insertion automatique de la disquette suivante lors du chargement d'une archive ZIP.",
+      NULL,
+      "media",
+      {
+         { "Always",         NULL },
+         { "Boot Only",      NULL },
+         { "At Disk Change", NULL },
+         { NULL,              NULL },
+      },
+      "Always"
+   },
+   {
       "px68k_disk_drive",
       "Échange de disques sur le lecteur",
       NULL,
