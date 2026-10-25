@@ -316,9 +316,9 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
 #endif
    {
       "px68k_archive_floppies",
-      "Insertion automatique des disquettes d'archive",
+      "Insertion automatique des disquettes archivées",
       NULL,
-      "Contrôle l'insertion automatique d'une autre disquette d'une archive ZIP au démarrage ou lors d'un changement de disque.",
+      "Contrôle l'insertion automatique d'une autre disquette d'une même archive ZIP au démarrage ou lors d'un changement de disquette.",
       NULL,
       "media",
       {
@@ -328,7 +328,7 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
          { "At Disk Change",  NULL },
          { NULL,               NULL },
       },
-      "Always"
+      "Off"
    },
    {
       "px68k_disk_drive",
