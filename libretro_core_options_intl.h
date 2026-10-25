@@ -322,10 +322,10 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
       NULL,
       "media",
       {
-         { "Off",             NULL },
-         { "Always",          NULL },
-         { "Boot Only",       NULL },
-         { "At Disk Change",  NULL },
+         { "Off",             "Désactivé" },
+         { "Always",          "Toujours" },
+         { "Boot Only",       "Démarrage uniquement" },
+         { "At Disk Change",  "Au changement de disquette" },
          { NULL,               NULL },
       },
       "Off"
