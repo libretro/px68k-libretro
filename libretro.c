@@ -432,11 +432,11 @@ static int get_archive_floppy_mode(void)
          return 1;
       if (!strcmp(var.value, "At Disk Change"))
          return 2;
-      if (!strcmp(var.value, "Off"))
-         return 3;
+      if (!strcmp(var.value, "Always"))
+         return 0;
    }
 
-   return 0; /* Backwards-compatible default: Always */
+   return 3; /* default: Off */
 }
 
 static unsigned get_image_index(void)
