@@ -3,6 +3,7 @@
 #include "fdc.h"
 #include "fdd.h"
 #include "disk_d88.h"
+#include "../libretro/zipdisk.h"
 
 /* ?????????? (16 Bytes) */
 typedef struct {
@@ -86,6 +87,75 @@ static void d88_sector_swap(D88_SECTOR *s)
 #endif
 
 
+static int D88_SetFD_Zip(int drv, const char *filename)
+{
+	uint8_t *data = NULL;
+	size_t size = 0;
+	size_t track_start, pos;
+	int trk, sct, sector_count;
+	D88_SECTOR d88s;
+
+	if (!px68k_zip_read_virtual(filename, &data, &size) || size < sizeof(D88_HEADER))
+		goto zip_error;
+
+	memcpy(&D88Head[drv], data, sizeof(D88_HEADER));
+	d88_header_swap(&D88Head[drv]);
+	if (D88Head[drv].fd_size < sizeof(D88_HEADER) || D88Head[drv].fd_size > size)
+		D88Head[drv].fd_size = (uint32_t)size;
+
+	for (trk = 0; trk < 164; trk++) {
+		track_start = D88Head[drv].trackp[trk];
+		if (track_start < sizeof(D88_HEADER) || track_start >= size)
+			continue;
+		pos = track_start;
+		if (pos + sizeof(D88_SECTOR) > size)
+			goto zip_error;
+		memcpy(&d88s, data + pos, sizeof(D88_SECTOR));
+		d88_sector_swap(&d88s);
+		sector_count = d88s.sectors;
+		if (!sector_count || sector_count > 256)
+			goto zip_error;
+		for (sct = 0; sct < sector_count; sct++) {
+			D88_SECTINFO *si;
+			if (pos + sizeof(D88_SECTOR) > size)
+				goto zip_error;
+			memcpy(&d88s, data + pos, sizeof(D88_SECTOR));
+			d88_sector_swap(&d88s);
+			if ((size_t)d88s.size > size - pos - sizeof(D88_SECTOR))
+				goto zip_error;
+			si = (D88_SECTINFO*)malloc(sizeof(D88_SECTINFO) + d88s.size);
+			if (!si)
+				goto zip_error;
+			memcpy(&si->sect, &d88s, sizeof(D88_SECTOR));
+			memcpy((uint8_t*)si + sizeof(D88_SECTINFO), data + pos + sizeof(D88_SECTOR), d88s.size);
+			si->next = NULL;
+			if (!D88Trks[drv][trk]) D88Trks[drv][trk] = si;
+			else {
+				D88_SECTINFO *tail = D88Trks[drv][trk];
+				while (tail->next) tail = tail->next;
+				tail->next = si;
+			}
+			pos += sizeof(D88_SECTOR) + d88s.size;
+		}
+		D88Cur[drv] = D88Top[drv] = D88Trks[drv][trk];
+	}
+	free(data);
+	FDD_SetReadOnly(drv);
+	return 1;
+
+zip_error:
+	if (data) free(data);
+	for (trk = 0; trk < 164; trk++) {
+		D88_SECTINFO *si = D88Trks[drv][trk];
+		while (si) { D88_SECTINFO *next = si->next; free(si); si = next; }
+		D88Trks[drv][trk] = NULL;
+	}
+	memset(&D88Head[drv], 0, sizeof(D88Head[drv]));
+	memset(D88File[drv], 0, MAX_PATH);
+	FDD_SetReadOnly(drv);
+	return 0;
+}
+
 int D88_SetFD(int drv, char* filename)
 {
 	int trk, sct;
@@ -94,6 +164,9 @@ int D88_SetFD(int drv, char* filename)
 
 	strncpy(D88File[drv], filename, MAX_PATH);
 	D88File[drv][MAX_PATH-1] = 0;
+
+	if (px68k_is_zip_virtual_path(filename))
+		return D88_SetFD_Zip(drv, filename);
 
 	if (!(fp = file_open(D88File[drv])))
    {

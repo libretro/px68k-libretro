@@ -422,7 +422,7 @@ ifeq ($(USE_LIBRETRO_VFS),1)
 	FLAGS += -DUSE_LIBRETRO_VFS
 endif
 
-LDFLAGS +=  $(fpic) $(SHARED) $(EXTRA_LDF)
+LDFLAGS +=  $(fpic) $(SHARED) $(EXTRA_LDF) -lz
 FLAGS   += $(INCFLAGS)
 
 WARNINGS :=
