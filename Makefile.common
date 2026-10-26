@@ -85,7 +85,6 @@ ifeq ($(USE_LIBRETRO_VFS),1)
 SOURCES_C 		+= \
 				$(LIBRETRO_COMM_DIR)/compat/compat_posix_string.c \
 				$(LIBRETRO_COMM_DIR)/compat/compat_strcasestr.c \
-				$(LIBRETRO_COMM_DIR)/compat/compat_strl.c \
 				$(LIBRETRO_COMM_DIR)/compat/compat_snprintf.c \
 				$(LIBRETRO_COMM_DIR)/compat/fopen_utf8.c \
 				$(LIBRETRO_COMM_DIR)/encodings/encoding_utf.c \
@@ -95,10 +94,18 @@ SOURCES_C 		+= \
 				$(LIBRETRO_COMM_DIR)/streams/file_stream.c \
 				$(LIBRETRO_COMM_DIR)/streams/file_stream_transforms.c \
 				$(LIBRETRO_COMM_DIR)/string/stdstring.c \
-				$(LIBRETRO_COMM_DIR)/time/rtime.c \
 				$(LIBRETRO_COMM_DIR)/vfs/vfs_implementation.c
 ifdef _MSC_VER
 SOURCES_C 		+= \
 				$(LIBRETRO_COMM_DIR)/compat/compat_snprintf.c
 endif
 endif
+
+# ZIP content: libretro-common's zlib-free zip reader and its link closure.
+SOURCES_C 		+= \
+				$(LIBRETRO_COMM_DIR)/compat/compat_strl.c \
+				$(LIBRETRO_COMM_DIR)/encodings/encoding_crc32.c \
+				$(LIBRETRO_COMM_DIR)/encodings/encoding_deflate.c \
+				$(LIBRETRO_COMM_DIR)/features/features_cpu.c \
+				$(LIBRETRO_COMM_DIR)/formats/zip/rzip_archive.c \
+				$(LIBRETRO_COMM_DIR)/time/rtime.c
