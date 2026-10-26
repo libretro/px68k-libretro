@@ -34,6 +34,7 @@
 #include "keyboard.h"
 #include "dosio.h"
 #include "prop.h"
+#include "zipdisk.h"
 
 static uint8_t initialized = 0;
 
@@ -124,13 +125,18 @@ void SaveConfig(void)
 		for (i = 0; i < 2; i++)
 		{
 			sprintf(buf, "FDD%d", i);
-			WritePrivateProfileString("WinX68k", buf, Config.FDDImage[i], winx68k_ini);
+			/* A ZIP member's slot means nothing to a later session. */
+			WritePrivateProfileString("WinX68k", buf,
+				px68k_is_zip_virtual_path(Config.FDDImage[i]) ? "" : Config.FDDImage[i],
+				winx68k_ini);
 		}
 
 	if (Config.save_hdd_path)
 		for (i=0; i<16; i++)
 		{
 			sprintf(buf, "HDD%d", i);
-			WritePrivateProfileString("WinX68k", buf, Config.HDImage[i], winx68k_ini);
+			WritePrivateProfileString("WinX68k", buf,
+				px68k_is_zip_virtual_path(Config.HDImage[i]) ? "" : Config.HDImage[i],
+				winx68k_ini);
 		}
 }

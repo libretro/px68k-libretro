@@ -14,6 +14,7 @@
 #include "disk_d88.h"
 #include "disk_xdf.h"
 #include "disk_dim.h"
+#include "../libretro/zipdisk.h"
 
 typedef struct {
 	int SetDelay[4];
@@ -102,6 +103,7 @@ void FDD_SetFD(int drive, char* filename, int readonly)
 		if ( SetFD[type](drive, filename) ) {
 			fdd.Types[drive]  = type;
 			fdd.ROnly[drive] |= readonly;
+			if (px68k_is_zip_virtual_path(filename)) fdd.ROnly[drive] = 1;
 			fdd.SetDelay[drive] = 3;
 			fdd.EMask[drive] = 0;
 			fdd.Blink[drive] = 0;

@@ -42,4 +42,8 @@ extern char menu_items[][15][30];
 
 int WinUI_get_drv_num(int key);
 
+/* Defined in libretro.c: mounts a ZIP member picked in the menu and
+ * rebuilds the Disk Control table from the same archive. */
+void px68k_disk_menu_sync_zip(int slot, const char *member, int drive);
+
 #endif /* _WINX68K_WINUI_H */

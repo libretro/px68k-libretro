@@ -17,6 +17,7 @@
 
 #include "libretro/winx68k.h"
 #include "libretro/dosio.h"
+#include "libretro/zipdisk.h"
 #include "libretro/dswin.h"
 #include "libretro/windraw.h"
 #include "libretro/joystick.h"
@@ -419,6 +420,25 @@ static bool get_eject_state(void)
    return !disk.inserted[disk.cur_drive];
 }
 
+/* Controls automatic pairing of floppy images from a ZIP archive.
+ * 0 = Always, 1 = Boot Only, 2 = At Disk Change, 3 = Off. */
+static int get_archive_floppy_mode(void)
+{
+   struct retro_variable var = { "px68k_archive_floppies", NULL };
+
+   if (environ_cb && environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (!strcmp(var.value, "Boot Only"))
+         return 1;
+      if (!strcmp(var.value, "At Disk Change"))
+         return 2;
+      if (!strcmp(var.value, "Always"))
+         return 0;
+   }
+
+   return 3; /* default: Off */
+}
+
 static unsigned get_image_index(void)
 {
    return disk.index;
@@ -433,6 +453,96 @@ static bool set_image_index(unsigned index)
 static unsigned get_num_images(void)
 {
    return disk.total_images;
+}
+
+/* Fills the Disk Control table with up to MAX_DISKS floppy members of a
+ * ZIP, in sorted order starting at member @first, and keeps the archive's
+ * slot from being recycled while the table refers to it. */
+static int zip_fill_disk_table(int slot, int first)
+{
+   unsigned old_total = disk.total_images;
+   int total          = px68k_zip_count(slot, 0);
+   int n              = 0;
+   int i;
+
+   for (i = first; i < total && n < MAX_DISKS; i++)
+   {
+      const char *name = px68k_zip_name(slot, 0, i);
+      if (!name || !px68k_zip_make_virtual_path(slot, name, disk.path[n],
+               sizeof(disk.path[n])))
+         break;
+      snprintf(disk.label[n], sizeof(disk.label[n]), "%s", name);
+      n++;
+   }
+   for (i = n; i < (int)old_total && i < MAX_DISKS; i++)
+   {
+      disk.path[i][0]  = '\0';
+      disk.label[i][0] = '\0';
+   }
+   disk.total_images = (unsigned)n;
+   px68k_zip_pin(slot);
+   return n;
+}
+
+/* Keep the internal PX68K file menu and RetroArch Disk Control backed by the
+ * same ZIP member list. The table holds MAX_DISKS members, so for a larger
+ * set it is the window holding the chosen disk and the one after it. */
+void px68k_disk_menu_sync_zip(int slot, const char *member, int drive)
+{
+   int total, selected = -1, first = 0, count, i;
+
+   if (drive < 0 || drive > 1 || !member || !*member)
+      return;
+
+   total = px68k_zip_count(slot, 0);
+   for (i = 0; i < total; i++)
+   {
+      const char *name = px68k_zip_name(slot, 0, i);
+      if (name && !strcmp(name, member))
+      {
+         selected = i;
+         break;
+      }
+   }
+   if (selected < 0)
+      return;
+
+   if (selected > MAX_DISKS - 2)
+      first = selected - (MAX_DISKS - 2);
+   if (total > MAX_DISKS && first > total - MAX_DISKS)
+      first = total - MAX_DISKS;
+   if ((count = zip_fill_disk_table(slot, first)) <= 0)
+      return;
+   selected -= first;
+
+   disk.index     = (unsigned)selected;
+   disk.cur_drive = (disk_drive)drive;
+   FDD_SetFD(drive, disk.path[selected], 0);
+   snprintf(Config.FDDImage[drive], sizeof(Config.FDDImage[drive]), "%s",
+         disk.path[selected]);
+   disk.inserted[drive] = true;
+
+   /* Boot Only pairs disks only during initial ZIP launch. At Disk Change
+    * pairs on manual insertion but not at boot. Off never pairs a second disk. */
+   {
+      int archive_mode = get_archive_floppy_mode();
+      if (drive == FDD0 && archive_mode != 1 && archive_mode != 3)
+      {
+         if (selected + 1 < count)
+         {
+            FDD_SetFD(FDD1, disk.path[selected + 1], 0);
+            snprintf(Config.FDDImage[FDD1], sizeof(Config.FDDImage[FDD1]), "%s",
+                  disk.path[selected + 1]);
+            disk.inserted[FDD1] = true;
+         }
+         else
+         {
+            FDD_EjectFD(FDD1);
+            Config.FDDImage[FDD1][0] = '\0';
+            disk.inserted[FDD1] = false;
+         }
+      }
+   }
 }
 
 static bool add_image_index(void)
@@ -1637,7 +1747,7 @@ void retro_get_system_info(struct retro_system_info *info)
    info->library_name     = "PX68K";
    info->library_version  = PX68K_VERSION GIT_VERSION;
    info->need_fullpath    = true;
-   info->valid_extensions = "dim|img|d88|88d|hdm|dup|2hd|xdf|hdf|cmd|m3u";
+   info->valid_extensions = "dim|img|d88|88d|hdm|dup|2hd|xdf|hdf|cmd|m3u|zip";
    info->block_extract    = false;
 }
 
@@ -1794,8 +1904,67 @@ bool retro_unserialize(const void *data, size_t size)
 void retro_cheat_reset(void) { }
 void retro_cheat_set(unsigned index, bool enabled, const char *code) { }
 
+/* Mounts a ZIP's floppies (or, without any, its first HDF) through the
+ * same px68k command line an M3U or HDF launch builds. */
+static int load_zip_content(const char *path)
+{
+   char cmdline[MAX_PATH * 2 + 32];
+   const char *name;
+   int slot = px68k_zip_register_archive(path);
+   int count;
+
+   if (slot < 0)
+      return 0;
+
+   if ((count = zip_fill_disk_table(slot, 0)) > 0)
+   {
+      int archive_mode = get_archive_floppy_mode();
+      int pair         = count > 1 && archive_mode != 2 && archive_mode != 3;
+
+      disk.index       = 0;
+      disk.inserted[0] = true;
+      disk.inserted[1] = pair ? true : false;
+      snprintf(RPATH, sizeof(RPATH), "%s", disk.path[0]);
+      if (pair)
+         snprintf(cmdline, sizeof(cmdline), "px68k \"%s\" \"%s\"",
+               disk.path[0], disk.path[1]);
+      else
+         snprintf(cmdline, sizeof(cmdline), "px68k \"%s\"", disk.path[0]);
+      parse_cmdline(cmdline);
+      return 1;
+   }
+
+   if (!(name = px68k_zip_name(slot, 1, 0))
+         || !px68k_zip_make_virtual_path(slot, name, RPATH, sizeof(RPATH))
+         || !px68k_zip_preload(RPATH))
+   {
+      RPATH[0] = '\0';
+      return 0;
+   }
+   /* The HDF lives in memory: SASI writes are kept for the session only. */
+   if (log_cb)
+      log_cb(RETRO_LOG_WARN, "[PX68K] HDD image %s is inside a ZIP: changes to it are not saved.\n", name);
+   if (environ_cb)
+   {
+      struct retro_message msg;
+      msg.msg    = "HDD image is inside a ZIP: changes are not saved";
+      msg.frames = 360;
+      environ_cb(RETRO_ENVIRONMENT_SET_MESSAGE, &msg);
+   }
+   snprintf(cmdline, sizeof(cmdline), "px68k -h \"%s\"", RPATH);
+   parse_cmdline(cmdline);
+   return 1;
+}
+
+static int is_zip_path(const char *path)
+{
+   size_t len = strlen(path);
+   return len >= 4 && !strcasecmp(path + len - 4, ".zip");
+}
+
 bool retro_load_game(const struct retro_game_info *info)
 {
+   px68k_zip_reset();
    no_content = 1;
    RPATH[0] = '\0';
 
@@ -1803,8 +1972,18 @@ bool retro_load_game(const struct retro_game_info *info)
    {
       const char *full_path = info->path;
       no_content            = 0;
-      strcpy(RPATH, full_path);
       extract_directory(base_dir, info->path, sizeof(base_dir));
+      if (is_zip_path(full_path))
+      {
+         if (!load_zip_content(full_path))
+         {
+            if (log_cb)
+               log_cb(RETRO_LOG_ERROR, "[PX68K] ZIP contains no supported floppy or HDF images, or could not be read.\n");
+            return false;
+         }
+      }
+      else
+         snprintf(RPATH, sizeof(RPATH), "%s", full_path);
 
       if (!retro_load_game_internal(RPATH))
          return false;
@@ -1845,6 +2024,7 @@ void retro_unload_game(void)
    FDD_Init();
    for (_d = 0; _d < 2;  _d++) Config.FDDImage[_d][0] = '\0';
    for (_d = 0; _d < 16; _d++) Config.HDImage[_d][0]  = '\0';
+   px68k_zip_reset();
 
    /* Re-arm the one-shot machine boot so the NEXT content load runs
     * pre_main() again (m68000_init + WinX68k_LoadROMs + WinX68k_Reset)
@@ -1997,6 +2177,7 @@ void retro_deinit(void)
    WinDraw_Cleanup();
 
    SaveConfig();
+   px68k_zip_reset();
    libretro_supports_input_bitmasks    = 0;
    libretro_supports_midi_output       = 0;
    libretro_supports_option_categories = 0;
