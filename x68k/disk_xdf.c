@@ -3,7 +3,6 @@
 #include "fdc.h"
 #include "fdd.h"
 #include "disk_xdf.h"
-#include "../libretro/zipdisk.h"
 
 static char           XDFFile[4][MAX_PATH];
 static int            XDFCur[4] = {0, 0, 0, 0};
@@ -43,18 +42,6 @@ int XDF_SetFD(int drv, char* filename)
 	if ( !XDFImg[drv] )
       return 0;
 	memset(XDFImg[drv], 0xe5, 1261568);
-	if (px68k_is_zip_virtual_path(filename)) {
-		uint8_t *zipdata = NULL;
-		size_t zipsize = 0;
-		if (!px68k_zip_read_virtual(filename, &zipdata, &zipsize)) {
-			free(XDFImg[drv]); XDFImg[drv] = 0; memset(XDFFile[drv], 0, MAX_PATH); return 0;
-		}
-		if (zipsize > 1261568) zipsize = 1261568;
-		memcpy(XDFImg[drv], zipdata, zipsize);
-		free(zipdata);
-		FDD_SetReadOnly(drv);
-		return 1;
-	}
 	fp = file_open(XDFFile[drv]);
 	if ( !fp )
    {

@@ -44,6 +44,7 @@
 
 #include "common.h"
 #include "dosio.h"
+#include "zipdisk.h"
 
 #ifdef _WIN32
 __declspec(dllimport) unsigned long __stdcall GetTickCount(void);
@@ -240,6 +241,9 @@ size_t file_seek(void* h, long pos, int16_t whence)
 	int seek_position = -1;
 	int64_t result = 0;
 
+	if (px68k_zip_owns(h))
+		return px68k_zip_seek(h, pos, whence);
+
 	switch (whence)
 	{
 	case FSEEK_SET:
@@ -263,6 +267,11 @@ size_t file_seek(void* h, long pos, int16_t whence)
 
 void file_close(void * h)
 {
+	if (px68k_zip_owns(h))
+	{
+		px68k_zip_close(h);
+		return;
+	}
 	filestream_close((RFILE *)h);
 }
 
@@ -270,14 +279,23 @@ void file_close(void * h)
 
 size_t file_seek(void* h, long pos, int16_t whence)
 {
-	struct internal_file *fp = local_lock(h);
-	int fd                   = fp->fd;
+	struct internal_file *fp;
+	int fd;
+	if (px68k_zip_owns(h))
+		return px68k_zip_seek(h, pos, whence);
+	fp = local_lock(h);
+	fd = fp->fd;
 	local_unlock(h);
 	return lseek(fd, pos, whence);
 }
 
 void file_close(void * h)
 {
+        if (px68k_zip_owns(h))
+        {
+                px68k_zip_close(h);
+                return;
+        }
         if (handletype(h) == HTYPE_FILE)
         {
 		struct internal_file *fp = local_lock(h);

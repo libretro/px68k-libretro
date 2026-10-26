@@ -3,7 +3,6 @@
 #include "fdc.h"
 #include "fdd.h"
 #include "disk_dim.h"
-#include "../libretro/zipdisk.h"
 
 /*
 	22-10-24
@@ -78,24 +77,6 @@ int DIM_SetFD(int drv, char* filename)
 	DIMImg[drv] = (uint8_t*)malloc(1024*9*170+sizeof(DIM_HEADER));		/* Maximum size */
 	if ( !DIMImg[drv] ) return 0;
 	memset(DIMImg[drv], 0xe5, 1024*9*170+sizeof(DIM_HEADER));
-	if (px68k_is_zip_virtual_path(filename)) {
-		uint8_t *zipdata = NULL;
-		size_t zipsize = 0, offset = sizeof(DIM_HEADER);
-		if (!px68k_zip_read_virtual(filename, &zipdata, &zipsize) || zipsize < sizeof(DIM_HEADER)) goto dim_set_error_no_file;
-		memcpy(DIMImg[drv], zipdata, sizeof(DIM_HEADER));
-		dh = (DIM_HEADER*)DIMImg[drv];
-		if (dh->type > 9) { free(zipdata); goto dim_set_error_no_file; }
-		len = SctLength[dh->type]; if (!len) { free(zipdata); goto dim_set_error_no_file; }
-		p = DIMImg[drv] + sizeof(DIM_HEADER);
-		for (i=0; i<170; i++) {
-			if (dh->trkflag[i]) {
-				if (offset + len > zipsize) { free(zipdata); goto dim_set_error_no_file; }
-				memcpy(p, zipdata + offset, len); offset += len;
-			}
-			p += len;
-		}
-		free(zipdata); FDD_SetReadOnly(drv); return 1;
-	}
 	if (!(fp = file_open(DIMFile[drv])))
 	{
 		memset(DIMFile[drv], 0, MAX_PATH);
@@ -119,9 +100,6 @@ int DIM_SetFD(int drv, char* filename)
 	}
 	file_close(fp);
 	return 1;
-
-dim_set_error_no_file:
-	free(DIMImg[drv]); DIMImg[drv] = 0; memset(DIMFile[drv], 0, MAX_PATH); FDD_SetReadOnly(drv); return 0;
 
 dim_set_error:
 	file_close(fp);

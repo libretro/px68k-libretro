@@ -93,8 +93,10 @@ struct menu_flist mfl;
 
 /* Navigation history shared by filesystem folders and ZIP archives. A ZIP is
  * treated as a directory node: entering it pushes the containing directory and
- * selected item; '..' pops that exact frame and restores the selection. */
-#define MFL_NAV_DEPTH 256
+ * selected item; '..' pops that exact frame and restores the selection.
+ * ZIPs do not nest, so a drive never holds more than one frame; the
+ * headroom only keeps a stale entry harmless. */
+#define MFL_NAV_DEPTH 4
 struct mfl_nav_frame
 {
    char dir[MAX_PATH];
@@ -102,15 +104,16 @@ struct mfl_nav_frame
    int ptr;
    int y;
 };
-static struct mfl_nav_frame mfl_nav[4][MFL_NAV_DEPTH];
-static int mfl_nav_depth[4];
-static char mfl_nav_restore[4][MAX_PATH];
+static struct mfl_nav_frame mfl_nav[2][MFL_NAV_DEPTH];
+static int mfl_nav_depth[2];
+static char mfl_nav_restore[2][MAX_PATH];
+static const char mfl_slash[2] = { SLASH, '\0' };
 
 static void menu_nav_push(int drv, const char *selected)
 {
    int d;
    struct mfl_nav_frame *f;
-   if (drv < 0 || drv >= 4) return;
+   if (drv < 0 || drv >= 2) return;
    d = mfl_nav_depth[drv];
    if (d >= MFL_NAV_DEPTH) d = MFL_NAV_DEPTH - 1;
    f = &mfl_nav[drv][d];
@@ -126,7 +129,7 @@ static int menu_nav_pop(int drv)
 {
    struct mfl_nav_frame *f;
    int i, idx = -1;
-   if (drv < 0 || drv >= 4 || mfl_nav_depth[drv] <= 0)
+   if (drv < 0 || drv >= 2 || mfl_nav_depth[drv] <= 0)
       return 0;
    f = &mfl_nav[drv][--mfl_nav_depth[drv]];
    snprintf(mfl_nav_restore[drv], sizeof(mfl_nav_restore[drv]), "%s", f->selected);
@@ -239,7 +242,7 @@ static void switch_mfl(int a, int b)
 static void menu_nav_restore_cursor(int drv)
 {
    int i;
-   if (drv < 0 || drv >= 4) return;
+   if (drv < 0 || drv >= 2) return;
    if (mfl_nav_restore[drv][0])
       for (i = 0; i < mfl.num; i++)
          if (!strcmp(mfl.name[i], mfl_nav_restore[drv]))
@@ -266,7 +269,7 @@ static int menu_name_is_zip(const char *name)
 
 static int menu_create_zip_flist(int drv)
 {
-   int slot, count;
+   int slot, count, i;
    if (!px68k_zip_is_browse_path(mfl.dir[drv]))
       return 0;
    slot = px68k_zip_browse_slot(mfl.dir[drv]);
@@ -278,11 +281,14 @@ static int menu_create_zip_flist(int drv)
    }
    strcpy(mfl.name[0], "..");
    mfl.type[0] = 1;
-   count = px68k_zip_list_slot(slot, &mfl.name[1][0], sizeof(mfl.name[0]), MFL_MAX - 2);
+   count = px68k_zip_count(slot, 0);
+   if (count > MFL_MAX - 2)
+      count = MFL_MAX - 2;
+   for (i = 0; i < count; i++)
    {
-      int i;
-      for (i = 1; i <= count; i++)
-         mfl.type[i] = 0;
+      snprintf(mfl.name[i + 1], sizeof(mfl.name[i + 1]), "%s",
+            px68k_zip_name(slot, 0, i));
+      mfl.type[i + 1] = 0;
    }
    mfl.num = count + 1;
    mfl.name[mfl.num][0] = '\0';
@@ -571,7 +577,7 @@ static void menu_seed_legacy_folder_stack(int drv, const char *folder_path)
    char path[MAX_PATH];
    char current[MAX_PATH];
    char saved_dir[MAX_PATH];
-   char *components[MFL_NAV_DEPTH];
+   char *components[MAX_PATH / 2];
    int count = 0, i;
    char *p;
    size_t len;
@@ -602,7 +608,7 @@ static void menu_seed_legacy_folder_stack(int drv, const char *folder_path)
       while (*p && *p != '/' && *p != '\\') p++;
       n = (size_t)(p - start);
       if (n && !(n == 1 && start[0] == '.')) {
-         if (count >= MFL_NAV_DEPTH) { mfl.stackptr = 0; snprintf(mfl.dir[drv], sizeof(mfl.dir[drv]), "%s", saved_dir); return; }
+         if (count >= (int)(sizeof(components) / sizeof(components[0]))) { mfl.stackptr = 0; snprintf(mfl.dir[drv], sizeof(mfl.dir[drv]), "%s", saved_dir); return; }
          components[count++] = start;
          if (*p) *p++ = '\0';
       } else if (*p) p++;
@@ -617,7 +623,7 @@ static void menu_seed_legacy_folder_stack(int drv, const char *folder_path)
       else {
          len = strlen(current);
          if (current[len - 1] != '/' && current[len - 1] != '\\')
-            strncat(current, (char[]){SLASH, '\0'}, sizeof(current) - strlen(current) - 1);
+            strncat(current, mfl_slash, sizeof(current) - strlen(current) - 1);
       }
       snprintf(mfl.dir[drv], sizeof(mfl.dir[drv]), "%s", current);
       menu_create_flist(0);
@@ -640,7 +646,7 @@ static void menu_seed_legacy_folder_stack(int drv, const char *folder_path)
          return;
       }
       strcat(current, components[i]);
-      strncat(current, (char[]){SLASH, '\0'}, sizeof(current) - strlen(current) - 1);
+      strncat(current, mfl_slash, sizeof(current) - strlen(current) - 1);
    }
    snprintf(mfl.dir[drv], sizeof(mfl.dir[drv]), "%s", saved_dir);
 }
@@ -940,9 +946,8 @@ int WinUI_Menu(int first)
                    * open the same archive's member list. */
                   if (drv < 2 && px68k_is_zip_virtual_path(Config.FDDImage[drv]))
                   {
-                     int slot = -1;
-                     if (sscanf(Config.FDDImage[drv], "zip://@%d/", &slot) == 1 &&
-                         slot >= 0)
+                     int slot = px68k_zip_virtual_slot(Config.FDDImage[drv]);
+                     if (slot >= 0)
                      {
                         char archive_path[MAX_PATH];
                         snprintf(mfl.dir[drv], sizeof(mfl.dir[drv]),
@@ -968,7 +973,7 @@ int WinUI_Menu(int first)
                               else
                               {
                                  *slash = '\0';
-                                 strncat(archive_path, (char[]){SLASH, '\0'},
+                                 strncat(archive_path, mfl_slash,
                                        sizeof(archive_path) - strlen(archive_path) - 1);
                               }
                               snprintf(mfl.dir[drv], sizeof(mfl.dir[drv]), "%s", archive_path);
