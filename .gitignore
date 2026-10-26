@@ -13,3 +13,6 @@ px68k-ios/px68k-ios.xcodeproj/xcuserdata
 *.dll
 libretro/libs
 libretro/obj
+tests/zipdisk/zipdisk_test
+tests/zipdisk/zipdisk_test.exe
+tests/zipdisk/zipdisk_test_tmp/

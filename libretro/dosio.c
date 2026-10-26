@@ -36,6 +36,7 @@
 #endif
 
 #include "dosio.h"
+#include "zipdisk.h"
 
 #ifdef _WIN32
 #define SLASH '\\'
@@ -68,6 +69,7 @@ void *file_open(const char *filename)
 	void *ret;
 
 	if (string_is_empty(filename)) return NULL;
+	if (px68k_is_zip_virtual_path(filename)) return px68k_zip_open(filename);
 	if (path_is_directory(filename)) return NULL;
 
 	ret = filestream_open(filename,
@@ -98,7 +100,10 @@ void *file_create(const char *filename)
 
 size_t file_lread(void* handle, void *data, size_t length)
 {
-	int64_t readsize = filestream_read((RFILE *)handle, data, (int64_t)length);
+	int64_t readsize;
+	if (px68k_zip_owns(handle))
+		return px68k_zip_read(handle, data, length);
+	readsize = filestream_read((RFILE *)handle, data, (int64_t)length);
 	if (readsize <= 0)
 		return 0;
 	return (size_t)readsize;
@@ -106,7 +111,10 @@ size_t file_lread(void* handle, void *data, size_t length)
 
 size_t file_lwrite(void *handle, void *data, size_t length)
 {
-	int64_t writesize = filestream_write((RFILE *)handle, data, (int64_t)length);
+	int64_t writesize;
+	if (px68k_zip_owns(handle))
+		return px68k_zip_write(handle, data, length);
+	writesize = filestream_write((RFILE *)handle, data, (int64_t)length);
 	if (writesize <= 0)
 		return 0;
 	return (size_t)writesize;
@@ -129,6 +137,8 @@ char *file_gets(void *handle, char *buffer, size_t length)
 
 int64_t file_tell(void *handle)
 {
+	if (px68k_zip_owns(handle))
+		return px68k_zip_tell(handle);
 	return filestream_tell((RFILE *)handle);
 }
 
@@ -146,7 +156,10 @@ int file_eof(void *handle)
 
 void *file_open(const char *filename)
 {
-	void *ret = create_file(filename, GENERIC_READ | GENERIC_WRITE,
+	void *ret;
+	if (px68k_is_zip_virtual_path(filename))
+		return px68k_zip_open(filename);
+	ret = create_file(filename, GENERIC_READ | GENERIC_WRITE,
 	    OPEN_EXISTING);
 	if (!ret)
 	{
@@ -166,6 +179,8 @@ void *file_create(const char *filename)
 size_t file_lread(void* handle, void *data, size_t length)
 {
 	int64_t readsize;
+	if (px68k_zip_owns(handle))
+		return px68k_zip_read(handle, data, length);
 	if (read_file(handle, data, length, &readsize) == 0)
 		return 0;
 	return (size_t)readsize;
@@ -174,6 +189,8 @@ size_t file_lread(void* handle, void *data, size_t length)
 size_t file_lwrite(void *handle, void *data, size_t length)
 {
 	int64_t writesize;
+	if (px68k_zip_owns(handle))
+		return px68k_zip_write(handle, data, length);
 	if (write_file(handle, data, length, &writesize) == 0)
 		return 0;
 	return (size_t)writesize;
