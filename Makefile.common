@@ -71,6 +71,8 @@ SOURCES_C 		+= \
 				$(CORE_DIR)/libretro/peace.c \
 				$(CORE_DIR)/libretro/zipdisk.c \
 				$(CORE_DIR)/libretro/state.c \
+				$(CORE_DIR)/sc55.c \
+				$(CORE_DIR)/sc55_libretro.c \
 				$(CORE_DIR)/libretro.c
 
 SOURCES_CXX 	+= \

@@ -18,6 +18,7 @@
 #include "libretro/winx68k.h"
 #include "libretro/dosio.h"
 #include "libretro/zipdisk.h"
+#include "sc55_libretro.h"
 #include "libretro/dswin.h"
 #include "libretro/windraw.h"
 #include "libretro/joystick.h"
@@ -302,6 +303,11 @@ static bool libretro_supports_option_categories = 0;
 
 void midi_out_short_msg(size_t msg)
 {
+   if (px68k_sc55_enabled())
+   {
+      px68k_sc55_midi_short(msg);
+      return;
+   }
    if (libretro_supports_midi_output && midi_cb.output_enabled())
    {
       midi_cb.write(msg         & 0xFF, 0); /* status byte */
@@ -312,6 +318,11 @@ void midi_out_short_msg(size_t msg)
 
 void midi_out_long_msg(uint8_t *s, size_t len)
 {
+   if (px68k_sc55_enabled())
+   {
+      px68k_sc55_midi_long(s, len);
+      return;
+   }
    if (libretro_supports_midi_output && midi_cb.output_enabled())
    {
       int i;
@@ -320,8 +331,18 @@ void midi_out_long_msg(uint8_t *s, size_t len)
    }
 }
 
+/* A non-NULL handle is required by x68k/midi.c before it will dispatch
+ * MIDI bytes. Use a private sentinel for the internal synthesizer: no
+ * external MIDI handle is involved in this case. */
+static int px68k_sc55_midi_handle;
+
 int midi_out_open(void **phmo)
 {
+   if (px68k_sc55_enabled())
+   {
+      if (phmo) *phmo = &px68k_sc55_midi_handle;
+      return 0;
+   }
    if (libretro_supports_midi_output && midi_cb.output_enabled())
    {
       *phmo = &midi_cb;
@@ -1378,6 +1399,29 @@ static void update_variables(int running)
 
    update_variable_midi_interface(running);
 
+   /* The internal SC-55 is an alternative MIDI destination, independent of
+    * RetroArch's external MIDI interface. Search the same roots as PrBoom and
+    * apply the SC-55-only gain independently of the PX68K audio volume. */
+   {
+      struct retro_variable sc55_var;
+      struct retro_variable sc55_volume_var;
+      int sc55_enabled = 0;
+      int sc55_volume = 100;
+      sc55_var.key = "px68k_sc55_emulation";
+      sc55_var.value = NULL;
+      if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &sc55_var) && sc55_var.value &&
+            !strcmp(sc55_var.value, "enabled"))
+         sc55_enabled = 1;
+      sc55_volume_var.key = "px68k_sc55_volume";
+      sc55_volume_var.value = NULL;
+      if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &sc55_volume_var) && sc55_volume_var.value)
+         sc55_volume = atoi(sc55_volume_var.value);
+      px68k_sc55_set_volume(sc55_volume);
+      px68k_sc55_configure(sc55_enabled, retro_system_directory, retro_content_directory);
+      if (sc55_enabled && px68k_sc55_enabled())
+         Config.MIDI_SW = 1;
+   }
+
    strcpy(key, "px68k_joytype");
    var.key = key;
    for (i = 0; i < 2; i++)
@@ -2150,6 +2194,7 @@ void retro_deinit(void)
    CDROM_Cleanup();
 #endif
    MIDI_Cleanup();
+   px68k_sc55_shutdown();
    WinX68k_Cleanup();
    WinDraw_Cleanup();
 
@@ -2781,6 +2826,7 @@ void retro_run(void)
          audio_samples_discard(nsamples - soundbuf_size);
    }
    raudio_callback(soundbuf, NULL, soundbuf_size << 2);
+   px68k_sc55_mix(soundbuf, (size_t)soundbuf_size);
 
    if (libretro_supports_midi_output && midi_cb.output_enabled())
       midi_cb.flush();
