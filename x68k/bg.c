@@ -300,6 +300,31 @@ struct SPRITECTRLTBL {
 #pragma pack(pop)
 typedef struct SPRITECTRLTBL SPRITECTRLTBL_T;
 
+/* Return nonzero when a hardware sprite covers this emulated scanline.
+ * Keep the coordinate conversion identical to Sprite_DrawLineMcr() so the
+ * renderer's dirty-line fast path can be bypassed only where sprites draw. */
+int BG_SpriteOnLine(uint32_t vlinebg)
+{
+	SPRITECTRLTBL_T *sct = (SPRITECTRLTBL_T *)Sprite_Regs;
+	int n;
+
+	for (n = 127; n >= 0; --n)
+	{
+		uint32_t y, x;
+		x = (sct[n].sprite_posx + BG_HAdjust) & 0x3ff;
+		if (x >= TextDotX + 16)
+			continue;
+		y = sct[n].sprite_posy & 0x3ff;
+		y -= vlinebg;
+		y += BG_VLINE;
+		y = -y;
+		y += 16;
+		if (y <= 15)
+			return 1;
+	}
+	return 0;
+}
+
 static INLINE void Sprite_DrawLineMcr(int pri)
 {
 	SPRITECTRLTBL_T *sct = (SPRITECTRLTBL_T *)Sprite_Regs;

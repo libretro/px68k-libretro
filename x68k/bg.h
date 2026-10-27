@@ -20,6 +20,7 @@ uint8_t FASTCALL BG_Read(uint32_t adr);
 void FASTCALL BG_Write(uint32_t adr, uint8_t data);
 
 void FASTCALL BG_DrawLine(int opaq, int gd);
+int BG_SpriteOnLine(uint32_t vlinebg);
 
 int BG_StateAction(StateMem *sm, int load, int data_only);
 
