@@ -1792,7 +1792,9 @@ void retro_get_system_info(struct retro_system_info *info)
    info->library_version  = PX68K_VERSION GIT_VERSION;
    info->need_fullpath    = true;
    info->valid_extensions = "dim|img|d88|88d|hdm|dup|2hd|xdf|hdf|cmd|m3u|zip";
-   info->block_extract    = false;
+   /* The core reads ZIPs itself: left to the frontend, an archive is
+    * unpacked and only its first disk image is passed on. */
+   info->block_extract    = true;
 }
 
 

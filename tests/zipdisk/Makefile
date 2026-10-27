@@ -1,13 +1,25 @@
-# Regression test for libretro/zipdisk.c. Run by hand:
+# Regression tests for ZIP content. Run by hand:
 #   make check                        (Linux, MSYS2 MINGW64)
 #   make check SANITIZER=address,undefined
 #   make check CC=x86_64-w64-mingw32-gcc EXE=.exe   (cross build)
+#
+# sysinfo_test loads the core built at the top of the tree (CORE_LIB), so
+# build the core first.
 
 CORE   := ../..
 LRC    := $(CORE)/libretro-common
 CC     ?= cc
 EXE    ?=
 TARGET := zipdisk_test$(EXE)
+SYSINFO := sysinfo_test$(EXE)
+
+ifeq ($(EXE),.exe)
+CORE_LIB ?= $(CORE)/px68k_libretro.dll
+DL_LIBS  :=
+else
+CORE_LIB ?= $(CORE)/px68k_libretro.so
+DL_LIBS  := -ldl
+endif
 
 CFLAGS ?= -O1 -g
 CFLAGS += -std=gnu89 -Wall -Wdeclaration-after-statement \
@@ -26,17 +38,21 @@ SOURCES := zipdisk_test.c \
            $(LRC)/formats/zip/rzip_archive.c \
            $(LRC)/time/rtime.c
 
-all: $(TARGET)
+all: $(TARGET) $(SYSINFO)
 
 $(TARGET): $(SOURCES)
 	$(CC) $(CFLAGS) $(SOURCES) -o $@ $(LDFLAGS)
 
-check: $(TARGET)
+$(SYSINFO): sysinfo_test.c
+	$(CC) $(CFLAGS) sysinfo_test.c -o $@ $(LDFLAGS) $(DL_LIBS)
+
+check: $(TARGET) $(SYSINFO)
 	rm -rf zipdisk_test_tmp && mkdir zipdisk_test_tmp
 	./$(TARGET) zipdisk_test_tmp
 	rm -rf zipdisk_test_tmp
+	./$(SYSINFO) $(CORE_LIB)
 
 clean:
-	rm -rf $(TARGET) zipdisk_test_tmp
+	rm -rf $(TARGET) $(SYSINFO) zipdisk_test_tmp
 
 .PHONY: all check clean

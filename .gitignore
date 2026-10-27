@@ -16,3 +16,5 @@ libretro/obj
 tests/zipdisk/zipdisk_test
 tests/zipdisk/zipdisk_test.exe
 tests/zipdisk/zipdisk_test_tmp/
+tests/zipdisk/sysinfo_test
+tests/zipdisk/sysinfo_test.exe
