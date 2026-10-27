@@ -14,12 +14,17 @@
 
 #if defined (HAVE_CYCLONE)
 #include "cyclone.h"
-#elif defined (HAVE_C68K)
+#endif
+#if defined (HAVE_C68K)
 #include "c68k/c68k.h"
-#elif defined (HAVE_MUSASHI)
+#endif
+#if defined (HAVE_M68000)
+#include "m68k/c68k.h"
+#endif
+#if defined (HAVE_MUSASHI)
 #include "musashi/m68k.h"
 #include "musashi/m68kcpu.h"
-#endif /* HAVE_C68K */ /* HAVE_MUSASHI */
+#endif
 
 /* MAME�ߴ��Υ쥸�����ֹ� (����̤�б�) */
 enum
@@ -35,6 +40,8 @@ extern	int	m68000_ICountBk;
 extern	int	ICount;
 
 void m68000_init(void);
+void m68000_set_emulation(int use_musashi);
+int  m68000_get_emulation(void);
 void m68000_reset(void);
 void m68000_exit(void);
 int  m68000_execute(int cycles);

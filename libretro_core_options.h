@@ -62,6 +62,20 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "normal"
    },
    {
+      "px68k_cpu_emulation",
+      "CPU Emulation",
+      NULL,
+      "Select the 68000 CPU emulator. Restart the core after changing this option.",
+      NULL,
+      "system",
+      {
+         { "C68K (Fast)", NULL },
+         { "Musashi (Slower)", NULL },
+         { NULL, NULL },
+      },
+      "C68K (Fast)"
+   },
+   {
       "px68k_cpuspeed",
       "CPU Speed",
       NULL,

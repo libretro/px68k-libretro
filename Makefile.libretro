@@ -14,6 +14,10 @@ unixpath = $(subst \,/,$1)
 unixcygpath = /$(subst :,,$(call unixpath,$1))
 C68K := 1
 
+# Build both CPU emulators and select between them at runtime by default.
+# Override with CPU_RUNTIME=0 to use the legacy single-backend build.
+CPU_RUNTIME ?= 1
+
 ifeq ($(platform),)
 	platform = unix
 	ifeq ($(shell uname -s),)

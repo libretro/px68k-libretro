@@ -13,22 +13,31 @@ INCFLAGS 		+= -I$(CORE_DIR)/x68k \
 SOURCES_C 		+= \
 				$(CORE_DIR)/m68000/m68000.c
 
+ifeq ($(CPU_RUNTIME),1)
+FLAGS += -DHAVE_M68000 -DHAVE_MUSASHI -DHAVE_CPU_RUNTIME
+SOURCES_C += \
+                $(CORE_DIR)/m68000/m68k/c68k.c \
+                $(CORE_DIR)/m68000/m68k/c68kexec.c \
+                $(CORE_DIR)/m68000/musashi/m68kcpu.c \
+                $(CORE_DIR)/m68000/musashi/m68kops.c \
+                $(CORE_DIR)/m68000/musashi/softfloat/softfloat.c
+else
 ifeq ($(CYCLONE),1)
-FLAGS 			+= -DHAVE_CYCLONE
-SOURCES_S 		+= \
-				$(CORE_DIR)/m68000/cyclone.s
+FLAGS += -DHAVE_CYCLONE
+SOURCES_S += $(CORE_DIR)/m68000/cyclone.s
+else
+ifeq ($(M68000),1)
+FLAGS += -DHAVE_M68000
+SOURCES_C += $(CORE_DIR)/m68000/m68k/c68k.c $(CORE_DIR)/m68000/m68k/c68kexec.c
 else
 ifeq ($(C68K),1)
-FLAGS 			+= -DHAVE_C68K -DC68K_NO_JUMP_TABLE
-SOURCES_C 		+= \
-				$(CORE_DIR)/m68000/c68k/c68k.c \
-				$(CORE_DIR)/m68000/c68k/c68kexec.c
+FLAGS += -DHAVE_C68K -DC68K_NO_JUMP_TABLE
+SOURCES_C += $(CORE_DIR)/m68000/c68k/c68k.c $(CORE_DIR)/m68000/c68k/c68kexec.c
 else
-FLAGS 			+= -DHAVE_MUSASHI
-SOURCES_C 		+= \
-				$(CORE_DIR)/m68000/musashi/m68kcpu.c \
-				$(CORE_DIR)/m68000/musashi/m68kops.c \
-				$(CORE_DIR)/m68000/musashi/softfloat/softfloat.c
+FLAGS += -DHAVE_MUSASHI
+SOURCES_C += $(CORE_DIR)/m68000/musashi/m68kcpu.c $(CORE_DIR)/m68000/musashi/m68kops.c $(CORE_DIR)/m68000/musashi/softfloat/softfloat.c
+endif
+endif
 endif
 endif
 

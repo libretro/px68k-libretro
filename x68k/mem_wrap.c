@@ -33,7 +33,7 @@ uint8_t *FONT;
 
 uint32_t BusErrFlag       = 0;
 uint32_t BusErrHandling   = 0;
-static uint32_t BusErrAdr = 0;
+uint32_t BusErrAdr = 0;
 
 /* forward declarations */
 static void wm_opm(uint32_t addr, uint8_t val);
@@ -424,13 +424,7 @@ cpu_readmem24_dword(uint32_t addr)
  */
 void Memory_Init(void)
 {
-#if defined (HAVE_CYCLONE)
 	cpu_setOPbase24((uint32_t)m68000_get_reg(M68K_PC));
-#elif defined (HAVE_C68K)
-	cpu_setOPbase24((uint32_t)C68k_Get_PC(&C68K));
-#elif defined (HAVE_MUSASHI)
-	cpu_setOPbase24((uint32_t)m68k_get_reg(NULL, M68K_REG_PC));
-#endif /* HAVE_C68K */ /* HAVE_MUSASHI */
 }
 
 void 
