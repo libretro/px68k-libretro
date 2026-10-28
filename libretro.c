@@ -1072,42 +1072,15 @@ void WinX68k_Reset(void)
 {
    OPM_Reset();
 
-#if defined (HAVE_CYCLONE)
    m68000_reset();
+   /* Reset vector byte order follows the ROM layout used by this platform. */
+#ifdef MSB_FIRST
+   m68000_set_reg(M68K_A7, (IPL[0x30000]<<24)|(IPL[0x30001]<<16)|(IPL[0x30002]<<8)|IPL[0x30003]);
+   m68000_set_reg(M68K_PC, (IPL[0x30004]<<24)|(IPL[0x30005]<<16)|(IPL[0x30006]<<8)|IPL[0x30007]);
+#else
    m68000_set_reg(M68K_A7, (IPL[0x30001]<<24)|(IPL[0x30000]<<16)|(IPL[0x30003]<<8)|IPL[0x30002]);
    m68000_set_reg(M68K_PC, (IPL[0x30005]<<24)|(IPL[0x30004]<<16)|(IPL[0x30007]<<8)|IPL[0x30006]);
-#elif defined (HAVE_C68K)
-   C68k_Reset(&C68K);
-#if 0
-   C68k_Set_Reg(&C68K, C68K_A7, (IPL[0x30001]<<24)|(IPL[0x30000]<<16)|(IPL[0x30003]<<8)|IPL[0x30002]);
-   C68k_Set_Reg(&C68K, C68K_PC, (IPL[0x30005]<<24)|(IPL[0x30004]<<16)|(IPL[0x30007]<<8)|IPL[0x30006]);
 #endif
-   /* Initial SSP/PC live at IPL offset 0x30000 (mapped to $ff0000).  The
-    * little-endian layout stores each 16-bit half byte-swapped, hence the
-    * (hi,lo) index juggling below.  On big-endian the IPL keeps its native
-    * ROM order (no swap in WinX68k_LoadROMs), so read the 32-bit values in
-    * straight big-endian byte order instead. */
-#ifdef MSB_FIRST
-   C68k_Set_AReg(&C68K, 7, (IPL[0x30000]<<24)|(IPL[0x30001]<<16)|(IPL[0x30002]<<8)|IPL[0x30003]);
-   C68k_Set_PC(&C68K, (IPL[0x30004]<<24)|(IPL[0x30005]<<16)|(IPL[0x30006]<<8)|IPL[0x30007]);
-#else
-   C68k_Set_AReg(&C68K, 7, (IPL[0x30001]<<24)|(IPL[0x30000]<<16)|(IPL[0x30003]<<8)|IPL[0x30002]);
-   C68k_Set_PC(&C68K, (IPL[0x30005]<<24)|(IPL[0x30004]<<16)|(IPL[0x30007]<<8)|IPL[0x30006]);
-#endif
-#elif defined (HAVE_MUSASHI)
-   m68k_pulse_reset();
-
-   /* Same IPL reset-vector byte order fix as the C68K path above: native
-    * big-endian order on MSB_FIRST (IPL is not byte-swapped there), the
-    * little-endian (hi,lo)-juggled order otherwise. */
-#ifdef MSB_FIRST
-   m68k_set_reg(M68K_REG_A7, (IPL[0x30000]<<24)|(IPL[0x30001]<<16)|(IPL[0x30002]<<8)|IPL[0x30003]);
-   m68k_set_reg(M68K_REG_PC, (IPL[0x30004]<<24)|(IPL[0x30005]<<16)|(IPL[0x30006]<<8)|IPL[0x30007]);
-#else
-   m68k_set_reg(M68K_REG_A7, (IPL[0x30001]<<24)|(IPL[0x30000]<<16)|(IPL[0x30003]<<8)|IPL[0x30002]);
-   m68k_set_reg(M68K_REG_PC, (IPL[0x30005]<<24)|(IPL[0x30004]<<16)|(IPL[0x30007]<<8)|IPL[0x30006]);
-#endif
-#endif /* HAVE_C68K */ /* HAVE_MUSASHI */
 
    Memory_Init();
    CRTC_Init();
@@ -1419,6 +1392,19 @@ static void update_variables(int running)
    struct retro_variable var = {0};
 
    update_variable_midi_interface(running);
+
+#ifdef HAVE_CPU_RUNTIME
+   /* CPU implementation is selected at boot; changing it requires a core restart. */
+   if (!running)
+   {
+      struct retro_variable cpu_var = { "px68k_cpu_emulation", NULL };
+      int use_musashi = 0;
+      if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &cpu_var) && cpu_var.value &&
+            !strcmp(cpu_var.value, "Musashi (Slower)"))
+         use_musashi = 1;
+      m68000_set_emulation(use_musashi);
+   }
+#endif
 
    /* The internal SC-55 is an alternative MIDI destination, independent of
     * RetroArch's external MIDI interface. Search the same roots as PrBoom and
@@ -2592,13 +2578,7 @@ static void WinX68k_Exec(void)
       }
 
       {
-#if defined (HAVE_CYCLONE)
          m68000_execute(n);
-#elif defined (HAVE_C68K)
-         C68k_Exec(&C68K, n);
-#elif defined (HAVE_MUSASHI)
-         m68k_execute(n);
-#endif /* HAVE_C68K */ /* HAVE_MUSASHI */
          m          = (n-m68000_ICountBk);
          ClkUsed   += m*10;
          usedclk    = ClkUsed/clkdiv;
