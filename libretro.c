@@ -1597,6 +1597,18 @@ static void update_variables(int running)
          Config.MenuFontSize = 1;
    }
 
+   if (Config.MenuLinesJump < 5 || Config.MenuLinesJump > 50)
+      Config.MenuLinesJump = 10;
+
+   var.key    = "px68k_menu_lines_jump";
+   var.value  = NULL;
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      int jump = atoi(var.value);
+      if (jump >= 5 && jump <= 50 && jump % 5 == 0)
+         Config.MenuLinesJump = jump;
+   }
+
    var.key    = "px68k_joy1_select";
    var.value  = NULL;
 

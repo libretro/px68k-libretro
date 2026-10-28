@@ -23,17 +23,18 @@ enum MenuState
    MS_HWJOY_SET
 };
 
-#define MFL_MAX 4000
+#define MFL_STACK_DEPTH 256
 
 struct menu_flist
 {
-	char name[MFL_MAX][MAX_PATH];
-	char type[MFL_MAX];
+	char **name;
+	char *type;
+	int capacity;
 	char dir[4][MAX_PATH];
 	int ptr;
 	int num;
 	int y;
-	int stack[2][MFL_MAX];
+	int stack[2][MFL_STACK_DEPTH];
 	int stackptr;
 };
 

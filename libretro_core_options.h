@@ -37,6 +37,7 @@ struct retro_core_option_v2_category option_cats_us[] = {
    { "audio",     "Audio",    "Change sound volumes and midi output type."                            },
    { "input",     "Input",    "Change controller types and button mapping."                           },
    { "media",     "Media",    "Change floppy disk media swapping options."                            },
+   { "menu",      "Menu",     "Configure the built-in menu and navigation."                           },
    { "advanced",  "Advanced", "Change system-related advanced options for performance or aesthetics." },
    { NULL,        NULL,       NULL },
 };
@@ -47,20 +48,6 @@ struct retro_core_option_v2_definition option_defs_us[] = {
     * Changing "Show layer 1" is fine, but don't change "layer_1"/etc or the possible values ("Yes|No").
     * Adding more variables and rearranging them is safe. */
 
-   {
-      "px68k_menufontsize",
-      "Menu Font Size",
-      NULL,
-      "Sets the built-in menu font size",
-      NULL,
-      "system",
-      {
-         { "normal", NULL },
-         { "large",  NULL },
-         { NULL,     NULL },
-      },
-      "normal"
-   },
    {
       "px68k_cpu_emulation",
       "CPU Emulation",
@@ -473,6 +460,35 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "TRIG1 TRIG2"
    },
    {
+      "px68k_menufontsize",
+      "Menu Font Size",
+      NULL,
+      "Sets the built-in menu font size",
+      NULL,
+      "menu",
+      {
+         { "normal", NULL },
+         { "large",  NULL },
+         { NULL,     NULL },
+      },
+      "normal"
+   },
+   {
+      "px68k_menu_lines_jump",
+      "Lines Jump (with left-right)",
+      NULL,
+      "Number of entries to jump when pressing Left or Right in the built-in menu.",
+      NULL,
+      "menu",
+      {
+         { "5", NULL }, { "10", NULL }, { "15", NULL },
+         { "20", NULL }, { "25", NULL }, { "30", NULL },
+         { "35", NULL }, { "40", NULL }, { "45", NULL },
+         { "50", NULL }, { NULL, NULL },
+      },
+      "10"
+   },
+   {
       "px68k_no_wait_mode",
       "No Wait Mode",
       NULL,
@@ -555,7 +571,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "px68k_text_off",
       "Text Off",
       NULL,
-      "TODO:",
+      "Disables the text layer, used for characters, text overlays, and some interface elements.",
       NULL,
       "advanced",
       {
@@ -569,7 +585,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "px68k_grp_off",
       "Grp Off",
       NULL,
-      "TODO:",
+      "Disables the graphics layer, typically used for bitmap graphics and backgrounds.",
       NULL,
       "advanced",
       {
@@ -583,7 +599,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "px68k_sp_off",
       "SP/BG Off",
       NULL,
-      "TODO:",
+      "Disables the sprite and tile-based background layers, commonly used for game characters, objects, and scrolling backgrounds.",
       NULL,
       "advanced",
       {
