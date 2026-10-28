@@ -325,8 +325,32 @@ void WinDraw_DrawLine(void)
 
 	if(VLINE==(uint32_t)-1)
 		return;
+
+	/* Redraw clean scanlines only when a hardware sprite actually covers them.
+	 * This preserves the dirty-line fast path on the rest of the screen while
+	 * avoiding stale sprite pixels in games that update sprites without
+	 * reliably invalidating every affected scanline. */
 	if (!TextDirtyLine[VLINE])
-		return;
+	{
+		if (!((VCReg2[1] & 0x40) && (BG_Regs[8] & 2) &&
+		      !(BG_Regs[0x11] & 2) && Debug_Sp))
+			return;
+
+		{
+			int s1 = (((BG_Regs[0x11] & 4) ? 2 : 1) -
+			          ((BG_Regs[0x11] & 16) ? 1 : 0));
+			int s2 = (((CRTC_Regs[0x29] & 4) ? 2 : 1) -
+			          ((CRTC_Regs[0x29] & 16) ? 1 : 0));
+			uint32_t sprite_line = VLINE;
+			sprite_line <<= s1;
+			sprite_line >>= s2;
+			if (!(BG_Regs[0x11] & 16))
+				sprite_line -= ((BG_Regs[0x0f] >> s1) -
+				                (CRTC_Regs[0x0d] >> s2));
+			if (!BG_SpriteOnLine(sprite_line))
+				return;
+		}
+	}
 
 	TextDirtyLine[VLINE] = 0;
 
