@@ -33,6 +33,7 @@ extern "C" {
  *   frontend language definition */
 
 struct retro_core_option_v2_category option_cats_us[] = {
+   { "menu",      "Menu",     "Configure the built-in menu and navigation." },
    { "system",    "System",   "Change emulated hardware settings."                                    },
    { "audio",     "Audio",    "Change sound volumes and midi output type."                            },
    { "input",     "Input",    "Change controller types and button mapping."                           },
@@ -53,13 +54,28 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       NULL,
       "Sets the built-in menu font size",
       NULL,
-      "system",
+      "menu",
       {
          { "normal", NULL },
          { "large",  NULL },
          { NULL,     NULL },
       },
       "normal"
+   },
+   {
+      "px68k_menu_lines_jump",
+      "Lines Jump (with left-right)",
+      NULL,
+      "Number of entries to jump when pressing Left or Right in the built-in menu.",
+      NULL,
+      "menu",
+      {
+         { "5", NULL }, { "10", NULL }, { "15", NULL },
+         { "20", NULL }, { "25", NULL }, { "30", NULL },
+         { "35", NULL }, { "40", NULL }, { "45", NULL },
+         { "50", NULL }, { NULL, NULL },
+      },
+      "10"
    },
    {
       "px68k_cpu_emulation",

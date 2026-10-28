@@ -30,6 +30,7 @@ typedef struct
 	int AdjustFrameRates;
 	int AudioDesyncHack;
 	int MenuFontSize; /* font size of menu, 0 = normal, 1 = large */
+	int MenuLinesJump; /* Left/Right navigation step, 5 to 50 */
 	int joy1_select_mapping; /* used for keyboard to joypad map for P1 Select */
 	int save_fdd_path;
 	int save_hdd_path;

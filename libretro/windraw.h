@@ -16,6 +16,7 @@ void WinDraw_DrawMenu(int menu_state, int mkey_pos, int mkey_y, int *mval_y);
 extern struct menu_flist mfl;
 
 void WinDraw_DrawMenufile(struct menu_flist *mfl);
+int WinDraw_ExplorerRows(void);
 void WinDraw_ClearMenuBuffer(void);
 
 #endif /* _WINX68K_WINDRAW_H */

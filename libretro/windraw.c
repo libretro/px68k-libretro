@@ -765,6 +765,9 @@ static uint16_t jis2idx(uint16_t jc)
 
 #define isHankaku(s) ((s) >= 0x20 && (s) <= 0x7e || (s) >= 0xa0 && (s) <= 0xdf)
 #define MENU_WIDTH 800
+#ifndef PX68K_MENU_VERSION
+#define PX68K_MENU_VERSION "0.15+"
+#endif
 
 /* fs : font size : 16 or 24
  * 半角文字の場合は16bitの上位8bitにデータを入れておくこと
@@ -909,178 +912,393 @@ char menu_item_desc[][60] = {
 	"Change / Eject HDD 1"
 };
 
+/* Draw the menu frames in pixels so their width does not depend on font size. */
+static void menu_line(int x0, int y0, int x1, int y1, uint16_t color)
+{
+   int x, y;
+   if (x0 == x1)
+      for (y = y0; y <= y1; ++y)
+         menu_buffer[y * MENU_WIDTH + x0] = color;
+   else
+      for (x = x0; x <= x1; ++x)
+         menu_buffer[y0 * MENU_WIDTH + x] = color;
+}
+
+static void menu_box(int x0, int y0, int x1, int y1, uint16_t color)
+{
+   menu_line(x0, y0, x1, y0, color);
+   menu_line(x0, y1, x1, y1, color);
+   menu_line(x0, y0, x0, y1, color);
+   menu_line(x1, y0, x1, y1, color);
+}
+
+/* Limit paths by displayed glyph width, keeping Shift-JIS pairs intact. */
+static void menu_path_fit(char *dst, size_t capacity, const char *src, int pixels)
+{
+   size_t n = 0;
+   int used = 0;
+   const unsigned char *p = (const unsigned char *)src;
+   while (*p && n + 2 < capacity)
+   {
+      int half = isHankaku(*p);
+      int bytes = half ? 1 : 2;
+      int width = half ? p6m.mfs / 2 : p6m.mfs;
+      if (used + width > pixels || (!half && !p[1]))
+         break;
+      dst[n++] = (char)*p++;
+      if (bytes == 2)
+         dst[n++] = (char)*p++;
+      used += width;
+   }
+   dst[n] = '\0';
+}
+
+/* Preserve the URI scheme and filename, spending only the required width
+ * on shortening directory components. Work in complete Shift-JIS glyphs. */
+static int menu_text_pixels(const char *s)
+{
+   int pixels = 0;
+   const unsigned char *p = (const unsigned char *)s;
+   while (*p)
+   {
+      if (isHankaku(*p)) { pixels += p6m.mfs / 2; ++p; }
+      else if (p[1]) { pixels += p6m.mfs; p += 2; }
+      else break;
+   }
+   return pixels;
+}
+
+/* Fit a path exactly in pixels. Keep the URI prefix and final filename;
+ * remove the minimum amount of parent-directory text, one glyph at a time. */
+static void menu_path_compact(char *dst, size_t cap, const char *src, int pixels)
+{
+   char work[PATH_MAX];
+   size_t prefix = 0, len;
+   if (!cap) return;
+   dst[0] = 0;
+   if (!strncmp(src, "zip://", 6)) prefix = 6;
+   else if (!strncmp(src, "file://", 7)) prefix = 7;
+   len = strlen(src);
+   if (len >= sizeof(work)) { menu_path_fit(dst, cap, src, pixels); return; }
+   memcpy(work, src, len + 1);
+   while (menu_text_pixels(work) > pixels)
+   {
+      char *last = strrchr(work + prefix, '/');
+      size_t i = prefix, best = 0, bestlen = 0;
+      if (!last) break;
+      /* Choose the longest remaining parent; preserve its first glyph and
+       * shorten its end. The three dots count against the width budget. */
+      while (work + i < last)
+      {
+         size_t j = i;
+         while (work[j] && work[j] != '/') ++j;
+         if (work + j > last) break;
+         if (j - i > bestlen && j - i > 4)
+         { best = i; bestlen = j - i; }
+         i = j + 1;
+      }
+      if (!bestlen) break;
+      {
+         size_t end = best + bestlen;
+         size_t cut = end - 1;
+         /* Avoid splitting a Shift-JIS character. */
+         size_t k = best;
+         while (k < cut)
+         {
+            size_t step = isHankaku((unsigned char)work[k]) ? 1 : 2;
+            if (k + step >= cut) { cut = k; break; }
+            k += step;
+         }
+         /* If already abbreviated, extend the existing ellipsis leftward. */
+         if (end >= best + 3 && !memcmp(work + end - 3, "...", 3))
+         {
+            cut = end - 3;
+            k = best;
+            while (k < cut)
+            {
+               size_t step = isHankaku((unsigned char)work[k]) ? 1 : 2;
+               if (k + step >= cut) { cut = k; break; }
+               k += step;
+            }
+         }
+         if (cut <= best) break;
+         memmove(work + cut + 3, work + end, strlen(work + end) + 1);
+         memcpy(work + cut, "...", 3);
+      }
+   }
+   if (menu_text_pixels(work) <= pixels)
+      menu_path_fit(dst, cap, work, pixels);
+   else
+   {
+      /* Extremely long final filenames: preserve the extension and tail. */
+      const char *tail = strrchr(work + prefix, '/');
+      const char *name = tail ? tail + 1 : work + prefix;
+      int budget = pixels - (int)(prefix * (p6m.mfs / 2)) - 3 * (p6m.mfs / 2);
+      size_t n = strlen(name);
+      if (budget > 0)
+      {
+         size_t start = n;
+         int used = 0;
+         while (start && used + p6m.mfs / 2 <= budget)
+         { --start; used += p6m.mfs / 2; }
+         snprintf(work, sizeof(work), "%.*s...%s", (int)prefix, src, name + start);
+      }
+      menu_path_fit(dst, cap, work, pixels);
+   }
+}
+
+/* Prefer recognizable filename prefixes in filesystem directories; preserve
+ * the old suffix-oriented display for ZIP archive members. */
+static void menu_explorer_fit(char *dst, size_t cap, const char *src,
+                              int pixels, int in_zip)
+{
+   size_t n = strlen(src);
+   int chars = pixels / (p6m.mfs / 2);
+   if (menu_text_pixels(src) <= pixels)
+   { menu_path_fit(dst, cap, src, pixels); return; }
+   if (chars > 6 && n > (size_t)chars)
+   {
+      size_t keep = (size_t)chars - 3;
+      if (in_zip)
+         snprintf(dst, cap, "...%s", src + n - keep);
+      else
+         snprintf(dst, cap, "%.*s...", (int)keep, src);
+   }
+   else menu_path_fit(dst, cap, src, pixels);
+}
+
+/* Split a displayed path into two pixel-bounded lines at a glyph boundary.
+ * Prefer a nearby directory separator or space, without losing characters. */
+static const char *menu_wrap_line(char *dst, size_t cap, const char *src,
+                                  int pixels)
+{
+   const unsigned char *p = (const unsigned char *)src;
+   const unsigned char *break_at = NULL;
+   const unsigned char *end = p;
+   int width = 0;
+   size_t count;
+   while (*end)
+   {
+      int half = isHankaku(*end);
+      int step = half ? 1 : 2;
+      int glyph_width = half ? p6m.mfs / 2 : p6m.mfs;
+      if (!half && !end[1]) break;
+      if (width + glyph_width > pixels) break;
+      if (half && (*end == '/' || *end == ' ')) break_at = end + 1;
+      width += glyph_width;
+      end += step;
+   }
+   if (*end && break_at && break_at > p + (end - p) / 2 &&
+       menu_text_pixels((const char *)break_at) <= pixels)
+      end = break_at;
+   count = (size_t)(end - p);
+   if (count >= cap) count = cap - 1;
+   memcpy(dst, src, count);
+   dst[count] = 0;
+   return src + count;
+}
+
 void WinDraw_DrawMenu(int menu_state, int mkey_pos, int mkey_y, int *mval_y)
 {
-	int i, drv;
-	char tmp[256];
+   int i, drv, fs, margin, left, right, separator, text_x, path_x, available;
+   int title_top, main_top, main_bottom, help_top, help_bottom;
+   int row_top, row_y, row_height, row_selected;
+   char tmp[PATH_MAX], line[PATH_MAX];
 
-	p6m.sbp     = menu_buffer;
-	p6m.mfs     = Config.MenuFontSize ? 24 : 16;
+   p6m.sbp = menu_buffer;
+   p6m.mfs = Config.MenuFontSize ? 24 : 16;
+   fs = p6m.mfs;
+   margin = fs / 2;
+   left = margin;
+   right = MENU_WIDTH - margin - 1;
+   separator = left + fs * 5;
+   text_x = left + fs;
+   path_x = separator + fs / 2;
+   available = right - margin - path_x;
+   title_top = margin;
+   main_top = 4 * fs + margin;
+   /* SYSTEM uses one line; each of the four drives uses two lines. */
+   main_bottom = main_top + 14 * fs;
+   help_top = main_bottom + fs;
+   help_bottom = help_top + 3 * fs;
 
-	/* タイトル */
-	p6m.mcolor  = 0x07ff; /* cyan */
-	set_mlocateC(0, 0);
-	draw_str(twaku_str);
-	set_mlocateC(0, 1);
-	draw_str(twaku2_str);
-	set_mlocateC(0, 2);
-	draw_str(twaku3_str);
+   /* Redraw the complete frame to remove text from the previous selection. */
+   memset(menu_buffer, 0, sizeof(menu_buffer));
+   p6m.mbcolor = 0;
+   menu_box(left, title_top, right, title_top + 3 * fs, 0x07ff);
+   menu_box(left, main_top, right, main_bottom, 0xffe0);
+   menu_line(separator, main_top, separator, main_bottom, 0xffe0);
+   menu_box(left, help_top, right, help_bottom, 0x07ff);
 
-	p6m.mcolor  = 0xffff;
-	set_mlocateC(2, 1);
-        strcpy(tmp, title_str);
-        strcat(tmp, PX68KVERSTR);
-	draw_str(tmp);
+   p6m.mcolor = 0xffff;
+   set_mlocateC(0, 1);
+   p6m.ml_x = text_x;
+   snprintf(tmp, sizeof(tmp), "SWITCH for PX68K Version %s", PX68K_MENU_VERSION);
+   if ((int)strlen(tmp) * (fs / 2) > right - text_x - margin)
+      tmp[(right - text_x - margin) / (fs / 2)] = '\0';
+   draw_str(tmp);
 
-	
-	p6m.mcolor  = 0xffff; /* 真ん中 */
+   row_top = main_top;
+   for (i = 0; i < 5; ++i)
+   {
+      row_height = (i == 0) ? 2 * fs : 3 * fs;
+      row_y = row_top + fs / 2;
+      row_selected = i == mkey_y - mkey_pos;
+      p6m.mcolor = 0xffff;
+      p6m.mbcolor = 0;
+      if (menu_state == MS_KEY && row_selected)
+      {
+         p6m.mcolor = 0;
+         p6m.mbcolor = 0xffe0;
+      }
+      p6m.ml_y = row_y;
+      p6m.ml_x = text_x;
+      draw_str(menu_item_key[i + mkey_pos]);
+      p6m.mcolor = 0xffff;
+      p6m.mbcolor = 0;
+      if ((menu_state == MS_VALUE || menu_state == MS_HWJOY_SET) && row_selected)
+      {
+         p6m.mcolor = 0;
+         p6m.mbcolor = 0xffe0;
+      }
+      p6m.ml_y = row_y;
+      p6m.ml_x = path_x;
+      drv = WinUI_get_drv_num(i + mkey_pos);
+      if (drv >= 0 && mval_y[i + mkey_pos] == 0)
+      {
+         const char *path = drv < 2 ? Config.FDDImage[drv] : Config.HDImage[drv - 2];
+         if (!path[0])
+            draw_str(" -- no disk --");
+         else
+         {
+            const char *remaining;
+            if (!strncmp(cur_dir_str, path, cur_dir_slen))
+               path += cur_dir_slen;
+            /* Keep the complete path when it fits on two lines. */
+            if (menu_text_pixels(path) <= available * 2 &&
+                strlen(path) < sizeof(tmp))
+               strcpy(tmp, path);
+            else
+               menu_path_compact(tmp, sizeof(tmp), path, available * 2);
+            remaining = menu_wrap_line(line, sizeof(line), tmp, available);
+            draw_str(line);
+            if (*remaining)
+            {
+               p6m.ml_y = row_y + fs;
+               p6m.ml_x = path_x;
+               menu_path_fit(line, sizeof(line), remaining, available);
+               draw_str(line);
+            }
+         }
+      }
+      else
+         draw_str(menu_items[i + mkey_pos][mval_y[i + mkey_pos]]);
+      row_top += row_height;
+      if (i < 4)
+         menu_line(left, row_top, right, row_top, 0xffe0);
+   }
+   p6m.mcolor = 0xffff;
+   p6m.mbcolor = 0;
+   p6m.ml_y = help_top + fs / 2;
+   p6m.ml_x = text_x;
+   draw_str(menu_item_desc[mkey_y]);
+   videoBuffer = (uint16_t *)menu_buffer;
+}
 
-	/* 真ん中枠 */
-	p6m.mcolor  = 0xffe0; /* yellow */
-	set_mlocateC(1, 4);
-	draw_str(waku_str);
-	for (i = 5; i < 10; i++)
-	{
-		set_mlocateC(1, i);
-		draw_str(waku2_str);
-	}
-	set_mlocateC(1, 10);
-	draw_str(waku3_str);
-
-	/* アイテム/キーワード */
-	p6m.mcolor = 0xffff;
-	for (i = 0; i < 5; i++)
-	{
-		set_mlocateC(3, 5 + i);
-		if (menu_state == MS_KEY && i == (mkey_y - mkey_pos))
-		{
-			p6m.mcolor  = 0x0;
-			p6m.mbcolor = 0xffe0;
-		}
-		else
-		{
-			p6m.mcolor  = 0xffff;
-			p6m.mbcolor = 0x0;
-		}
-		draw_str(menu_item_key[i + mkey_pos]);
-	}
-
-	/* アイテム/現在値 */
-	p6m.mcolor  = 0xffff;
-	p6m.mbcolor = 0x0;
-	for (i = 0; i < 5; i++)
-	{
-		if (       (menu_state == MS_VALUE 
-               || menu_state == MS_HWJOY_SET)
-               && i == (mkey_y - mkey_pos))
-		{
-			p6m.mcolor  = 0x0;
-			p6m.mbcolor = 0xffe0;
-		}
-		else
-		{
-			p6m.mcolor  = 0xffff;
-			p6m.mbcolor = 0x0;
-		}
-		set_mlocateC(17, 5 + i);
-
-		drv = WinUI_get_drv_num(i + mkey_pos);
-		if (drv >= 0  && mval_y[i + mkey_pos] == 0)
-		{
-			char *p;
-			char ptr[PATH_MAX];
-			if (drv < 2)
-				p = Config.FDDImage[drv];
-			else
-				p = Config.HDImage[drv - 2];
-
-			if (p[0] == '\0')
-				draw_str(" -- no disk --");
-			else
-			{
-				/* 先頭のカレントディレクトリ名を表示しない */
-				if (!strncmp(cur_dir_str, p, cur_dir_slen))
-					strncpy(ptr, p + cur_dir_slen, sizeof(ptr));
-				else
-					strncpy(ptr, p, sizeof(ptr));
-				ptr[40] = '\0';
-				draw_str(ptr);
-			}
-		} else {
-			draw_str(menu_items[i + mkey_pos][mval_y[i + mkey_pos]]);
-		}
-	}
-
-	/* 下枠 */
-	p6m.mcolor  = 0x07ff; /* cyan */
-	p6m.mbcolor = 0x0;
-	set_mlocateC(0, 11);
-	draw_str(swaku_str);
-	set_mlocateC(0, 12);
-	draw_str(swaku2_str);
-	set_mlocateC(0, 13);
-	draw_str(swaku3_str);
-
-	/* キャプション */
-	p6m.mcolor  = 0xffff;
-	p6m.mbcolor = 0x0;
-	set_mlocateC(2, 12);
-	draw_str(menu_item_desc[mkey_y]);
-
-	videoBuffer=(uint16_t*)menu_buffer;
-
+/* Number of explorer rows available without an expanded filename. */
+int WinDraw_ExplorerRows(void)
+{
+   int fs = Config.MenuFontSize ? 24 : 16;
+   return (600 - 2 * fs - fs) / fs;
 }
 
 void WinDraw_DrawMenufile(struct menu_flist *mfl)
 {
-	int i;
-	char ptr[PATH_MAX];
+   int i, fs = p6m.mfs;
+   int margin = fs / 2;
+   int left = margin, right = MENU_WIDTH - margin - 1;
+   int top = fs, bottom = 600 - fs;
+   int text_x = left + fs / 2;
+   int available = right - margin - text_x - fs / 2;
+   int rows = WinDraw_ExplorerRows();
+   int preview = 0, preview_rows = 0;
+   int selected;
+   char ptr[PATH_MAX];
 
-   /* 0xf800 - red */
-	/* 0xf81f - magenta */
-
-	/* bottom frame */
-
-	p6m.mcolor  = 0xffff;
-	p6m.mbcolor = 0x1; /* 0 means transparent */
-	set_mlocateC(1, 1);
-	draw_str(swaku_str);
-	for (i = 2; i < 16; i++)
+   selected = mfl->ptr + mfl->y;
+   if (selected >= 0 && selected < mfl->num)
    {
-		set_mlocateC(1, i);
-		draw_str(swaku2_str);
-	}
-	set_mlocateC(1, 16);
-	draw_str(swaku3_str);
+      const char *name = mfl->name[selected];
+      int directory = mfl->type[selected];
+      menu_explorer_fit(ptr, sizeof(ptr), name, available - (directory ? fs : 0),
+                        (!strncmp(mfl->dir[0], "zipbrowse://", 12) ||
+                         !strncmp(mfl->dir[1], "zipbrowse://", 12)));
+      preview = strcmp(ptr, name) != 0;
+   }
+   /* Only shortened selections consume preview space. */
+   if (preview)
+   {
+      preview_rows = 3;
+      rows -= preview_rows + 1;
+   }
+   if (rows < 1) rows = 1;
+   /* Keep the selected absolute index while adapting the scroll window. */
+   if (selected >= mfl->num) selected = mfl->num - 1;
+   if (selected < 0) selected = 0;
+   if (selected < mfl->ptr) mfl->ptr = selected;
+   if (selected >= mfl->ptr + rows) mfl->ptr = selected - rows + 1;
+   if (mfl->ptr < 0) mfl->ptr = 0;
+   mfl->y = selected - mfl->ptr;
 
-	for (i = 0; i < 14; i++)
-	{
-		if (i + 1 > mfl->num)
-			break;
-		if (i == mfl->y)
-		{
-			p6m.mcolor  = 0x0;
-			p6m.mbcolor = 0xffff;
-		}
-		else
-		{
-			p6m.mcolor  = 0xffff;
-			p6m.mbcolor = 0x1;
-		}
-		/* enclose directory in '[ ]' */
-		set_mlocateC(3, i + 2);
-		if (mfl->type[i + mfl->ptr])
-         draw_str("[");
-		strncpy(ptr, mfl->name[i + mfl->ptr], sizeof(ptr));
-		ptr[56] = '\0';
-		draw_str(ptr);
-		if (mfl->type[i + mfl->ptr])
-         draw_str("]");
-	}
-
-	p6m.mbcolor = 0x0; /* switch back to transparent mode */
-
-	videoBuffer=(uint16_t*)menu_buffer;
+   memset(menu_buffer, 0, sizeof(menu_buffer));
+   menu_box(left, top, right, bottom, 0xffff);
+   for (i = 0; i < rows && i + mfl->ptr < mfl->num; ++i)
+   {
+      const char *name = mfl->name[i + mfl->ptr];
+      int directory = mfl->type[i + mfl->ptr];
+      p6m.mcolor = (i == mfl->y) ? 0 : 0xffff;
+      p6m.mbcolor = (i == mfl->y) ? 0xffff : 0x1;
+      set_mlocateC(0, i + 2);
+      p6m.ml_x = text_x;
+      if (directory) draw_str("[");
+      menu_explorer_fit(ptr, sizeof(ptr), name, available - (directory ? fs : 0),
+                        (!strncmp(mfl->dir[0], "zipbrowse://", 12) ||
+                         !strncmp(mfl->dir[1], "zipbrowse://", 12)));
+      draw_str(ptr);
+      if (directory) draw_str("]");
+   }
+   if (preview && selected < mfl->num)
+   {
+      const unsigned char *scan = (const unsigned char *)mfl->name[selected];
+      int row = (bottom / fs) - preview_rows;
+      int maxrow = row + preview_rows - 1;
+      int x = text_x;
+      int limit = right - margin;
+      char piece[3];
+      p6m.mcolor = 0xffff;
+      p6m.mbcolor = 0;
+      menu_line(left + 1, row * fs - fs / 2, right - 1, row * fs - fs / 2, 0xffff);
+      while (*scan && row <= maxrow)
+      {
+         int bytes = isHankaku(*scan) ? 1 : (scan[1] ? 2 : 1);
+         int width = bytes == 1 ? fs / 2 : fs;
+         if (x + width > limit)
+         {
+            row++;
+            x = text_x;
+            if (row > maxrow) break;
+         }
+         piece[0] = (char)*scan++;
+         if (bytes == 2) piece[1] = (char)*scan++;
+         piece[bytes] = '\0';
+         set_mlocateC(0, row);
+         p6m.ml_x = x;
+         draw_str(piece);
+         x = p6m.ml_x;
+      }
+   }
+   p6m.mbcolor = 0;
+   videoBuffer = (uint16_t *)menu_buffer;
 }
 
 void WinDraw_ClearMenuBuffer(void)
