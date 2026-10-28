@@ -1,7 +1,10 @@
 LOCAL_PATH := $(call my-dir)
 
 CORE_DIR := $(LOCAL_PATH)/../..
-C68K := 1
+CPU_RUNTIME := 1
+# Runtime mode builds the m68k C68K backend and Musashi together.
+# Do not enable the legacy standalone C68K backend.
+C68K := 0
 USE_LIBRETRO_VFS := 1
 
 include $(CORE_DIR)/Makefile.common
