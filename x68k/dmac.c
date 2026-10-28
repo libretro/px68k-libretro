@@ -287,12 +287,14 @@ void FASTCALL DMA_Write(uint32_t adr, uint8_t data)
             }
             else
             {
-               if (DMA[ch].CSR & 0xf8)
-               {
-                  /* Timing errors */
-                  DMAERR(ch, 0x02)
-                     break;
-               }
+               /* Match the HD63450 start behavior used by MAME: a START
+                * command reinitializes the channel status and starts the
+                * transfer, even if the channel was already active. Some
+                * X68000 software reprograms/restarts DMA3 this way while
+                * streaming ADPCM. Treating the active bit as a timing error
+                * aborts the transfer and can leave the ADPCM FIFO empty.
+                */
+               DMA[ch].CSR &= 0x0f; /* Clear completion/error status flags. */
                DMA[ch].CSR |= 0x08;
                if ((DMA[ch].OCR & 8) /*&&(!DMA[ch].MTC)*/)
                {
