@@ -196,6 +196,14 @@ size_t file_lwrite(void *handle, void *data, size_t length)
 	return (size_t)writesize;
 }
 
+/* The non-VFS backend also needs file_tell for floppy autodetection.
++ * file_seek returns the current offset for FSEEK_CUR and supports
++ * ZIP virtual handles through px68k_zip_seek. */
+int64_t file_tell(void *handle)
+{
+    return (int64_t)file_seek(handle, 0, FSEEK_CUR);
+}
+
 #endif /* !USE_LIBRETRO_VFS */
 
 void file_setcd(const char *exename)
