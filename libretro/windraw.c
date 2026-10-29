@@ -448,6 +448,7 @@ void WinDraw_DrawLine(void)
 			}
 			if (VCReg2[1]&0x03)
 			{
+				if ( (VCReg2[0]&0x14)!=0x14 )
 				{
 					Grp_DrawLine8(0, opaq);
 					gon=1;
@@ -474,6 +475,7 @@ void WinDraw_DrawLine(void)
 			}
 			if (VCReg2[1]&0x03)
 			{
+				if ( (VCReg2[0]&0x14)!=0x14 )
 				{
 					Grp_DrawLine8(1, opaq);
 					gon=1;
