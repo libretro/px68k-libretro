@@ -656,11 +656,13 @@ void WinDraw_DrawLine(void)
 		if ( ((VCReg2[0]&0x5d)==0x1d)&&(!(VCReg1[0]&0x03))&&(tron) )
 			WinDraw_DrawTextLineTR(opaq);
 		else
-			/* FIXME: Verify corrent td param here. Games like Overdriver
-			 * expect a td value of 1 here, yet the condition
-			 * ((VCReg1[0]&0x30)>=0x10) returns 0 for this game causing
-			 * grp > text. See stage 2 of the game. */
-			WinDraw_DrawTextLine(opaq, ((VCReg1[0]&0x30)>=0x10));
+			/* Keep text transparency testing enabled at this priority.
+			 * Overdriver stage 2 needs td=1 to composite the water
+			 * with the GRP mountains and rain. The previous condition,
+			 * ((VCReg1[0] & 0x30) >= 0x10), selected td=0 there and
+			 * obscured the GRP scene. Revisit this choice if a game
+			 * demonstrates different hardware behaviour. */
+			WinDraw_DrawTextLine(opaq, 1);
 		opaq = 0;
 		tdrawed = 1;
 	}
