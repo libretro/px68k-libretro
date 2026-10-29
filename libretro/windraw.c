@@ -416,15 +416,26 @@ void WinDraw_DrawLine(void)
 		break;
 	case 1:	
 	case 2:	
+		/* 256-colour GRP enable pairing (XEiJ-style, test 23):
+		 * VC R2 bits 0/1 enable the first 8-bit GRP layer (OR), and
+		 * bits 2/3 enable the second (OR). Each layer combines two
+		 * 4-bit GVRAM planes. Previously PX68K checked only bit 0
+		 * (0x01) for the first layer and bit 2 (0x04) for the second.
+		 * This fixes missing graphics in Etoile Princesse and passed
+		 * our Dracula, Gradius II and SSF2 regression scenes.
+		 * The alternative is to restore the original 0x01/0x04
+		 * checks if hardware evidence contradicts paired-bit OR.
+		 * Keep priority ordering, transparency and blending unchanged.
+		 */
 		opaq = 1; /* 256 colors */
 		if ( (VCReg1[1]&3) <= ((VCReg1[1]>>4)&3) ) /* 同じ値の時は、GRP0が優先（ドラスピ） */
 		{
-			if ( (VCReg2[0]&0x10)&&(VCReg2[1]&1) )
+			if ( (VCReg2[0]&0x10)&&(VCReg2[1]&0x03) )
 			{
 				Grp_DrawLine8SP(0); /* 半透明の下準備 */
 				tron = pron = 1;
 			}
-			if (VCReg2[1]&4)
+			if (VCReg2[1]&0x0c)
 			{
 				if ( ((VCReg2[0]&0x1e)==0x1e)&&(tron) )
 					Grp_DrawLine8TR(1, 1);
@@ -435,7 +446,7 @@ void WinDraw_DrawLine(void)
 				opaq = 0;
 				gon=1;
 			}
-			if (VCReg2[1]&1)
+			if (VCReg2[1]&0x03)
 			{
 				if ( (VCReg2[0]&0x14)!=0x14 )
 				{
@@ -446,12 +457,12 @@ void WinDraw_DrawLine(void)
 		}
 		else
 		{
-			if ( (VCReg2[0]&0x10)&&(VCReg2[1]&1) )
+			if ( (VCReg2[0]&0x10)&&(VCReg2[1]&0x03) )
 			{
 				Grp_DrawLine8SP(1); /* 半透明の下準備 */
 				tron = pron = 1;
 			}
-			if (VCReg2[1]&4)
+			if (VCReg2[1]&0x0c)
 			{
 				if ( ((VCReg2[0]&0x1e)==0x1e)&&(tron) )
 					Grp_DrawLine8TR(0, 1);
@@ -462,7 +473,7 @@ void WinDraw_DrawLine(void)
 				opaq = 0;
 				gon=1;
 			}
-			if (VCReg2[1]&1)
+			if (VCReg2[1]&0x03)
 			{
 				if ( (VCReg2[0]&0x14)!=0x14 )
 				{
@@ -645,11 +656,13 @@ void WinDraw_DrawLine(void)
 		if ( ((VCReg2[0]&0x5d)==0x1d)&&(!(VCReg1[0]&0x03))&&(tron) )
 			WinDraw_DrawTextLineTR(opaq);
 		else
-			/* FIXME: Verify corrent td param here. Games like Overdriver
-			 * expect a td value of 1 here, yet the condition
-			 * ((VCReg1[0]&0x30)>=0x10) returns 0 for this game causing
-			 * grp > text. See stage 2 of the game. */
-			WinDraw_DrawTextLine(opaq, ((VCReg1[0]&0x30)>=0x10));
+			/* Keep text transparency testing enabled at this priority.
+			 * Overdriver stage 2 needs td=1 to composite the water
+			 * with the GRP mountains and rain. The previous condition,
+			 * ((VCReg1[0] & 0x30) >= 0x10), selected td=0 there and
+			 * obscured the GRP scene. Revisit this choice if a game
+			 * demonstrates different hardware behaviour. */
+			WinDraw_DrawTextLine(opaq, 1);
 		opaq = 0;
 		tdrawed = 1;
 	}
