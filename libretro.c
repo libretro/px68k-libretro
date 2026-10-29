@@ -2014,16 +2014,7 @@ static int load_zip_content(const char *path)
       RPATH[0] = '\0';
       return 0;
    }
-   /* The HDF lives in memory: SASI writes are kept for the session only. */
-   if (log_cb)
-      log_cb(RETRO_LOG_WARN, "[PX68K] HDD image %s is inside a ZIP: changes to it are not saved.\n", name);
-   if (environ_cb)
-   {
-      struct retro_message msg;
-      msg.msg    = "HDD image is inside a ZIP: changes are not saved";
-      msg.frames = 360;
-      environ_cb(RETRO_ENVIRONMENT_SET_MESSAGE, &msg);
-   }
+
    snprintf(cmdline, sizeof(cmdline), "px68k -h \"%s\"", RPATH);
    parse_cmdline(cmdline);
    return 1;
