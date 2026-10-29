@@ -24,6 +24,7 @@
 #define ZIP_SLOTS              32
 #define ZIP_MEMBERS            4
 #define ZIP_HANDLES            8
+#define ZIP_BLOCK_SIZE         4096
 /* Largest member inflated: SASI addresses 2^21 256-byte sectors, and no
  * floppy format here comes near 8 MiB. */
 #define ZIP_HDF_MAX            ((uint64_t)512 * 1024 * 1024)
@@ -35,6 +36,9 @@ struct zip_member
    size_t   size;
    int      refs;
    int      resident;
+   unsigned char *dirty;
+   size_t blocks;
+   char overlay[1024];
    char     path[MAX_PATH];
 };
 
@@ -61,6 +65,154 @@ static int                      zip_pinned = -1;
 static struct zip_open_archive  zo        = { NULL, NULL, { NULL, NULL }, { 0, 0 }, -1 };
 static struct zip_member        zip_members[ZIP_MEMBERS];
 static struct zip_handle        zip_handles[ZIP_HANDLES];
+
+static char zip_save_dir[768];
+void px68k_zip_set_save_directory(const char *path)
+{
+   if (!path) path = "";
+   strncpy(zip_save_dir,path,sizeof(zip_save_dir)-1);
+   zip_save_dir[sizeof(zip_save_dir)-1] = 0;
+}
+static uint32_t zip_hash(uint32_t h, const char *p)
+{
+   while (*p) { h ^= (unsigned char)*p++; h *= 16777619UL; }
+   return h;
+}
+static void zip_overlay_name(struct zip_member *m, int slot, const char *name)
+{
+   uint32_t hash;
+   size_t n, i, len;
+   const char *sep="/";
+   const char *base=name;
+   const char *p;
+   char label[65];
+   char legacy[1024];
+   FILE *f;
+   if (!zip_save_dir[0]) return;
+   hash=zip_hash(2166136261UL,zip_archives[slot]);
+   hash=zip_hash(hash,name);
+   for (p=name;*p;p++)
+      if (*p=='/' || *p=='\\') base=p+1;
+   len=strlen(base);
+   if (len>64) len=64;
+   for (i=0;i<len;i++)
+   {
+      unsigned char ch=(unsigned char)base[i];
+      if (ch<32 || ch==127 || ch=='<' || ch=='>' || ch==':' ||
+          ch=='"' || ch=='/' || ch=='\\' || ch=='|' ||
+          ch=='?' || ch=='*') label[i]='_';
+      else label[i]=(char)ch;
+   }
+   label[len]=0;
+   if (!len) strcpy(label,"disk");
+   n=strlen(zip_save_dir);
+   if (zip_save_dir[n-1]=='/' || zip_save_dir[n-1]=='\\') sep="";
+   snprintf(m->overlay,sizeof(m->overlay),"%s%s%s-%08lx-%lu.pxo",
+            zip_save_dir,sep,label,(unsigned long)hash,(unsigned long)m->size);
+   /* Existing overlays retain their data when upgrading the naming scheme.
+    * If migration fails, continue using the original save filename. */
+   snprintf(legacy,sizeof(legacy),"%s%sPX68K-%08lx-%lu.pxo",
+            zip_save_dir,sep,(unsigned long)hash,(unsigned long)m->size);
+   f=fopen(m->overlay,"rb");
+   if (f) { fclose(f); return; }
+   f=fopen(legacy,"rb");
+   if (f)
+   {
+      fclose(f);
+      if (rename(legacy,m->overlay)!=0)
+      {
+         strncpy(m->overlay,legacy,sizeof(m->overlay)-1);
+         m->overlay[sizeof(m->overlay)-1]=0;
+      }
+   }
+}
+static int zip_put32(FILE *f,uint32_t v)
+{
+   unsigned char b[4];
+   b[0]=(unsigned char)v; b[1]=(unsigned char)(v>>8);
+   b[2]=(unsigned char)(v>>16); b[3]=(unsigned char)(v>>24);
+   return fwrite(b,1,4,f)==4;
+}
+static int zip_get32(FILE *f,uint32_t *v)
+{
+   unsigned char b[4];
+   if (fread(b,1,4,f)!=4) return 0;
+   *v=(uint32_t)b[0]|((uint32_t)b[1]<<8)|((uint32_t)b[2]<<16)|((uint32_t)b[3]<<24);
+   return 1;
+}
+/* Append-only changed-block journal. Each record replaces one 4 KiB block.
+ * Truncated tail records are ignored, preserving previous valid writes. */
+static void zip_overlay_load(struct zip_member *m)
+{
+   FILE *f;
+   uint32_t magic, size, block, index, bytes;
+   unsigned char data[ZIP_BLOCK_SIZE];
+   if (!m->overlay[0] || !(f=fopen(m->overlay,"rb"))) return;
+   if (!zip_get32(f,&magic) || !zip_get32(f,&size) ||
+       !zip_get32(f,&block) || magic!=0x31584f50UL ||
+       size!=(uint32_t)m->size || block!=ZIP_BLOCK_SIZE)
+   { fclose(f); return; }
+   while (zip_get32(f,&index) && zip_get32(f,&bytes))
+   {
+      size_t off;
+      if (index>=m->blocks || bytes==0 || bytes>ZIP_BLOCK_SIZE) break;
+      off=(size_t)index*ZIP_BLOCK_SIZE;
+      if (bytes>m->size-off || fread(data,1,bytes,f)!=bytes) break;
+      memcpy(m->data+off,data,bytes);
+   }
+   fclose(f);
+}
+static int zip_overlay_flush(struct zip_member *m)
+{
+   FILE *f;
+   size_t i, off, bytes;
+   int fresh = 0;
+   uint32_t magic, size, block;
+   if (!m->dirty || !m->overlay[0]) return 1;
+   for (i=0;i<m->blocks && !m->dirty[i];i++);
+   if (i==m->blocks) return 1;
+   f=fopen(m->overlay,"rb");
+   if (!f) fresh=1;
+   else
+   {
+      if (!zip_get32(f,&magic) || !zip_get32(f,&size) ||
+          !zip_get32(f,&block) || magic!=0x31584f50UL ||
+          size!=(uint32_t)m->size || block!=ZIP_BLOCK_SIZE)
+      {
+         fclose(f);
+         return 0; /* Never append to an incompatible overlay. */
+      }
+      fclose(f);
+   }
+   f=fopen(m->overlay,"ab");
+   if (!f) return 0;
+   if (fresh && (!zip_put32(f,0x31584f50UL) ||
+                 !zip_put32(f,(uint32_t)m->size) ||
+                 !zip_put32(f,ZIP_BLOCK_SIZE))) goto fail;
+   for (i=0;i<m->blocks;i++)
+   {
+      if (!m->dirty[i]) continue;
+      off=i*ZIP_BLOCK_SIZE;
+      bytes=m->size-off;
+      if (bytes>ZIP_BLOCK_SIZE) bytes=ZIP_BLOCK_SIZE;
+      if (!zip_put32(f,(uint32_t)i) || !zip_put32(f,(uint32_t)bytes) ||
+          fwrite(m->data+off,1,bytes,f)!=bytes) goto fail;
+   }
+   if (fclose(f)!=0) return 0;
+   for (i=0;i<m->blocks;i++) m->dirty[i]=0;
+   return 1;
+fail:
+   fclose(f);
+   return 0;
+}
+static void zip_member_release(struct zip_member *m)
+{
+   zip_overlay_flush(m);
+   free(m->dirty);
+   free(m->data);
+   memset(m,0,sizeof(*m));
+}
+
 
 static const char *ext_of(const char *name)
 {
@@ -268,8 +420,7 @@ int px68k_zip_register_archive(const char *archive)
       if (zip_members[i].data && !zip_members[i].refs
             && px68k_zip_virtual_slot(zip_members[i].path) == slot)
       {
-         free(zip_members[i].data);
-         memset(&zip_members[i], 0, sizeof(zip_members[i]));
+         zip_member_release(&zip_members[i]);
       }
    free(zip_archives[slot]);
    zip_archives[slot] = copy;
@@ -290,8 +441,7 @@ void px68k_zip_reset(void)
       zip_handles[i].m = NULL;
    for (i = 0; i < ZIP_MEMBERS; i++)
    {
-      free(zip_members[i].data);
-      memset(&zip_members[i], 0, sizeof(zip_members[i]));
+      zip_member_release(&zip_members[i]);
    }
    for (i = 0; i < ZIP_SLOTS; i++)
    {
@@ -424,6 +574,11 @@ static struct zip_member *zip_member_get(const char *virtual_path)
    m->size     = size;
    m->refs     = 0;
    m->resident = resident;
+   m->blocks = (size + ZIP_BLOCK_SIZE - 1) / ZIP_BLOCK_SIZE;
+   m->dirty = (unsigned char*)calloc(m->blocks ? m->blocks : 1,1);
+   if (!m->dirty) { free(data); memset(m,0,sizeof(*m)); return NULL; }
+   zip_overlay_name(m,slot,member);
+   zip_overlay_load(m);
    strcpy(m->path, virtual_path);
    return m;
 }
@@ -493,8 +648,7 @@ size_t px68k_zip_read(void *handle, void *data, size_t len)
    return len;
 }
 
-/* Writes land in the cached member only; they are gone after
- * px68k_zip_reset(). The image never grows. */
+/* Writes update the cached member and mark 4 KiB blocks for persistence. */
 size_t px68k_zip_write(void *handle, const void *data, size_t len)
 {
    struct zip_handle *h = (struct zip_handle*)handle;
@@ -502,6 +656,13 @@ size_t px68k_zip_write(void *handle, const void *data, size_t len)
       return 0;
    if (len > h->m->size - h->pos)
       len = h->m->size - h->pos;
+   if (len)
+   {
+      size_t first=h->pos/ZIP_BLOCK_SIZE;
+      size_t last=(h->pos+len-1)/ZIP_BLOCK_SIZE;
+      size_t i;
+      for (i=first;i<=last;i++) h->m->dirty[i]=1;
+   }
    memcpy(h->m->data + h->pos, data, len);
    h->pos += len;
    return len;
@@ -517,9 +678,9 @@ void px68k_zip_close(void *handle)
    struct zip_handle *h = (struct zip_handle*)handle;
    struct zip_member *m = h->m;
    h->m = NULL;
+   if (m) zip_overlay_flush(m);
    if (m && --m->refs <= 0 && !m->resident)
    {
-      free(m->data);
-      memset(m, 0, sizeof(*m));
+      zip_member_release(m);
    }
 }

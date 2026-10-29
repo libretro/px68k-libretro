@@ -14,6 +14,7 @@ extern "C" {
 
 int px68k_zip_register_archive(const char *archive);
 void px68k_zip_pin(int slot);
+void px68k_zip_set_save_directory(const char *path);
 void px68k_zip_reset(void);
 
 /* Sorted floppy (hdd == 0) or HDF (hdd != 0) members of an archive. A
