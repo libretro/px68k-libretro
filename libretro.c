@@ -2181,6 +2181,7 @@ void retro_init(void)
    else
       /* make retro_save_directory the same in case RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY is not implemented by the frontend */
       retro_save_directory = retro_system_directory;
+   px68k_zip_set_save_directory(retro_save_directory);
    
    /* If browse directory is defined use it for StartDir config */
    if (environ_cb(RETRO_ENVIRONMENT_GET_FILE_BROWSER_START_DIRECTORY, &browse_dir) && browse_dir)

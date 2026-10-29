@@ -69,21 +69,107 @@ static void ConvertCapital(char* buf)
 	}
 }
 
-static int GetDiskType(char* file)
+/* Identify floppy containers by structure before considering their names.
+ * No DIM signature is required: older DIM files can have an empty headerinfo.
+ * A size/track-map match is required to avoid mistaking raw sectors for DIM.
+ * Detection reads only the first 256 bytes; no extra disk buffer is needed. */
+static unsigned long FDD_LE32(const uint8_t *p)
 {
-	char tmp[8], *p;
-	int ret = FD_XDF;
-	p = strrchr(file, '.');
-	if ( p ) {
-		memset(tmp, 0, 8);
-		strncpy(tmp, p+1, 3);
-		ConvertCapital(tmp);
-		if ( (!strncmp(tmp, "D88", 3))||(!strncmp(tmp, "88D", 3)) )
-			ret = FD_D88;
-		else if ( !strncmp(tmp, "DIM", 3) )
-			ret = FD_DIM;
-	}
-	return ret;
+    return (unsigned long)p[0] | ((unsigned long)p[1] << 8) |
+           ((unsigned long)p[2] << 16) | ((unsigned long)p[3] << 24);
+}
+
+static int FDD_DetectDiskType(char *filename)
+{
+    static const unsigned int dim_track_size[10] =
+        {8192, 9216, 7680, 9216, 0, 0, 0, 0, 0, 9216};
+    uint8_t header[256];
+    void *fp;
+    int64_t length;
+    size_t got;
+    unsigned long expected, disk_size, offset, previous;
+    unsigned int i, tracks;
+    int d88_valid;
+    int fallback;
+    char tmp[8], *p;
+
+    fallback = FD_XDF;
+    p = strrchr(filename, '.');
+    if (p) {
+        memset(tmp, 0, sizeof(tmp));
+        strncpy(tmp, p + 1, 3);
+        ConvertCapital(tmp);
+        if (!strncmp(tmp, "D88", 3) || !strncmp(tmp, "88D", 3))
+            fallback = FD_D88;
+        else if (!strncmp(tmp, "DIM", 3))
+            fallback = FD_DIM;
+    }
+
+    fp = file_open(filename);
+    if (!fp) return fallback;
+    file_seek(fp, 0, FSEEK_END);
+    length = file_tell(fp);
+    file_seek(fp, 0, FSEEK_SET);
+    got = file_lread(fp, header, sizeof(header));
+    file_close(fp);
+    if (got != sizeof(header) || length <= 0) return fallback;
+
+    /* D88: validate size and ordered, in-range track offsets. */
+    disk_size = FDD_LE32(header + 28);
+    d88_valid = (length >= 688 && disk_size == (unsigned long)length &&
+                 header[26] <= 1 && (header[27] == 0 ||
+                 header[27] == 0x10 || header[27] == 0x20 ||
+                 header[27] == 0x30));
+    /* The full D88 track table is 164 * 4 bytes; examine it only
+     * after the fixed header passes basic checks. */
+    if (d88_valid) {
+        uint8_t table[656];
+        fp = file_open(filename);
+        if (fp) {
+            file_seek(fp, 32, FSEEK_SET);
+            got = file_lread(fp, table, sizeof(table));
+            file_close(fp);
+        } else got = 0;
+        if (got != sizeof(table)) d88_valid = 0;
+        previous = 0;
+        tracks = 0;
+        if (d88_valid) {
+            for (i = 0; i < 164; ++i) {
+                offset = FDD_LE32(table + i * 4);
+                if (!offset) continue;
+                if (offset < 688 || offset >= disk_size ||
+                    (previous && offset <= previous)) {
+                    d88_valid = 0;
+                    break;
+                }
+                previous = offset;
+                ++tracks;
+            }
+            if (!tracks) d88_valid = 0;
+        }
+        if (d88_valid) return FD_D88;
+    }
+
+    /* DIM: 256-byte header + precisely the tracks marked present.
+     * Track flags are conventionally 0 or 1, but accept any nonzero
+     * value as the existing DIM loader does. */
+    if (header[0] < 10 && dim_track_size[header[0]]) {
+        expected = 256;
+        tracks = 0;
+        for (i = 1; i <= 170; ++i) {
+            if (header[i]) {
+                expected += dim_track_size[header[0]];
+                ++tracks;
+            }
+        }
+        if (tracks && expected == (unsigned long)length)
+            return FD_DIM;
+    }
+
+    /* The existing XDF handler supports 77 cylinders, two heads,
+     * eight 1024-byte sectors. Do not misroute other raw geometries. */
+    if (length == 1261568) return FD_XDF;
+    return fallback;
 }
 
 static uint32_t FASTCALL FDD_Int(uint8_t irq)
@@ -96,7 +182,9 @@ static uint32_t FASTCALL FDD_Int(uint8_t irq)
 
 void FDD_SetFD(int drive, char* filename, int readonly)
 {
-	int type = GetDiskType(filename);
+	int type;
+	if ( (drive<0)||(drive>3) ) return;
+	type = FDD_DetectDiskType(filename);
 	if ( (drive<0)||(drive>3) ) return;
 	FDD_EjectFD(drive);
 	if ( SetFD[type] ) {
