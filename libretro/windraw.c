@@ -1219,6 +1219,230 @@ void WinDraw_DrawMenu(int menu_state, int mkey_pos, int mkey_y, int *mval_y)
 }
 
 /* Number of explorer rows available without an expanded filename. */
+/* Optional MAME software-list labels. Original filenames remain authoritative. */
+#include "mame_utf8_sjis.h"
+extern int px68k_mame_names_mode(void);
+extern const char *px68k_mame_names_system_dir(void);
+
+typedef struct mame_label_entry {
+   char *shortname;
+   char *description;
+   char *japanese;
+   struct mame_label_entry *next;
+} mame_label_entry;
+static mame_label_entry *mame_labels[1024];
+static int mame_labels_loaded;
+static char mame_labels_dir[4096];
+
+static unsigned mame_label_hash(const char *s)
+{
+   unsigned h = 5381;
+   while (*s) h = ((h << 5) + h) ^ (unsigned char)*s++;
+   return h % 1024;
+}
+
+static void mame_labels_clear(void)
+{
+   int i;
+   for (i = 0; i < 1024; ++i)
+   {
+      mame_label_entry *e = mame_labels[i];
+      while (e)
+      {
+         mame_label_entry *next = e->next;
+         free(e->shortname);
+         free(e->description);
+         free(e->japanese);
+         free(e);
+         e = next;
+      }
+      mame_labels[i] = NULL;
+   }
+}
+
+static char *mame_label_dup(const char *s, size_t n)
+{
+   char *r = (char *)malloc(n + 1);
+   if (r) { memcpy(r, s, n); r[n] = 0; }
+   return r;
+}
+
+static void mame_label_decode(char *s)
+{
+   char *r = s, *w = s;
+   while (*r)
+   {
+      if (*r == '&')
+      {
+         const char *entity[] = { "&amp;", "&lt;", "&gt;", "&quot;", "&apos;" };
+         const char chars[] = { '&', '<', '>', '"', '\'' };
+         int i;
+         for (i = 0; i < 5; ++i)
+            if (!strncmp(r, entity[i], strlen(entity[i]))) break;
+         if (i < 5) { *w++ = chars[i]; r += strlen(entity[i]); continue; }
+      }
+      *w++ = *r++;
+   }
+   *w = 0;
+}
+
+/* Convert UTF-8 MAME metadata into the Shift-JIS expected by draw_str(). */
+static unsigned short mame_unicode_sjis(unsigned u)
+{
+   size_t lo = 0, hi = sizeof(mame_unicode_map)/sizeof(mame_unicode_map[0]);
+   if (u >= 0x20 && u <= 0x7e) return (unsigned short)u;
+   if (u >= 0xff61 && u <= 0xff9f) return (unsigned short)(0xa1 + u - 0xff61);
+   while (lo < hi)
+   {
+      size_t mid = lo + (hi-lo)/2;
+      if (mame_unicode_map[mid].unicode < u) lo = mid+1;
+      else hi = mid;
+   }
+   if (lo < sizeof(mame_unicode_map)/sizeof(mame_unicode_map[0]) && mame_unicode_map[lo].unicode == u)
+      return mame_unicode_map[lo].sjis;
+   return (unsigned short)'?';
+}
+
+static char *mame_utf8_to_sjis(const char *src)
+{
+   size_t len = strlen(src), i = 0, out = 0;
+   char *dst = (char *)malloc(len*2 + 1);
+   if (!dst) return NULL;
+   while (i < len)
+   {
+      unsigned c = (unsigned char)src[i++], u = c;
+      unsigned short sj;
+      int more = 0, j, valid = 1;
+      if (c >= 0xc2 && c <= 0xdf) { u = c & 31; more = 1; }
+      else if (c >= 0xe0 && c <= 0xef) { u = c & 15; more = 2; }
+      else if (c >= 0xf0 && c <= 0xf4) { u = c & 7; more = 3; }
+      else if (c >= 0x80) { u = '?'; }
+      for (j = 0; j < more; ++j)
+      {
+         unsigned char b = (unsigned char)src[i];
+         if (!b || (b & 0xc0) != 0x80) { valid = 0; break; }
+         u = (u << 6) | (b & 63);
+         ++i;
+      }
+      if (!valid || (more == 1 && u < 0x80) || (more == 2 && u < 0x800) ||
+          (more == 3 && u < 0x10000) || (u >= 0xd800 && u <= 0xdfff)) u = '?';
+      sj = mame_unicode_sjis(u);
+      if (sj > 0xff) { dst[out++] = (char)(sj >> 8); dst[out++] = (char)(sj & 255); }
+      else dst[out++] = (char)sj;
+   }
+   dst[out] = 0;
+   return dst;
+}
+
+static void mame_labels_load(void)
+{
+   const char *dir = px68k_mame_names_system_dir();
+   char path[4096], line[8192], shortname[256];
+   mame_label_entry *current = NULL;
+   FILE *f;
+   if (!dir || !*dir) return;
+   if (mame_labels_loaded && !strcmp(mame_labels_dir, dir)) return;
+   mame_labels_clear();
+   mame_labels_loaded = 1;
+   snprintf(mame_labels_dir, sizeof(mame_labels_dir), "%s", dir);
+   if (strlen(dir) + 24 >= sizeof(path)) return;
+   snprintf(path, sizeof(path), "%s/MAME/hash/x68k_flop.xml", dir);
+   f = fopen(path, "rb");
+   if (!f) return;
+   shortname[0] = 0;
+   while (fgets(line, sizeof(line), f))
+   {
+      char *a, *b;
+      a = strstr(line, "<software ");
+      if (a)
+      {
+         a = strstr(a, "name=\"");
+         shortname[0] = 0;
+         current = NULL;
+         if (a)
+         {
+            a += 6; b = strchr(a, '"');
+            if (b && (size_t)(b-a) < sizeof(shortname))
+            { memcpy(shortname, a, (size_t)(b-a)); shortname[b-a] = 0; }
+         }
+      }
+      a = strstr(line, "<description>");
+      if (a && shortname[0])
+      {
+         a += 13; b = strstr(a, "</description>");
+         if (b && b > a && b-a < 1024)
+         {
+            unsigned h = mame_label_hash(shortname);
+            mame_label_entry *e = (mame_label_entry *)calloc(1, sizeof(*e));
+            if (e)
+            {
+               e->shortname = mame_label_dup(shortname, strlen(shortname));
+               e->description = mame_label_dup(a, (size_t)(b-a));
+               if (e->shortname && e->description)
+               {
+                  mame_label_decode(e->description);
+                  { char *converted = mame_utf8_to_sjis(e->description);
+                    if (converted) { free(e->description); e->description = converted; }
+                    else { free(e->description); e->description = mame_label_dup(shortname, strlen(shortname)); } }
+                  current = e;
+                  e->next = mame_labels[h]; mame_labels[h] = e;
+               }
+               else { free(e->shortname); free(e->description); free(e); }
+            }
+         }
+         shortname[0] = 0;
+      }
+      a = strstr(line, "<info ");
+      if (a && current && strstr(a, "name=\"alt_title\""))
+      {
+         a = strstr(a, "value=\"");
+         if (a)
+         {
+            a += 7; b = strchr(a, '"');
+            if (b && b > a && b-a < 1024)
+            {
+               char *raw = mame_label_dup(a, (size_t)(b-a));
+               if (raw)
+               {
+                  char *converted;
+                  mame_label_decode(raw);
+                  converted = mame_utf8_to_sjis(raw);
+                  if (converted) { free(current->japanese); current->japanese = converted; }
+                  free(raw);
+               }
+            }
+         }
+      }
+      if (strstr(line, "</software>")) { shortname[0] = 0; current = NULL; }
+   }
+   fclose(f);
+}
+
+static const char *mame_explorer_name(const char *name, int directory)
+{
+   size_t n;
+   char key[256];
+   unsigned h;
+   mame_label_entry *e;
+   static char result[2048];
+   int mode = px68k_mame_names_mode();
+   if (directory || !mode) return name;
+   n = strlen(name);
+   if (n <= 4 || n >= sizeof(key) + 4 || strcasecmp(name+n-4, ".zip")) return name;
+   mame_labels_load();
+   n -= 4;
+   if (n >= sizeof(key)) return name;
+   memcpy(key, name, n); key[n] = 0;
+   h = mame_label_hash(key);
+   for (e = mame_labels[h]; e; e = e->next)
+      if (!strcmp(e->shortname, key))
+      {
+         snprintf(result, sizeof(result), "%s.zip", (mode == 2 && e->japanese && *e->japanese) ? e->japanese : e->description);
+         return result;
+      }
+   return name;
+}
+
 int WinDraw_ExplorerRows(void)
 {
    int fs = Config.MenuFontSize ? 24 : 16;
@@ -1241,7 +1465,7 @@ void WinDraw_DrawMenufile(struct menu_flist *mfl)
    selected = mfl->ptr + mfl->y;
    if (selected >= 0 && selected < mfl->num)
    {
-      const char *name = mfl->name[selected];
+      const char *name = mame_explorer_name(mfl->name[selected], mfl->type[selected]);
       int directory = mfl->type[selected];
       menu_explorer_fit(ptr, sizeof(ptr), name, available - (directory ? fs : 0),
                         (!strncmp(mfl->dir[0], "zipbrowse://", 12) ||
@@ -1267,7 +1491,7 @@ void WinDraw_DrawMenufile(struct menu_flist *mfl)
    menu_box(left, top, right, bottom, 0xffff);
    for (i = 0; i < rows && i + mfl->ptr < mfl->num; ++i)
    {
-      const char *name = mfl->name[i + mfl->ptr];
+      const char *name = mame_explorer_name(mfl->name[i + mfl->ptr], mfl->type[i + mfl->ptr]);
       int directory = mfl->type[i + mfl->ptr];
       p6m.mcolor = (i == mfl->y) ? 0 : 0xffff;
       p6m.mbcolor = (i == mfl->y) ? 0xffff : 0x1;
@@ -1282,7 +1506,7 @@ void WinDraw_DrawMenufile(struct menu_flist *mfl)
    }
    if (preview && selected < mfl->num)
    {
-      const unsigned char *scan = (const unsigned char *)mfl->name[selected];
+      const unsigned char *scan = (const unsigned char *)mame_explorer_name(mfl->name[selected], mfl->type[selected]);
       int row = (bottom / fs) - preview_rows;
       int maxrow = row + preview_rows - 1;
       int x = text_x;
