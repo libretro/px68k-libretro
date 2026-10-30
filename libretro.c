@@ -154,6 +154,22 @@ static int menu_mode = menu_out;
 
 static retro_video_refresh_t video_cb;
 static retro_environment_t environ_cb;
+/* Explorer-only setting: no changes to archive paths or disk handling. */
+int px68k_mame_names_mode(void)
+{
+   struct retro_variable var = { "px68k_mame_names", NULL };
+   if (!environ_cb || !environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) || !var.value) return 0;
+   if (!strcmp(var.value, "japanese")) return 2;
+   if (!strcmp(var.value, "english") || !strcmp(var.value, "enabled")) return 1;
+   return 0;
+}
+
+const char *px68k_mame_names_system_dir(void)
+{
+   return retro_system_directory;
+}
+
+
 static retro_input_poll_t input_poll_cb;
 static retro_set_rumble_state_t rumble_cb;
 retro_input_state_t input_state_cb;

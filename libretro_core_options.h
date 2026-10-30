@@ -356,6 +356,21 @@ struct retro_core_option_v2_definition option_defs_us[] = {
    },
 #endif
    {
+      "px68k_mame_names",
+      "MAME Software List Names",
+      NULL,
+      "Show English descriptions or Japanese alt_title labels from MAME x68k_flop.xml for matching ZIP filenames in the internal explorer. Requires MAME/hash/x68k_flop.xml in the system directory.",
+      NULL,
+      "menu",
+      {
+         { "disabled", NULL },
+         { "english", "English" },
+         { "japanese", "Japanese" },
+         { NULL, NULL },
+      },
+      "disabled"
+   },
+   {
       "px68k_archive_floppies",
       "Auto Insert Floppies from Archive",
       NULL,
