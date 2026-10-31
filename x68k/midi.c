@@ -149,6 +149,10 @@ int MIDI_StateAction(StateMem *sm, int load, int data_only)
 }
 
 
+/* Dispatch one queued MIDI byte when the emulated UART finishes transmitting it. */
+static void MIDI_TransmitNext(void);
+void MIDI_Message(uint8_t mes);
+
 static uint32_t FASTCALL MIDI_Int(uint8_t irq)
 {
 	IRQH_IRQCallBack(irq);
@@ -168,6 +172,7 @@ void FASTCALL MIDI_Timer(uint32_t clk)
 		if (MIDI_Buffered)
 		{
 			MIDI_Buffered--;
+			MIDI_TransmitNext();
 			if ( (MIDI_Buffered<MIDIFIFOSIZE)&&(MIDI_IntEnable&0x40) )		/* Tx FIFO Empty Interrupt（エトプリ） */
 			{
 				MIDI_IntFlag |= 0x40;
@@ -505,6 +510,16 @@ uint8_t FASTCALL MIDI_Read(uint32_t adr)
 	return ret;
 }
 
+
+static void MIDI_TransmitNext(void)
+{
+	if (DBufPtrW != DBufPtrR)
+	{
+		uint8_t msg = DelayBuf[DBufPtrR].msg;
+		DBufPtrR = (DBufPtrR + 1) % MIDIDELAYBUF;
+		MIDI_Message(msg);
+	}
+}
 
 static void AddDelayBuf(uint8_t msg)
 {

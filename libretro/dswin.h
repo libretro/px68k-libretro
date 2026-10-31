@@ -3,6 +3,7 @@
 
 #include "common.h"
 
+void audio_buffer_reset(void);
 void DSound_Play(void);
 void DSound_Stop(void);
 void DSound_Send0(int32_t clock);

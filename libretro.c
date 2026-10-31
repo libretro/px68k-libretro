@@ -63,10 +63,8 @@
 #define MODE_HIGH_ACTUAL 55.46 /* floor((10*100*1000^2 / VSYNC_HIGH)) / 100 */
 #define MODE_NORM_ACTUAL 61.46 /* floor((10*100*1000^2 / VSYNC_NORM)) / 100 */
 #define MODE_HIGH_COMPAT 55.5  /* 31.50 kHz - commonly used  */
-#define MODE_NORM_COMPAT 59.94 /* 15.98 kHz - actual value should be ~61.46 fps. this is lowered to
-                     * reduced the chances of audio stutters due to mismatch
-                     * fps when vsync is used since most monitors are only capable
-                     * of upto 60Hz refresh rate. */
+#define MODE_NORM_COMPAT 60.00 /* Optional frontend-compatible 15 kHz presentation rate.
+                     * Native X68000 CRTC timing remains unchanged. */
 enum
 {
    MODES_ACTUAL,
@@ -89,7 +87,7 @@ uint32_t	VLINE = 0;
 uint32_t	vline = 0;
 
 #define SOUNDRATE 44100.0
-#define SNDSZ round(SOUNDRATE / FRAMERATE)
+/* Audio frame budget is accumulated fractionally to avoid rounding drift. */
 
 static int firstcall          = 1;
 
@@ -137,10 +135,54 @@ int CHANGEAV_TIMING       = 0; /* Separate change of geometry from change of ref
 int VID_MODE              = MODE_NORM; /* what framerate we start in */
 static float FRAMERATE;
 uint32_t libretro_supports_input_bitmasks = 0;
-unsigned int total_usec   = (unsigned int) -1;
 
 static int16_t soundbuf[1024 * 2];
+/* Legacy timer module linkage; no longer used to gate emulated frames. */
+unsigned int total_usec = (unsigned int)-1;
 static int soundbuf_size;
+static double audio_frame_fraction = 0.0;
+/* Experimental FinalBurn-style fixed audio output cadence: the sound
+ * renderer receives enough clock ticks to synthesize the output block
+ * implied by the advertised FPS. Emulated CPU/video clocks are unchanged. */
+static double fb_audio_clock_remainder = 0.0;
+static int fb_audio_last_mode = -1;
+static int fb_audio_last_adjust = -1;
+static int fb_audio_clock(int clock)
+{
+   double ratio, scaled;
+   int result;
+   if (!Config.AdjustFrameRates)
+   {
+      fb_audio_clock_remainder = 0.0;
+      fb_audio_last_mode = VID_MODE;
+      fb_audio_last_adjust = 0;
+      return clock;
+   }
+   if (fb_audio_last_mode != VID_MODE || fb_audio_last_adjust != Config.AdjustFrameRates)
+   {
+      fb_audio_clock_remainder = 0.0;
+      fb_audio_last_mode = VID_MODE;
+      fb_audio_last_adjust = Config.AdjustFrameRates;
+   }
+   ratio = (double)framerates[0][VID_MODE] / (double)framerates[1][VID_MODE];
+   scaled = (double)clock * ratio + fb_audio_clock_remainder;
+   result = (int)scaled;
+   fb_audio_clock_remainder = scaled - (double)result;
+   return result;
+}
+
+static int next_audio_frame_size(void)
+{
+   int frames;
+   if (FRAMERATE <= 0.0f)
+      return 0;
+   audio_frame_fraction += (double)SOUNDRATE / (double)FRAMERATE;
+   frames = (int)audio_frame_fraction;
+   audio_frame_fraction -= frames;
+   if (frames > 1024) frames = 1024;
+   if (frames < 0) frames = 0;
+   return frames;
+}
 
 uint16_t *videoBuffer;
 
@@ -1215,7 +1257,7 @@ static int pmain(int argc, char *argv[])
    SRAM_Init();
    /* FIXME: actually, this sets initial register values rather than suppose to set soft-reset values */
    WinX68k_Reset();
-   Timer_Init();
+
 
    MIDI_Init();
    MIDI_SetMimpiMap(Config.ToneMapFile);	/* ToneMap file usage */
@@ -1559,6 +1601,12 @@ static void update_variables(int running)
          opt_analog = true;
    }
 
+   /* Read on every variable update: ADPCM_Update checks this each audio block. */
+   var.key   = "px68k_adpcm_lpf";
+   var.value = NULL;
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+      Config.Sound_LPF = strcmp(var.value, "disabled") != 0;
+
    var.key    = "px68k_adpcm_vol";
    var.value  = NULL;
 
@@ -1713,16 +1761,6 @@ static void update_variables(int running)
          Config.VbtnSwap = 1;
    }
 
-   var.key    = "px68k_no_wait_mode";
-   var.value  = NULL;
-
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      if (!strcmp(var.value, "disabled"))
-         Config.NoWaitMode = 0;
-      else if (!strcmp(var.value, "enabled"))
-         Config.NoWaitMode = 1;
-   }
 
    var.key    = "px68k_frameskip";
    var.value  = NULL;
@@ -1768,16 +1806,6 @@ static void update_variables(int running)
          CHANGEAV_TIMING = CHANGEAV_TIMING || Config.AdjustFrameRates != temp;
    }
 
-   var.key   = "px68k_audio_desync_hack";
-   var.value = NULL;
-
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      if (!strcmp(var.value, "disabled"))
-         Config.AudioDesyncHack = 0;
-      else if (!strcmp(var.value, "enabled"))
-         Config.AudioDesyncHack = 1;
-   }
 
    var.key   = "px68k_text_off";
    var.value = NULL;
@@ -1842,26 +1870,6 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
    struct retro_system_timing timing = { FRAMERATE, SOUNDRATE };
    info->geometry                    = geom;
    info->timing                      = timing;
-}
-
-static void frame_time_cb(retro_usec_t usec)
-{
-   total_usec += usec;
-   /* -1 is reserved as an error code for unavailable a la stdlib clock() */
-   if (total_usec == (unsigned int) -1)
-      total_usec = 0;
-}
-
-static void setup_frame_time_cb(void)
-{
-   struct retro_frame_time_callback cb;
-
-   cb.callback   = frame_time_cb;
-   cb.reference  = ceil(1000000 / FRAMERATE);
-   if (!environ_cb(RETRO_ENVIRONMENT_SET_FRAME_TIME_CALLBACK, &cb))
-      total_usec = (unsigned int) -1;
-   else if (total_usec == (unsigned int) -1)
-      total_usec = 0;
 }
 
 /* TODO/FIXME - implement savestates */
@@ -2100,6 +2108,7 @@ void retro_unload_game(void)
     *   - FDD_Init() zeroes the FDD hardware struct and the image pointers.
     *   - Config FDD/HD paths are cleared so nothing is re-mounted from a
     *     stale slot. */
+   audio_buffer_reset();
    FDD_Cleanup();
    FDD_Init();
    for (_d = 0; _d < 2;  _d++) Config.FDDImage[_d][0] = '\0';
@@ -2235,11 +2244,12 @@ void retro_init(void)
    memset(Core_old_Key_State, 0, sizeof(Core_old_Key_State));
 
    FRAMERATE = framerates[Config.AdjustFrameRates][VID_MODE];
-   setup_frame_time_cb();
+
 }
 
 void retro_deinit(void)
 {
+   audio_buffer_reset();
    SRAM_UpdateBoot();
 
    OPM_Cleanup();
@@ -2267,6 +2277,7 @@ void retro_deinit(void)
 
 void retro_reset(void)
 {
+   audio_buffer_reset();
    WinX68k_Reset();
    if (Config.MIDI_SW && Config.MIDI_Reset)
 	   MIDI_Reset();
@@ -2474,6 +2485,7 @@ static void handle_retrok(void)
          CHANGEAV  = 1;
          menu_mode = menu_enter;
          midi_output_panic();
+         audio_buffer_reset();
          DSound_Stop();
       }
       else
@@ -2481,6 +2493,7 @@ static void handle_retrok(void)
          CHANGEAV  = 1;
          retrow    = oldrw;
          retroh    = oldrh;
+         audio_buffer_reset();
          DSound_Play();
          menu_mode = menu_out;
       }
@@ -2646,7 +2659,7 @@ static void WinX68k_Exec(void)
 
       if (clk_count >= clk_next)
       {
-         MIDI_DelayOut((Config.MIDIAutoDelay)?(Config.BufferSize*5):Config.MIDIDelay);
+         /* MIDI output is now paced by the emulated 31.25-kbit/s UART in MIDI_Timer. */
          MFP_TimerA();
          if ((MFP[MFP_AER] & 0x40) && (vline == CRTC_IntLine))
             MFP_Int(1);
@@ -2689,7 +2702,7 @@ static void WinX68k_Exec(void)
             MouseIntCnt = 0;
             SCC_IntCheck();
          }
-         DSound_Send0(clk_line);
+         DSound_Send0(fb_audio_clock(clk_line));
 
          vline++;
          clk_next  = (clk_total*(vline+1))/VLINE_TOTAL;
@@ -2754,47 +2767,23 @@ void retro_run(void)
       firstcall     = 0;
       /* Initialization done */
       update_variables(0);
-      soundbuf_size = SNDSZ;
+      audio_frame_fraction = 0.0;
+      soundbuf_size = next_audio_frame_size();
+      audio_buffer_reset();
       return;
    }
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE, &updated) && updated)
       update_variables(1);
 
-   if (CHANGEAV || CHANGEAV_TIMING)
-   {
-      if (CHANGEAV_TIMING)
-      {
-         struct retro_system_av_info system_av_info;
-         retro_get_system_av_info(&system_av_info);
-         FRAMERATE                            = framerates[Config.AdjustFrameRates][VID_MODE];
-         system_av_info.timing.fps            = FRAMERATE;
-         environ_cb(RETRO_ENVIRONMENT_SET_SYSTEM_AV_INFO, &system_av_info);
-         setup_frame_time_cb();
-         CHANGEAV_TIMING                      = 0;
-         CHANGEAV                             = 0;
-      }
-      if (CHANGEAV)
-      {
-         struct retro_system_av_info system_av_info;
-         system_av_info.geometry.base_width   = retrow;
-         system_av_info.geometry.base_height  = retroh;
-         system_av_info.geometry.aspect_ratio = (float)4.0/3.0;
-         environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &system_av_info);
-         CHANGEAV                             = 0;
-      }
-      soundbuf_size                           = SNDSZ;
-   }
-
+   /* Process frontend AV changes after emulation, immediately before
+    * video_cb(), so dimensions correspond to the frame being submitted. */
    input_poll_cb();
    rumble_frames();
 
    FDD_IsReading = 0;
 
-   if (     (menu_mode == menu_out)
-         && (  Config.AudioDesyncHack
-            || Config.NoWaitMode
-            || Timer_GetCount()))
+   if (menu_mode == menu_out)
    {
       Joystick_Update(0, -1, 0);
       Joystick_Update(0, -1, 1);
@@ -2879,25 +2868,54 @@ void retro_run(void)
       menu_mode = menu_in;
       if (ret == WUM_MENU_END)
       {
+         audio_buffer_reset();
          DSound_Play();
          menu_mode = menu_out;
       }
    }
 
-   if (Config.AudioDesyncHack)
+   /* The paused internal menu must not advance any synthesizer. */
+   if (soundbuf_size < 0) soundbuf_size = 0;
+   if (soundbuf_size > (int)(sizeof(soundbuf) / (2 * sizeof(soundbuf[0]))))
+      soundbuf_size = (int)(sizeof(soundbuf) / (2 * sizeof(soundbuf[0])));
+   if (menu_mode != menu_out)
+      memset(soundbuf, 0, (size_t)soundbuf_size * 4);
+   else
    {
-      int nsamples = audio_samples_avail();
-      if (nsamples > soundbuf_size)
-         audio_samples_discard(nsamples - soundbuf_size);
+      raudio_callback(soundbuf, NULL, soundbuf_size << 2);
+      px68k_sc55_mix(soundbuf, (size_t)soundbuf_size);
    }
-   raudio_callback(soundbuf, NULL, soundbuf_size << 2);
-   px68k_sc55_mix(soundbuf, (size_t)soundbuf_size);
 
    if (libretro_supports_midi_output && midi_cb.output_enabled())
       midi_cb.flush();
 
    audio_batch_cb((const int16_t*)soundbuf, soundbuf_size);
    /* TODO/FIXME - hardcoded pitch here */
+   if (CHANGEAV || CHANGEAV_TIMING)
+   {
+      struct retro_system_av_info av;
+      if (CHANGEAV_TIMING)
+      {
+         FRAMERATE = framerates[Config.AdjustFrameRates][VID_MODE];
+         audio_frame_fraction = 0.0;
+         retro_get_system_av_info(&av);
+         environ_cb(RETRO_ENVIRONMENT_SET_SYSTEM_AV_INFO, &av);
+
+         CHANGEAV_TIMING = 0;
+         CHANGEAV = 0;
+      }
+      else
+      {
+         struct retro_game_geometry geom;
+         geom.base_width = retrow;
+         geom.base_height = retroh;
+         geom.max_width = 800;
+         geom.max_height = 600;
+         geom.aspect_ratio = 4.0f / 3.0f;
+         environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &geom);
+         CHANGEAV = 0;
+      }
+   }
+   soundbuf_size = next_audio_frame_size();
    video_cb(videoBuffer, retrow, retroh, /*retrow*/ 800 << 1);
 }
-

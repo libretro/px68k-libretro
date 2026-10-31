@@ -57,7 +57,7 @@ void WinDraw_Init(void)
 	WinDraw_Pal16G = 0x07e0;
 	WinDraw_Pal16B = 0x001f;
 
-	ScrBuf         = malloc(800 * 600 * 2);
+	ScrBuf         = (uint16_t *)calloc(800 * 600, sizeof(uint16_t));
 }
 
 void WinDraw_Cleanup(void)
@@ -88,8 +88,11 @@ void FASTCALL WinDraw_Draw(void)
 
 	if (CHANGEAV==1)
 	{
-		retrow=TextDotX;
-		retroh=TextDotY;
+		/* Clamp only frontend presentation dimensions; do not alter CRTC state. */
+        retrow = TextDotX > 800 ? 800 : TextDotX;
+        retroh = TextDotY > 600 ? 600 : TextDotY;
+        if (!retrow) retrow = 1;
+        if (!retroh) retroh = 1;
 	}
 
 	videoBuffer = (uint16_t*)ScrBuf;
@@ -323,8 +326,12 @@ void WinDraw_DrawLine(void)
 {
 	int opaq, ton=0, gon=0, bgon=0, tron=0, pron=0, tdrawed=0;
 
-	if(VLINE==(uint32_t)-1)
-		return;
+	/* CRTC registers may contain transitional values while software changes
+     * video modes. Never let these values index beyond the host framebuffer
+     * or the 1024-entry dirty-line table. Preserve the emulated registers. */
+    if (!ScrBuf || VLINE >= 600 || VLINE >= 1024 ||
+        TextDotX == 0 || TextDotX > FULLSCREEN_WIDTH)
+        return;
 
 	/* Redraw clean scanlines only when a hardware sprite actually covers them.
 	 * This preserves the dirty-line fast path on the rest of the screen while
