@@ -1786,8 +1786,6 @@ static void update_variables(int running)
       else if (!strcmp(var.value, "enabled"))
          Config.AdjustFrameRates = 1;
 
-      if (log_cb && temp != Config.AdjustFrameRates)
-         log_cb(RETRO_LOG_INFO, "[PX68K PCM DIAG] option AdjustFrameRates %d -> %d running=%d mode=%d fps=%.5f\n", temp, Config.AdjustFrameRates, running, VID_MODE, (double)FRAMERATE);
       if (running) /* minimize the chance of resetting av_info during startup */
          CHANGEAV_TIMING = CHANGEAV_TIMING || Config.AdjustFrameRates != temp;
    }
@@ -2739,20 +2737,6 @@ void retro_run(void)
    static bool mbL = false, mbR = false;
    static uint32_t midi_last_run_time = 0;
    uint32_t midi_now = timeGetTime();
-   static unsigned long diag_frames = 0;
-   static int diag_last_mode = -1, diag_last_option = -1;
-   static uint32_t diag_last_w = 0, diag_last_h = 0;
-   static px68k_audio_diag diag_prev;
-   px68k_audio_diag diag_now;
-   if (diag_last_mode != VID_MODE || diag_last_option != Config.AdjustFrameRates ||
-       diag_last_w != retrow || diag_last_h != retroh)
-   {
-      if (log_cb)
-         log_cb(RETRO_LOG_INFO, "[PX68K PCM DIAG] transition frame=%lu mode=%d->%d adjust=%d->%d size=%ux%u->%ux%u fps=%.5f flags geom=%d timing=%d\n", diag_frames, diag_last_mode, VID_MODE, diag_last_option, Config.AdjustFrameRates, (unsigned)diag_last_w, (unsigned)diag_last_h, (unsigned)retrow, (unsigned)retroh, (double)FRAMERATE, CHANGEAV, CHANGEAV_TIMING);
-      diag_last_mode = VID_MODE; diag_last_option = Config.AdjustFrameRates;
-      diag_last_w = retrow; diag_last_h = retroh;
-   }
-
 
    /* RetroArch can stop calling retro_run while paused. On resume, silence
     * voices left active by the external MIDI device. The threshold is much
@@ -2899,8 +2883,6 @@ void retro_run(void)
          FRAMERATE = framerates[Config.AdjustFrameRates][VID_MODE];
          audio_frame_fraction = 0.0;
          retro_get_system_av_info(&av);
-         if (log_cb)
-            log_cb(RETRO_LOG_INFO, "[PX68K PCM DIAG] SET_SYSTEM_AV_INFO mode=%d adjust=%d fps=%.6f audio=%.1f size=%ux%u\n", VID_MODE, Config.AdjustFrameRates, av.timing.fps, av.timing.sample_rate, (unsigned)retrow, (unsigned)retroh);
          environ_cb(RETRO_ENVIRONMENT_SET_SYSTEM_AV_INFO, &av);
 
          CHANGEAV_TIMING = 0;
@@ -2914,20 +2896,10 @@ void retro_run(void)
          geom.max_width = 800;
          geom.max_height = 600;
          geom.aspect_ratio = 4.0f / 3.0f;
-         if (log_cb)
-            log_cb(RETRO_LOG_INFO, "[PX68K PCM DIAG] SET_GEOMETRY size=%ux%u mode=%d\n", (unsigned)retrow, (unsigned)retroh, VID_MODE);
          environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &geom);
          CHANGEAV = 0;
       }
    }
    soundbuf_size = next_audio_frame_size();
    video_cb(videoBuffer, retrow, retroh, /*retrow*/ 800 << 1);
-   diag_frames++;
-   if ((diag_frames % 120) == 0)
-   {
-      audio_diag_get(&diag_now);
-      if (log_cb)
-         log_cb(RETRO_LOG_INFO, "[PX68K PCM DIAG] frames=%lu mode=%d adjust=%d fps=%.5f target=%.3f/frame output=%d queued=%d peak=%d produced=%lu copied=%lu requested=%lu padded=%lu dropped=%lu resets=%lu calls=%lu delta: produced=%lu copied=%lu requested=%lu padded=%lu dropped=%lu resets=%lu\n", diag_frames, VID_MODE, Config.AdjustFrameRates, (double)FRAMERATE, (double)SOUNDRATE / (double)FRAMERATE, soundbuf_size, diag_now.queued, diag_now.peak_queued, diag_now.produced, diag_now.copied, diag_now.requested, diag_now.padded, diag_now.dropped, diag_now.resets, diag_now.calls, diag_now.produced - diag_prev.produced, diag_now.copied - diag_prev.copied, diag_now.requested - diag_prev.requested, diag_now.padded - diag_prev.padded, diag_now.dropped - diag_prev.dropped, diag_now.resets - diag_prev.resets);
-      diag_prev = diag_now;
-   }
 }

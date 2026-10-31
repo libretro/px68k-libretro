@@ -3,11 +3,6 @@
 
 #include "common.h"
 
-typedef struct px68k_audio_diag {
-   unsigned long produced, requested, copied, padded, dropped, resets, calls;
-   int queued, peak_queued;
-} px68k_audio_diag;
-void audio_diag_get(px68k_audio_diag *out);
 void audio_buffer_reset(void);
 void DSound_Play(void);
 void DSound_Stop(void);

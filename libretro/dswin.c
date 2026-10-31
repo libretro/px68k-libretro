@@ -38,13 +38,6 @@ static uint8_t pcmbuffer[PCMBUF_SIZE];
 #define PCM_CAPACITY (PCMBUF_SIZE / 4)
 static int pcm_read = 0, pcm_write = 0, pcm_count = 0;
 static int32_t snd_precounter = 0;
-static px68k_audio_diag diag;
-void audio_diag_get(px68k_audio_diag *out)
-{
-   if (!out) return;
-   *out = diag;
-   out->queued = pcm_count;
-}
 
 uint8_t *pbsp = pcmbuffer;
 uint8_t *pbrp = pcmbuffer, *pbwp = pcmbuffer;
@@ -52,7 +45,6 @@ uint8_t *pbep = &pcmbuffer[PCMBUF_SIZE];
 
 void audio_buffer_reset(void)
 {
-   diag.resets++;
    pcm_read = pcm_write = pcm_count = 0;
    pbrp = pbwp = pbsp;
    memset(pcmbuffer, 0, sizeof(pcmbuffer));
@@ -95,7 +87,6 @@ static void sound_send(int length)
          /* Preserve emulator time when producer outruns consumer. */
          int drop = length;
          if (drop > pcm_count) drop = pcm_count;
-         diag.dropped += (unsigned long)drop;
          pcm_read = (pcm_read + drop) % PCM_CAPACITY;
          pcm_count -= drop;
          pbrp = pbsp + pcm_read * 4;
@@ -105,8 +96,6 @@ static void sound_send(int length)
       OPM_Update((int16_t *)(pbsp + pcm_write * 4), n, pbsp, pbep);
       pcm_write = (pcm_write + n) % PCM_CAPACITY;
       pcm_count += n;
-      diag.produced += (unsigned long)n;
-      if (pcm_count > diag.peak_queued) diag.peak_queued = pcm_count;
       pbwp = pbsp + pcm_write * 4;
       length -= n;
    }
@@ -146,8 +135,6 @@ void raudio_callback(void *userdata, unsigned char *stream, int len)
    if (!out || len <= 0) return;
    /* Callers supply stereo frames. Handle any malformed byte remainder. */
    frames = len / 4;
-   diag.calls++;
-   diag.requested += (unsigned long)frames;
    while (frames > 0)
    {
       /* Never advance synthesizers to satisfy frontend demand.
@@ -158,12 +145,11 @@ void raudio_callback(void *userdata, unsigned char *stream, int len)
       if (n > pcm_count) n = pcm_count;
       if (n > frames) n = frames;
       if (n <= 0) break;
-      diag.copied += (unsigned long)n;
       memcpy(out, pbsp + pcm_read * 4, n * 4);
       out += n * 4;
       audio_samples_discard(n);
       frames -= n;
    }
-   if (frames > 0) { diag.padded += (unsigned long)frames; memset(out, 0, frames * 4); }
+   if (frames > 0) memset(out, 0, frames * 4);
    if (len & 3) memset((uint8_t *)userdata + (len & ~3), 0, len & 3);
 }
