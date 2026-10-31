@@ -270,6 +270,20 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "GM"
    },
    {
+      "px68k_adpcm_lpf",
+      "ADPCM Low-Pass Filter",
+      NULL,
+      "Enable the original ADPCM low-pass filter.",
+      NULL,
+      "audio",
+      {
+         { "enabled",  NULL },
+         { "disabled", NULL },
+         { NULL, NULL },
+      },
+      "enabled"
+   },
+   {
       "px68k_adpcm_vol",
       "ADPCM Volume",
       NULL,
@@ -489,20 +503,6 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "10"
    },
    {
-      "px68k_no_wait_mode",
-      "No Wait Mode",
-      NULL,
-      "When set to [enabled], core runs as fast as possible. Can cause audio desync. Setting this [disabled] is recommended.",
-      NULL,
-      "advanced",
-      {
-         { "disabled", NULL},
-         { "enabled",  NULL},
-         { NULL,       NULL },
-      },
-      "disabled"
-   },
-   {
       "px68k_frameskip",
       "Frames Skip",
       NULL,
@@ -526,24 +526,10 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "Full Frame"
    },
    {
-      "px68k_push_video_before_audio",
-      "Push Video before Audio",
-      NULL,
-      "Prioritize reducing video latency over audio latency and/or stuttering.",
-      NULL,
-      "advanced",
-      {
-         { "disabled", NULL},
-         { "enabled",  NULL},
-         { NULL,       NULL },
-      },
-      "disabled"
-   },
-   {
       "px68k_adjust_frame_rates",
       "Adjust Frame Rates",
       NULL,
-      "For compatibility with modern displays, slightly adjust frame rates reported to frontend in order to reduce the chances of audio stuttering.  Disable to use actual frame rates.",
+      "For compatibility with modern displays, changes the 15KHz mode from 61.46 to 60Hz. Disable to get the real machine timing.",
       NULL,
       "advanced",
       {
@@ -552,20 +538,6 @@ struct retro_core_option_v2_definition option_defs_us[] = {
          { NULL,       NULL },
       },
       "enabled"
-   },
-   {
-      "px68k_audio_desync_hack",
-      "Audio Desync Hack",
-      NULL,
-      "Prevents audio from desynchronizing by simply discarding any audio samples generated past the requested amount per frame slice.  Forces 'No Wait Mode' to [enabled], use appropriate frontend settings to properly throttle content.",
-      NULL,
-      "advanced",
-      {
-         { "disabled", NULL},
-         { "enabled",  NULL},
-         { NULL,       NULL },
-      },
-      "disabled"
    },
    {
       "px68k_text_off",

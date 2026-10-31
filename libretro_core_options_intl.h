@@ -310,6 +310,20 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
       "GM"
    },
    {
+      "px68k_adpcm_lpf",
+      "Filtre passe-bas ADPCM",
+      NULL,
+      "Active le filtre passe-bas ADPCM original. Le changement est immédiat, sans redémarrage du cœur.",
+      NULL,
+      "audio",
+      {
+         { "enabled",  NULL },
+         { "disabled", NULL },
+         { NULL, NULL },
+      },
+      "enabled"
+   },
+   {
       "px68k_adpcm_vol",
       "Volume ADPCM",
       NULL,
