@@ -7,10 +7,6 @@
 #include <libretro.h>
 #include <retro_inline.h>
 
-#ifndef HAVE_NO_LANGEXTRA
-#include "libretro_core_options_intl.h"
-#endif
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -33,14 +29,256 @@ extern "C" {
  *   frontend language definition */
 
 struct retro_core_option_v2_category option_cats_us[] = {
-   { "system",    "System",   "Change emulated hardware settings."                                    },
-   { "audio",     "Audio",    "Change sound volumes and midi output type."                            },
-   { "input",     "Input",    "Change controller types and button mapping."                           },
-   { "media",     "Media",    "Change floppy disk media swapping options."                            },
+   { "system",      "System",      "Change emulated hardware settings."                              },
+   { "input",       "Input",       "Change controller types and button mapping."                     },
+   { "p1_joy2key",  "P1 Joy2Key",  "Map Player 1 RetroPad inputs to X68000 keyboard keys."            },
+   { "p2_joy2key",  "P2 Joy2Key",  "Map Player 2 RetroPad inputs to X68000 keyboard keys."            },
+   { "audio",       "Audio",       "Change sound volumes and midi output type."                       },
+   { "media",       "Media",       "Change floppy disk media swapping options."                        },
    { "menu",      "Menu",     "Configure the built-in menu and navigation."                           },
    { "advanced",  "Advanced", "Change system-related advanced options for performance or aesthetics." },
    { NULL,        NULL,       NULL },
 };
+
+#define PX68K_JOY2KEY_VALUES \
+   { "none", "None" }, \
+   { "menu", "PX68K Menu" }, \
+   { "esc", "Escape" }, \
+   { "1", "1" }, \
+   { "2", "2" }, \
+   { "3", "3" }, \
+   { "4", "4" }, \
+   { "5", "5" }, \
+   { "6", "6" }, \
+   { "7", "7" }, \
+   { "8", "8" }, \
+   { "9", "9" }, \
+   { "0", "0" }, \
+   { "minus", "-" }, \
+   { "equals", "^" }, \
+   { "yen", "Yen" }, \
+   { "backspace", "Backspace" }, \
+   { "tab", "Tab" }, \
+   { "q", "Q" }, \
+   { "w", "W" }, \
+   { "e", "E" }, \
+   { "r", "R" }, \
+   { "t", "T" }, \
+   { "y", "Y" }, \
+   { "u", "U" }, \
+   { "i", "I" }, \
+   { "o", "O" }, \
+   { "p", "P" }, \
+   { "at", "@" }, \
+   { "lbracket", "[" }, \
+   { "return", "Return" }, \
+   { "a", "A" }, \
+   { "s", "S" }, \
+   { "d", "D" }, \
+   { "f", "F" }, \
+   { "g", "G" }, \
+   { "h", "H" }, \
+   { "j", "J" }, \
+   { "k", "K" }, \
+   { "l", "L" }, \
+   { "semicolon", ";" }, \
+   { "colon", ":" }, \
+   { "rbracket", "]" }, \
+   { "z", "Z" }, \
+   { "x", "X" }, \
+   { "c", "C" }, \
+   { "v", "V" }, \
+   { "b", "B" }, \
+   { "n", "N" }, \
+   { "m", "M" }, \
+   { "comma", "," }, \
+   { "period", "." }, \
+   { "slash", "/" }, \
+   { "underquote", "Underscore" }, \
+   { "space", "Space" }, \
+   { "home", "Home" }, \
+   { "delete", "Delete" }, \
+   { "roll_up", "Roll Up" }, \
+   { "roll_down", "Roll Down" }, \
+   { "undo", "Undo" }, \
+   { "left", "Cursor Left" }, \
+   { "up", "Cursor Up" }, \
+   { "right", "Cursor Right" }, \
+   { "down", "Cursor Down" }, \
+   { "clear", "Clear" }, \
+   { "kp_divide", "Keypad /" }, \
+   { "kp_multiply", "Keypad *" }, \
+   { "kp_minus", "Keypad -" }, \
+   { "kp7", "Keypad 7" }, \
+   { "kp8", "Keypad 8" }, \
+   { "kp9", "Keypad 9" }, \
+   { "kp_plus", "Keypad +" }, \
+   { "kp4", "Keypad 4" }, \
+   { "kp5", "Keypad 5" }, \
+   { "kp6", "Keypad 6" }, \
+   { "kp_equals", "Keypad =" }, \
+   { "kp1", "Keypad 1" }, \
+   { "kp2", "Keypad 2" }, \
+   { "kp3", "Keypad 3" }, \
+   { "kp_enter", "Keypad Enter" }, \
+   { "kp0", "Keypad 0" }, \
+   { "kp_comma", "Keypad ," }, \
+   { "kp_period", "Keypad ." }, \
+   { "symbol", "Symbol" }, \
+   { "touroku", "Touroku" }, \
+   { "help", "Help" }, \
+   { "xf1", "XF1" }, \
+   { "xf2", "XF2" }, \
+   { "xf3", "XF3" }, \
+   { "xf4", "XF4" }, \
+   { "xf5", "XF5" }, \
+   { "kana", "Kana" }, \
+   { "roman", "Roman" }, \
+   { "enter_code", "Enter Code" }, \
+   { "capslock", "Caps Lock" }, \
+   { "insert", "Insert" }, \
+   { "hiragana", "Hiragana" }, \
+   { "fullwidth", "Full-width" }, \
+   { "break", "Break" }, \
+   { "copy", "Copy" }, \
+   { "f1", "F1" }, \
+   { "f2", "F2" }, \
+   { "f3", "F3" }, \
+   { "f4", "F4" }, \
+   { "f5", "F5" }, \
+   { "f6", "F6" }, \
+   { "f7", "F7" }, \
+   { "f8", "F8" }, \
+   { "f9", "F9" }, \
+   { "f10", "F10" }, \
+   { "shift", "Shift" }, \
+   { "ctrl", "Ctrl" }, \
+   { "opt1", "OPT.1" }, \
+   { "opt2", "OPT.2" }, \
+   { NULL, NULL }
+
+#define PX68K_P1_JOY2KEY_VALUES \
+   { "none", "None" }, \
+   { "menu", "PX68K Menu" }, \
+   { "mouse_btn1", "Mouse Btn1" }, \
+   { "mouse_btn2", "Mouse Btn2" }, \
+   { "esc", "Escape" }, \
+   { "1", "1" }, \
+   { "2", "2" }, \
+   { "3", "3" }, \
+   { "4", "4" }, \
+   { "5", "5" }, \
+   { "6", "6" }, \
+   { "7", "7" }, \
+   { "8", "8" }, \
+   { "9", "9" }, \
+   { "0", "0" }, \
+   { "minus", "-" }, \
+   { "equals", "^" }, \
+   { "yen", "Yen" }, \
+   { "backspace", "Backspace" }, \
+   { "tab", "Tab" }, \
+   { "q", "Q" }, \
+   { "w", "W" }, \
+   { "e", "E" }, \
+   { "r", "R" }, \
+   { "t", "T" }, \
+   { "y", "Y" }, \
+   { "u", "U" }, \
+   { "i", "I" }, \
+   { "o", "O" }, \
+   { "p", "P" }, \
+   { "at", "@" }, \
+   { "lbracket", "[" }, \
+   { "return", "Return" }, \
+   { "a", "A" }, \
+   { "s", "S" }, \
+   { "d", "D" }, \
+   { "f", "F" }, \
+   { "g", "G" }, \
+   { "h", "H" }, \
+   { "j", "J" }, \
+   { "k", "K" }, \
+   { "l", "L" }, \
+   { "semicolon", ";" }, \
+   { "colon", ":" }, \
+   { "rbracket", "]" }, \
+   { "z", "Z" }, \
+   { "x", "X" }, \
+   { "c", "C" }, \
+   { "v", "V" }, \
+   { "b", "B" }, \
+   { "n", "N" }, \
+   { "m", "M" }, \
+   { "comma", "," }, \
+   { "period", "." }, \
+   { "slash", "/" }, \
+   { "underquote", "Underscore" }, \
+   { "space", "Space" }, \
+   { "home", "Home" }, \
+   { "delete", "Delete" }, \
+   { "roll_up", "Roll Up" }, \
+   { "roll_down", "Roll Down" }, \
+   { "undo", "Undo" }, \
+   { "left", "Cursor Left" }, \
+   { "up", "Cursor Up" }, \
+   { "right", "Cursor Right" }, \
+   { "down", "Cursor Down" }, \
+   { "clear", "Clear" }, \
+   { "kp_divide", "Keypad /" }, \
+   { "kp_multiply", "Keypad *" }, \
+   { "kp_minus", "Keypad -" }, \
+   { "kp7", "Keypad 7" }, \
+   { "kp8", "Keypad 8" }, \
+   { "kp9", "Keypad 9" }, \
+   { "kp_plus", "Keypad +" }, \
+   { "kp4", "Keypad 4" }, \
+   { "kp5", "Keypad 5" }, \
+   { "kp6", "Keypad 6" }, \
+   { "kp_equals", "Keypad =" }, \
+   { "kp1", "Keypad 1" }, \
+   { "kp2", "Keypad 2" }, \
+   { "kp3", "Keypad 3" }, \
+   { "kp_enter", "Keypad Enter" }, \
+   { "kp0", "Keypad 0" }, \
+   { "kp_comma", "Keypad ," }, \
+   { "kp_period", "Keypad ." }, \
+   { "symbol", "Symbol" }, \
+   { "touroku", "Touroku" }, \
+   { "help", "Help" }, \
+   { "xf1", "XF1" }, \
+   { "xf2", "XF2" }, \
+   { "xf3", "XF3" }, \
+   { "xf4", "XF4" }, \
+   { "xf5", "XF5" }, \
+   { "kana", "Kana" }, \
+   { "roman", "Roman" }, \
+   { "enter_code", "Enter Code" }, \
+   { "capslock", "Caps Lock" }, \
+   { "insert", "Insert" }, \
+   { "hiragana", "Hiragana" }, \
+   { "fullwidth", "Full-width" }, \
+   { "break", "Break" }, \
+   { "copy", "Copy" }, \
+   { "f1", "F1" }, \
+   { "f2", "F2" }, \
+   { "f3", "F3" }, \
+   { "f4", "F4" }, \
+   { "f5", "F5" }, \
+   { "f6", "F6" }, \
+   { "f7", "F7" }, \
+   { "f8", "F8" }, \
+   { "f9", "F9" }, \
+   { "f10", "F10" }, \
+   { "shift", "Shift" }, \
+   { "ctrl", "Ctrl" }, \
+   { "opt1", "OPT.1" }, \
+   { "opt2", "OPT.2" }, \
+   { NULL, NULL }
+
+#ifndef HAVE_NO_LANGEXTRA
+#include "libretro_core_options_intl.h"
+#endif
 
 struct retro_core_option_v2_definition option_defs_us[] = {
 
@@ -104,73 +342,447 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       },
       "2MB"
    },
+   /* from PX68K Menu */
    {
-      "px68k_analog",
-      "Use Analog",
+      "px68k_joy_mouse",
+      "Joy2Mouse",
       NULL,
-      NULL,
+      "Adds P1 D-pad and left analog stick mouse movement. Assign Mouse Btn1 and Mouse Btn2 to P1 Joy2Key inputs to use them as mouse clicks.",
       NULL,
       "input",
       {
          { "disabled", NULL },
          { "enabled",  NULL },
-         { NULL,       NULL },
+         { NULL,        NULL },
       },
       "disabled"
    },
    {
-      "px68k_joytype1",
-      "P1 Joypad Type",
+      "px68k_joy2mouse_analog_speed",
+      "Joy2Mouse Analog speed",
       NULL,
-      "Set the joypad type for player 1.",
+      "Maximum mouse movement speed for the left analog stick, in mouse units per frame.",
       NULL,
       "input",
       {
-         { "Default (2 Buttons)",  NULL },
-         { "CPSF-MD (8 Buttons)",  NULL },
-         { "CPSF-SFC (8 Buttons)", NULL },
-         { "Cyberstick (Digital)", NULL },
-         { "Cyberstick (Analog)",  NULL },
-         { NULL,                   NULL },
+         { "1", NULL }, { "2", NULL }, { "4", NULL }, { "6", NULL },
+         { "8", NULL }, { "10", NULL }, { "12", NULL }, { "16", NULL },
+         { "20", NULL }, { "24", NULL }, { NULL, NULL },
       },
-      "Default (2 Buttons)"
+      "12"
    },
    {
-      "px68k_joytype2",
-      "P2 Joypad Type",
+      "px68k_joy2mouse_analog_deadzone",
+      "Joy2Mouse Analog deadzone",
       NULL,
-      "Set the joypad type for player 2.",
+      "Analog stick deadzone percentage. Increase this if the mouse pointer drifts when the stick is released.",
       NULL,
       "input",
       {
-         { "Default (2 Buttons)",  NULL },
-         { "CPSF-MD (8 Buttons)",  NULL },
-         { "CPSF-SFC (8 Buttons)", NULL },
-         { NULL,                   NULL },
+         { "0", NULL }, { "5", NULL }, { "10", NULL }, { "12.5", NULL },
+         { "15", NULL }, { "20", NULL }, { "25", NULL }, { "30", NULL },
+         { "40", NULL }, { "50", NULL }, { NULL, NULL },
       },
-      "Default (2 Buttons)"
+      "12.5"
    },
    {
-      "px68k_joy1_select",
-      "P1 Joystick Select Mapping",
+      "px68k_joy2mouse_digital_speed",
+      "Joy2Mouse Digital speed",
       NULL,
-      "Assigns a keyboard key to joypad's SELECT button since some games use these keys as the Start or Insert Coin buttons.",
+      "Mouse movement speed for the D-pad, in mouse units per frame.",
       NULL,
       "input",
       {
-         { "Default", NULL },
-         { "XF1",     NULL },
-         { "XF2",     NULL },
-         { "XF3",     NULL },
-         { "XF4",     NULL },
-         { "XF5",     NULL },
-         { "OPT1",    NULL },
-         { "OPT2",    NULL },
-         { "F1",      NULL },
-         { "F2",      NULL },
-         { NULL,      NULL },
+         { "1", NULL }, { "2", NULL }, { "3", NULL }, { "4", NULL },
+         { "5", NULL }, { "6", NULL }, { "8", NULL }, { "10", NULL },
+         { "12", NULL }, { NULL, NULL },
       },
-      "Default"
+      "6"
+   },
+
+   {
+      "px68k_j2k_p1_up",
+      "P1 Joy2Key UP",
+      NULL,
+      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      NULL,
+      "p1_joy2key",
+      {
+         PX68K_P1_JOY2KEY_VALUES
+      },
+      "up"
+   },
+   {
+      "px68k_j2k_p1_down",
+      "P1 Joy2Key Down",
+      NULL,
+      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      NULL,
+      "p1_joy2key",
+      {
+         PX68K_P1_JOY2KEY_VALUES
+      },
+      "down"
+   },
+   {
+      "px68k_j2k_p1_left",
+      "P1 Joy2Key Left",
+      NULL,
+      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      NULL,
+      "p1_joy2key",
+      {
+         PX68K_P1_JOY2KEY_VALUES
+      },
+      "left"
+   },
+   {
+      "px68k_j2k_p1_right",
+      "P1 Joy2Key Right",
+      NULL,
+      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      NULL,
+      "p1_joy2key",
+      {
+         PX68K_P1_JOY2KEY_VALUES
+      },
+      "right"
+   },
+   {
+      "px68k_j2k_p1_select",
+      "P1 Joy2Key Select",
+      NULL,
+      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      NULL,
+      "p1_joy2key",
+      {
+         PX68K_P1_JOY2KEY_VALUES
+      },
+      "esc"
+   },
+   {
+      "px68k_j2k_p1_start",
+      "P1 Joy2Key Start",
+      NULL,
+      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      NULL,
+      "p1_joy2key",
+      {
+         PX68K_P1_JOY2KEY_VALUES
+      },
+      "return"
+   },
+   {
+      "px68k_j2k_p1_a",
+      "P1 Joy2Key A",
+      NULL,
+      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      NULL,
+      "p1_joy2key",
+      {
+         PX68K_P1_JOY2KEY_VALUES
+      },
+      "z"
+   },
+   {
+      "px68k_j2k_p1_b",
+      "P1 Joy2Key B",
+      NULL,
+      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      NULL,
+      "p1_joy2key",
+      {
+         PX68K_P1_JOY2KEY_VALUES
+      },
+      "x"
+   },
+   {
+      "px68k_j2k_p1_x",
+      "P1 Joy2Key X",
+      NULL,
+      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      NULL,
+      "p1_joy2key",
+      {
+         PX68K_P1_JOY2KEY_VALUES
+      },
+      "x"
+   },
+   {
+      "px68k_j2k_p1_y",
+      "P1 Joy2Key Y",
+      NULL,
+      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      NULL,
+      "p1_joy2key",
+      {
+         PX68K_P1_JOY2KEY_VALUES
+      },
+      "z"
+   },
+   {
+      "px68k_j2k_p1_l",
+      "P1 Joy2Key L",
+      NULL,
+      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      NULL,
+      "p1_joy2key",
+      {
+         PX68K_P1_JOY2KEY_VALUES
+      },
+      "opt1"
+   },
+   {
+      "px68k_j2k_p1_r",
+      "P1 Joy2Key R",
+      NULL,
+      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      NULL,
+      "p1_joy2key",
+      {
+         PX68K_P1_JOY2KEY_VALUES
+      },
+      "opt2"
+   },
+   {
+      "px68k_j2k_p1_l2",
+      "P1 Joy2Key L2",
+      NULL,
+      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      NULL,
+      "p1_joy2key",
+      {
+         PX68K_P1_JOY2KEY_VALUES
+      },
+      "menu"
+   },
+   {
+      "px68k_j2k_p1_r2",
+      "P1 Joy2Key R2",
+      NULL,
+      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      NULL,
+      "p1_joy2key",
+      {
+         PX68K_P1_JOY2KEY_VALUES
+      },
+      "space"
+   },
+   {
+      "px68k_j2k_p1_l3",
+      "P1 Joy2Key L3",
+      NULL,
+      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      NULL,
+      "p1_joy2key",
+      {
+         PX68K_P1_JOY2KEY_VALUES
+      },
+      "mouse_btn1"
+   },
+   {
+      "px68k_j2k_p1_r3",
+      "P1 Joy2Key R3",
+      NULL,
+      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      NULL,
+      "p1_joy2key",
+      {
+         PX68K_P1_JOY2KEY_VALUES
+      },
+      "mouse_btn2"
+   },
+   {
+      "px68k_j2k_p2_up",
+      "P2 Joy2Key UP",
+      NULL,
+      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      NULL,
+      "p2_joy2key",
+      {
+         PX68K_JOY2KEY_VALUES
+      },
+      "up"
+   },
+   {
+      "px68k_j2k_p2_down",
+      "P2 Joy2Key Down",
+      NULL,
+      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      NULL,
+      "p2_joy2key",
+      {
+         PX68K_JOY2KEY_VALUES
+      },
+      "down"
+   },
+   {
+      "px68k_j2k_p2_left",
+      "P2 Joy2Key Left",
+      NULL,
+      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      NULL,
+      "p2_joy2key",
+      {
+         PX68K_JOY2KEY_VALUES
+      },
+      "left"
+   },
+   {
+      "px68k_j2k_p2_right",
+      "P2 Joy2Key Right",
+      NULL,
+      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      NULL,
+      "p2_joy2key",
+      {
+         PX68K_JOY2KEY_VALUES
+      },
+      "right"
+   },
+   {
+      "px68k_j2k_p2_select",
+      "P2 Joy2Key Select",
+      NULL,
+      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      NULL,
+      "p2_joy2key",
+      {
+         PX68K_JOY2KEY_VALUES
+      },
+      "esc"
+   },
+   {
+      "px68k_j2k_p2_start",
+      "P2 Joy2Key Start",
+      NULL,
+      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      NULL,
+      "p2_joy2key",
+      {
+         PX68K_JOY2KEY_VALUES
+      },
+      "return"
+   },
+   {
+      "px68k_j2k_p2_a",
+      "P2 Joy2Key A",
+      NULL,
+      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      NULL,
+      "p2_joy2key",
+      {
+         PX68K_JOY2KEY_VALUES
+      },
+      "z"
+   },
+   {
+      "px68k_j2k_p2_b",
+      "P2 Joy2Key B",
+      NULL,
+      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      NULL,
+      "p2_joy2key",
+      {
+         PX68K_JOY2KEY_VALUES
+      },
+      "x"
+   },
+   {
+      "px68k_j2k_p2_x",
+      "P2 Joy2Key X",
+      NULL,
+      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      NULL,
+      "p2_joy2key",
+      {
+         PX68K_JOY2KEY_VALUES
+      },
+      "x"
+   },
+   {
+      "px68k_j2k_p2_y",
+      "P2 Joy2Key Y",
+      NULL,
+      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      NULL,
+      "p2_joy2key",
+      {
+         PX68K_JOY2KEY_VALUES
+      },
+      "z"
+   },
+   {
+      "px68k_j2k_p2_l",
+      "P2 Joy2Key L",
+      NULL,
+      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      NULL,
+      "p2_joy2key",
+      {
+         PX68K_JOY2KEY_VALUES
+      },
+      "opt1"
+   },
+   {
+      "px68k_j2k_p2_r",
+      "P2 Joy2Key R",
+      NULL,
+      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      NULL,
+      "p2_joy2key",
+      {
+         PX68K_JOY2KEY_VALUES
+      },
+      "opt2"
+   },
+   {
+      "px68k_j2k_p2_l2",
+      "P2 Joy2Key L2",
+      NULL,
+      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      NULL,
+      "p2_joy2key",
+      {
+         PX68K_JOY2KEY_VALUES
+      },
+      "menu"
+   },
+   {
+      "px68k_j2k_p2_r2",
+      "P2 Joy2Key R2",
+      NULL,
+      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      NULL,
+      "p2_joy2key",
+      {
+         PX68K_JOY2KEY_VALUES
+      },
+      "space"
+   },
+   {
+      "px68k_j2k_p2_l3",
+      "P2 Joy2Key L3",
+      NULL,
+      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      NULL,
+      "p2_joy2key",
+      {
+         PX68K_JOY2KEY_VALUES
+      },
+      "touroku"
+   },
+   {
+      "px68k_j2k_p2_r3",
+      "P2 Joy2Key R3",
+      NULL,
+      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      NULL,
+      "p2_joy2key",
+      {
+         PX68K_JOY2KEY_VALUES
+      },
+      "shift"
    },
    {
       "px68k_sc55_emulation",
@@ -444,35 +1056,6 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "disabled"
    },
 
-   /* from PX68K Menu */
-   {
-      "px68k_joy_mouse",
-      "Joy/Mouse",
-      NULL,
-      "Select [Mouse] or [Joypad] to control in-game mouse pointer.",
-      NULL,
-      "input",
-      {
-         { "Mouse",    NULL},
-         { "Joystick", NULL}, /* unimplemented yet */
-         { NULL,       NULL },
-      },
-      "Mouse"
-   },
-   {
-      "px68k_vbtn_swap",
-      "VBtn Swap",
-      NULL,
-      "Swaps TRIG1 and TRIG2 buttons when a 2-button gamepad is selected.",
-      NULL,
-      "input",
-      {
-         { "TRIG1 TRIG2", NULL},
-         { "TRIG2 TRIG1", NULL},
-         { NULL,          NULL },
-      },
-      "TRIG1 TRIG2"
-   },
    {
       "px68k_menufontsize",
       "Menu Font Size",

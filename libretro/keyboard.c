@@ -122,9 +122,6 @@ static uint8_t KeyTable[KEYTABLE_MAX] = {
 };
 
 /* P6K: PX68K_KEYBOARD */
-#define P6K_UP 1
-#define P6K_DOWN 2
-
 void send_keycode(uint8_t code, int flag)
 {
 	uint8_t newwp;

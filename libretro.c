@@ -108,9 +108,23 @@ char base_dir[MAX_PATH];
 static uint8_t Core_Key_State[512];
 static uint8_t Core_old_Key_State[512];
 
-static bool joypad1, joypad2;
+static bool joypad1 = true, joypad2 = true;
+static unsigned controller_device[2] = {
+   RETRO_DEVICE_JOYPAD, RETRO_DEVICE_JOYPAD
+};
+static bool controller_device_set[2];
+static float joy_mouse_analog_speed = 12.0f;
+static float joy_mouse_deadzone = 12.5f;
+static float joy_mouse_digital_speed = 6.0f;
 
-static bool opt_analog;
+static int controller_type[2];
+
+#define PX68K_DEVICE_CPSF_MD      RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 1)
+#define PX68K_DEVICE_CPSF_SFC     RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 2)
+#define PX68K_DEVICE_CYBERSTICK_D RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 3)
+#define PX68K_DEVICE_CYBERSTICK_A RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 4)
+#define PX68K_DEVICE_JOY2KEY      RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 5)
+
 
 static char CMDFILE[512];
 
@@ -240,47 +254,6 @@ static struct retro_disk_control_ext_callback dskcb_ext;
 
 static struct retro_input_descriptor input_descs[64];
 
-static struct retro_input_descriptor input_descs_p1[] = {
-   { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A, "A" },
-   { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B, "B" },
-   { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X, "X" },
-   { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y, "Y" },
-   { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT, "Select" },
-   { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START, "Start" },
-   { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT, "Right" },
-   { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT, "Left" },
-   { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP, "Up" },
-   { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN, "Down" },
-   { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R, "R" },
-   { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L, "L" },
-   { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R2, "R2 - Touroku" },
-   { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L2, "L2 - Menu" },
-   { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R3, "R3" },
-   { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L3, "L3" },
-};
-static struct retro_input_descriptor input_descs_p2[] = {
-   { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A, "A" },
-   { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B, "B" },
-   { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X, "X" },
-   { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y, "Y" },
-   { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT, "Select" },
-   { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START, "Start" },
-   { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT, "Right" },
-   { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT, "Left" },
-   { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP, "Up" },
-   { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN, "Down" },
-   { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R, "R" },
-   { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L, "L" },
-   { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R2, "R2" },
-   { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L2, "L2" },
-   { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R3, "R3" },
-   { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L3, "L3" },
-
-};
-
-static struct retro_input_descriptor input_descs_null[] = {
-   { 0, 0, 0, 0, NULL }
-};
 
 static bool is_path_absolute(const char* path)
 {
@@ -1349,84 +1322,265 @@ run_pmain:
 
 static void retro_set_controller_descriptors(void)
 {
-   unsigned i;
-   unsigned size = 16;
+   static const unsigned input_ids[16] = {
+      RETRO_DEVICE_ID_JOYPAD_A, RETRO_DEVICE_ID_JOYPAD_B,
+      RETRO_DEVICE_ID_JOYPAD_X, RETRO_DEVICE_ID_JOYPAD_Y,
+      RETRO_DEVICE_ID_JOYPAD_SELECT, RETRO_DEVICE_ID_JOYPAD_START,
+      RETRO_DEVICE_ID_JOYPAD_RIGHT, RETRO_DEVICE_ID_JOYPAD_LEFT,
+      RETRO_DEVICE_ID_JOYPAD_UP, RETRO_DEVICE_ID_JOYPAD_DOWN,
+      RETRO_DEVICE_ID_JOYPAD_R, RETRO_DEVICE_ID_JOYPAD_L,
+      RETRO_DEVICE_ID_JOYPAD_R2, RETRO_DEVICE_ID_JOYPAD_L2,
+      RETRO_DEVICE_ID_JOYPAD_R3, RETRO_DEVICE_ID_JOYPAD_L3
+   };
+   static const char *default_labels[16] = {
+      "A", "B", "X", "Y", "Select", "Start", "Right", "Left",
+      "Up", "Down", "R", "L", "R2", "L2", "R3", "L3"
+   };
+   static const char *md_labels[16] = {
+      "MD A", "MD B", "MD Y", "MD X", "Mode", "Start",
+      "Right", "Left", "Up", "Down", "MD C", "MD Z",
+      "P1 Joy2Key R2", "PX68K Menu", "P1 Joy2Key R3", "P1 Joy2Key L3"
+   };
+   static const char *sfc_labels[16] = {
+      "SFC Y", "SFC B", "SFC X", "SFC L", "Select", "Start",
+      "Right", "Left", "Up", "Down", "SFC A", "SFC R",
+      "P1 Joy2Key R2", "PX68K Menu", "P1 Joy2Key R3", "P1 Joy2Key L3"
+   };
+   static const char *cyber_d_labels[16] = {
+      "A", "B", "C", "D", "Select", "Start",
+      "Right", "Left", "Up", "Down", "E2", "E1",
+      NULL, "PX68K Menu", NULL, NULL
+   };
+   static const char *cyber_a_labels[16] = {
+      "A", "B", "C", "D", "Select", "Start",
+      NULL, NULL, NULL, NULL, "E2", "E1",
+      "P1 Joy2Key Start", "PX68K Menu", NULL, NULL
+   };
+   static const char *two_button_labels[16] = {
+      "Button 1", "Button 2", NULL, NULL,
+      NULL, NULL, "Right", "Left", "Up", "Down", NULL, NULL,
+      NULL, "Joy2Key L2", NULL, NULL
+   };
+   static const char *joy2key_names[16] = {
+      "A", "B", "X", "Y", "Select", "Start", "Right", "Left",
+      "Up", "Down", "R", "L", "R2", "L2", "R3", "L3"
+   };
+   static char dynamic_labels[2][16][40];
+   unsigned port;
+   unsigned count = 0;
 
-   for (i = 0; i < (2 * size); i++)
-      input_descs[i] = input_descs_null[0];
+   memset(input_descs, 0, sizeof(input_descs));
 
-   if (joypad1 && joypad2)
+   for (port = 0; port < 2; port++)
    {
-      for (i = 0; i < (2 * size); i++)
+      unsigned i;
+      const char **labels = default_labels;
+      if ((port == 0 && !joypad1) || (port == 1 && !joypad2))
+         continue;
+
+      switch (Config.JOY_TYPE[port])
       {
-         if (i < size)
-            input_descs[i] = input_descs_p1[i];
-         else
-            input_descs[i] = input_descs_p2[i - size];
+         case PAD_CPSF_MD:      labels = md_labels; break;
+         case PAD_CPSF_SFC:     labels = sfc_labels; break;
+         case PAD_CYBERSTICK_D: labels = cyber_d_labels; break;
+         case PAD_CYBERSTICK_A: labels = cyber_a_labels; break;
+         default: break;
+      }
+
+      for (i = 0; i < 16 && count < 63; i++)
+      {
+         const char *label = labels[i];
+         const char *native_label =
+            Joystick_NativeLabel(Config.JOY_TYPE[port], input_ids[i]);
+
+         /* CPSF labels come from the same table that drives the emulated
+          * signals, so the descriptors always match the real behaviour. */
+         if (native_label)
+            label = native_label;
+
+         if (Config.JOY_TYPE[port] == PAD_JOY2KEY)
+         {
+            if (i == 13)
+               snprintf(dynamic_labels[port][i], sizeof(dynamic_labels[port][i]),
+                     "PX68K Menu (P%u Joy2Key L2)", port + 1);
+            else
+               snprintf(dynamic_labels[port][i], sizeof(dynamic_labels[port][i]),
+                     "P%u Joy2Key %s", port + 1, joy2key_names[i]);
+            label = dynamic_labels[port][i];
+         }
+         else if (Config.JOY_TYPE[port] == PAD_2BUTTON)
+         {
+            if (i == 2 || i == 3 || i == 4 || i == 5 ||
+                i == 10 || i == 11 || i == 12 || i == 14 || i == 15)
+            {
+               snprintf(dynamic_labels[port][i], sizeof(dynamic_labels[port][i]),
+                     "P%u Joy2Key %s", port + 1, joy2key_names[i]);
+               label = dynamic_labels[port][i];
+            }
+            else if (i == 13)
+               label = "PX68K Menu (Joy2Key L2)";
+         }
+         else if (Config.JOY_TYPE[port] == PAD_CPSF_MD ||
+                  Config.JOY_TYPE[port] == PAD_CPSF_SFC ||
+                  Config.JOY_TYPE[port] == PAD_CYBERSTICK_D ||
+                  Config.JOY_TYPE[port] == PAD_CYBERSTICK_A)
+         {
+            if (i == 12 || i == 14 || i == 15 ||
+                (Config.JOY_TYPE[port] == PAD_CYBERSTICK_A &&
+                 (i >= 6 && i <= 9)))
+            {
+               if (Config.JOY_TYPE[port] == PAD_CYBERSTICK_A && i == 12)
+                  snprintf(dynamic_labels[port][i], sizeof(dynamic_labels[port][i]),
+                        "P%u Joy2Key Start", port + 1);
+               else
+                  snprintf(dynamic_labels[port][i], sizeof(dynamic_labels[port][i]),
+                        "P%u Joy2Key %s", port + 1, joy2key_names[i]);
+               label = dynamic_labels[port][i];
+            }
+         }
+
+         input_descs[count].port = port;
+         input_descs[count].device = RETRO_DEVICE_JOYPAD;
+         input_descs[count].index = 0;
+         input_descs[count].id = input_ids[i];
+         input_descs[count].description = label;
+         count++;
+      }
+
+      if (port == 0 && Config.JOY_TYPE[port] == PAD_CYBERSTICK_A)
+      {
+         static const struct retro_input_descriptor cyber_analog_descs[] = {
+            { 0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT,
+               RETRO_DEVICE_ID_ANALOG_X, "CyberStick Stick X" },
+            { 0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT,
+               RETRO_DEVICE_ID_ANALOG_Y, "CyberStick Stick Y" },
+            { 0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT,
+               RETRO_DEVICE_ID_ANALOG_Y, "CyberStick Throttle (Right Y)" },
+            { 0, 0, 0, 0, NULL }
+         };
+         unsigned j;
+         for (j = 0; cyber_analog_descs[j].description && count < 63; j++)
+         {
+            input_descs[count] = cyber_analog_descs[j];
+            count++;
+         }
       }
    }
-   else if (joypad1 || joypad2)
-   {
-      for (i = 0; i < size; i++)
-      {
-         if (joypad1)
-            input_descs[i] = input_descs_p1[i];
-         else
-            input_descs[i] = input_descs_p2[i];
-      }
-   }
-   else
-      input_descs[0] = input_descs_null[0];
+
    environ_cb(RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS, &input_descs);
 }
 
 void retro_set_controller_port_device(unsigned port, unsigned device)
 {
+   unsigned base_device;
+   int joy_type = PAD_NONE;
+
    if (port >= 2)
       return;
 
-   switch (device)
+   base_device = device & RETRO_DEVICE_MASK;
+
+   if (base_device == RETRO_DEVICE_JOYPAD)
    {
-      case RETRO_DEVICE_JOYPAD:
-         if (port == 0)
-            joypad1 = true;
-         if (port == 1)
-            joypad2 = true;
-         break;
-      case RETRO_DEVICE_KEYBOARD:
-         if (port == 0)
-            joypad1 = false;
-         if (port == 1)
-            joypad2 = false;
-         break;
-      case RETRO_DEVICE_NONE:
-         if (port == 0)
-            joypad1 = false;
-         if (port == 1)
-            joypad2 = false;
-         break;
-      default:
+      joy_type = PAD_2BUTTON;
+      if (device == PX68K_DEVICE_CPSF_MD)
+         joy_type = PAD_CPSF_MD;
+      else if (device == PX68K_DEVICE_CPSF_SFC)
+         joy_type = PAD_CPSF_SFC;
+      else if (device == PX68K_DEVICE_CYBERSTICK_D)
+         joy_type = PAD_CYBERSTICK_D;
+      else if (device == PX68K_DEVICE_CYBERSTICK_A && port == 0)
+         joy_type = PAD_CYBERSTICK_A;
+      else if (device == PX68K_DEVICE_JOY2KEY)
+         joy_type = PAD_JOY2KEY;
+      else if (device != RETRO_DEVICE_JOYPAD &&
+               device != PX68K_DEVICE_CPSF_MD &&
+               device != PX68K_DEVICE_CPSF_SFC &&
+               device != PX68K_DEVICE_CYBERSTICK_D &&
+               device != PX68K_DEVICE_CYBERSTICK_A &&
+               device != PX68K_DEVICE_JOY2KEY)
+      {
          if (log_cb)
-            log_cb(RETRO_LOG_ERROR, "[libretro]: Invalid device, setting type to RETRO_DEVICE_JOYPAD ...\n");
+            log_cb(RETRO_LOG_ERROR, "[libretro]: Unknown joypad subclass %u, using RetroPad.\n", device);
+      }
    }
-   log_cb(RETRO_LOG_INFO, "Set Controller Device: %d, Port: %d %d %d\n", device, port, joypad1, joypad2);
+   else if (device != RETRO_DEVICE_KEYBOARD && device != RETRO_DEVICE_NONE)
+   {
+      if (log_cb)
+         log_cb(RETRO_LOG_ERROR, "[libretro]: Unsupported controller device %u.\n", device);
+      return;
+   }
+
+   controller_device[port] = device;
+   controller_device_set[port] = true;
+   Config.JOY_TYPE[port] = joy_type;
+   controller_type[port] = joy_type;
+   if (port == 0)
+      joypad1 = (base_device == RETRO_DEVICE_JOYPAD);
+   else
+      joypad2 = (base_device == RETRO_DEVICE_JOYPAD);
+
+   /* Changing one logical port's device must not reset the other port's
+    * PIA strobe state. Joystick_Init() is reserved for core initialization. */
    retro_set_controller_descriptors();
+}
+
+/* The device chosen through the libretro controller interface is the single
+ * source of truth for a logical port. If anything else overwrote
+ * Config.JOY_TYPE, restore it so a port can never silently fall back to a
+ * 2-button joystick. */
+static void sync_controller_types(void)
+{
+   unsigned port;
+   int changed = 0;
+
+   for (port = 0; port < 2; port++)
+   {
+      if (!controller_device_set[port])
+         continue;
+      if (Config.JOY_TYPE[port] != controller_type[port])
+      {
+         Config.JOY_TYPE[port] = controller_type[port];
+         changed = 1;
+      }
+   }
+   if (changed)
+      retro_set_controller_descriptors();
 }
 
 void retro_set_environment(retro_environment_t cb)
 {
    int nocontent = 1;
 
-   static const struct retro_controller_description port[] = {
-      { "RetroPad",              RETRO_DEVICE_JOYPAD },
-      { "RetroKeyboard",         RETRO_DEVICE_KEYBOARD },
-      { 0 },
+   /* Controller types are listed per emulated port. Keep the generic
+    * RetroPad first, followed by the supported device subclasses. Port 2
+    * intentionally omits the analog Cyberstick, which is P1-only. */
+   static const struct retro_controller_description port_controllers[2][8] = {
+      {
+         { "2-button joystick", RETRO_DEVICE_JOYPAD },
+         { "CPSF-MD (8 Buttons)", PX68K_DEVICE_CPSF_MD },
+         { "CPSF-SFC (8 Buttons)", PX68K_DEVICE_CPSF_SFC },
+         { "Cyberstick (Digital)", PX68K_DEVICE_CYBERSTICK_D },
+         { "Cyberstick (Analog)", PX68K_DEVICE_CYBERSTICK_A },
+         { "Joy2Key Remap", PX68K_DEVICE_JOY2KEY },
+         { "RetroKeyboard", RETRO_DEVICE_KEYBOARD },
+         { "None", RETRO_DEVICE_NONE }
+      },
+      {
+         { "2-button joystick", RETRO_DEVICE_JOYPAD },
+         { "CPSF-MD (8 Buttons)", PX68K_DEVICE_CPSF_MD },
+         { "CPSF-SFC (8 Buttons)", PX68K_DEVICE_CPSF_SFC },
+         { "Cyberstick (Digital)", PX68K_DEVICE_CYBERSTICK_D },
+         { "Joy2Key Remap", PX68K_DEVICE_JOY2KEY },
+         { "RetroKeyboard", RETRO_DEVICE_KEYBOARD },
+         { "None", RETRO_DEVICE_NONE }
+      }
    };
 
    static const struct retro_controller_info ports[] = {
-      { port, 2 },
-      { port, 2 },
-      { NULL, 0 },
+      { port_controllers[0], 8 },
+      { port_controllers[1], 7 },
+      { NULL, 0 }
    };
 
    environ_cb = cb;
@@ -1494,31 +1648,23 @@ static void update_variables(int running)
          Config.MIDI_SW = 1;
    }
 
-   strcpy(key, "px68k_joytype");
-   var.key = key;
-   for (i = 0; i < 2; i++)
    {
-      key[strlen("px68k_joytype")] = '1' + i;
-      var.value = NULL;
-      if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-      {
-         int val = Config.JOY_TYPE[i];
-         if (!(strcmp(var.value, "Default (2 Buttons)")))
-            Config.JOY_TYPE[i] = PAD_2BUTTON;
-         else if (!(strcmp(var.value, "CPSF-MD (8 Buttons)")))
-            Config.JOY_TYPE[i] = PAD_CPSF_MD;
-         else if (!(strcmp(var.value, "CPSF-SFC (8 Buttons)")))
-            Config.JOY_TYPE[i] = PAD_CPSF_SFC;
-         else if (!(strcmp(var.value, "Cyberstick (Digital)")))
-            Config.JOY_TYPE[i] = PAD_CYBERSTICK_D;
-         else if (!(strcmp(var.value, "Cyberstick (Analog)")))
-            Config.JOY_TYPE[i] = PAD_CYBERSTICK_A;
-         if (Config.JOY_TYPE[i] != val)
+      static const char *joy2key_controls[16] = {
+         "a", "b", "x", "y", "select", "start", "right", "left",
+         "up", "down", "r", "l", "r2", "l2", "r3", "l3"
+      };
+      unsigned port, input;
+      char joy2key_option[40];
+      for (port = 0; port < 2; port++)
+         for (input = 0; input < 16; input++)
          {
-            log_cb(RETRO_LOG_DEBUG, "player: %d type: %d\n", i + 1, Config.JOY_TYPE[i]);
-            Joystick_Init();
+            snprintf(joy2key_option, sizeof(joy2key_option),
+                  "px68k_j2k_p%u_%s", port + 1, joy2key_controls[input]);
+            var.key = joy2key_option;
+            var.value = NULL;
+            if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+               Joystick_SetKeyMapping(port, input, var.value);
          }
-      }
    }
 
    var.key = "px68k_cpuspeed";
@@ -1572,17 +1718,6 @@ static void update_variables(int running)
          value = 12;
 
       Config.ram_size = (value * 1024 * 1024);
-   }
-
-   var.key = "px68k_analog";
-   var.value = NULL;
-
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      if (!strcmp(var.value, "disabled"))
-         opt_analog = false;
-      if (!strcmp(var.value, "enabled"))
-         opt_analog = true;
    }
 
    /* Read on every variable update: ADPCM_Update checks this each audio block. */
@@ -1657,33 +1792,6 @@ static void update_variables(int running)
          Config.MenuLinesJump = jump;
    }
 
-   var.key    = "px68k_joy1_select";
-   var.value  = NULL;
-
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      if (!strcmp(var.value, "XF1"))
-         Config.joy1_select_mapping = KBD_XF1;
-      else if (!strcmp(var.value, "XF2"))
-         Config.joy1_select_mapping = KBD_XF2;
-      else if (!strcmp(var.value, "XF3"))
-         Config.joy1_select_mapping = KBD_XF3;
-      else if (!strcmp(var.value, "XF4"))
-         Config.joy1_select_mapping = KBD_XF4;
-      else if (!strcmp(var.value, "XF5"))
-         Config.joy1_select_mapping = KBD_XF5;
-      else if (!strcmp(var.value, "F1"))
-         Config.joy1_select_mapping = KBD_F1;
-      else if (!strcmp(var.value, "F2"))
-         Config.joy1_select_mapping = KBD_F2;
-      else if (!strcmp(var.value, "OPT1"))
-         Config.joy1_select_mapping = KBD_OPT1;
-      else if (!strcmp(var.value, "OPT2"))
-         Config.joy1_select_mapping = KBD_OPT2;
-      else
-         Config.joy1_select_mapping = 0;
-   }
-
    var.key    = "px68k_save_fdd_path";
    var.value  = NULL;
 
@@ -1723,28 +1831,26 @@ static void update_variables(int running)
    var.value    = NULL;
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      int value = 0;
-      if (!strcmp(var.value, "Joystick"))
-         value = 0;
-      else if (!strcmp(var.value, "Mouse"))
-         value = 1;
+      Config.Joy2Mouse = !strcmp(var.value, "enabled");
 
-      Config.JoyOrMouse = value;
-      Mouse_StartCapture(value == 1);
-   }
-
-   var.key    = "px68k_vbtn_swap";
-   var.value  = NULL;
-
+   var.key   = "px68k_joy2mouse_analog_speed";
+   var.value = NULL;
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      if (!strcmp(var.value, "TRIG1 TRIG2"))
-         Config.VbtnSwap = 0;
-      else if (!strcmp(var.value, "TRIG2 TRIG1"))
-         Config.VbtnSwap = 1;
-   }
+      joy_mouse_analog_speed = (float)atoi(var.value);
 
+   var.key   = "px68k_joy2mouse_analog_deadzone";
+   var.value = NULL;
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+      joy_mouse_deadzone = (float)atof(var.value);
+
+   var.key   = "px68k_joy2mouse_digital_speed";
+   var.value = NULL;
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+      joy_mouse_digital_speed = (float)atoi(var.value);
+
+   Joystick_SetMouseOptions(joy_mouse_analog_speed, joy_mouse_deadzone,
+         joy_mouse_digital_speed);
+   Mouse_StartCapture(1);
 
    var.key    = "px68k_frameskip";
    var.value  = NULL;
@@ -2219,10 +2325,18 @@ void retro_init(void)
    Config.save_fdd_path = 1;
    Config.clockmhz      = 10;
    Config.ram_size      = 2 * 1024 *1024;
-   Config.JOY_TYPE[0]   = 0;
-   Config.JOY_TYPE[1]   = 0;
 
    update_variables(0);
+
+   /* A frontend may send the controller selection before retro_init().
+    * Reapply such selections after the core defaults are initialized.
+    * Later changes are applied immediately by retro_set_controller_port_device(). */
+   {
+      unsigned port;
+      for (port = 0; port < 2; port++)
+         if (controller_device_set[port])
+            retro_set_controller_port_device(port, controller_device[port]);
+   }
 
    memset(Core_Key_State, 0, 512);
    memset(Core_old_Key_State, 0, sizeof(Core_old_Key_State));
@@ -2509,10 +2623,6 @@ static void handle_retrok(void)
          KEYP(KeyTable[i].lrkey, KeyTable[i].keycode);
    }
    
-   /* only process kb_to_joypad map when its not zero, else button is used as
-    * joypad select mode */
-   if (Config.joy1_select_mapping)
-      KEYP(RETROK_XFX, Config.joy1_select_mapping);
 #undef KEYP
 }
 
@@ -2775,54 +2885,56 @@ void retro_run(void)
       WinX68k_Exec();
    }
 
-   mouse_x       = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_X);
-   mouse_y       = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_Y);
-
+   /* Physical mouse input remains available. Joy2Mouse adds P1 controller
+    * movement as a second source without consuming native joystick buttons. */
+   mouse_x = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_X);
+   mouse_y = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_Y);
    Mouse_Event(0, mouse_x, mouse_y);
 
-   mouse_l       = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_LEFT);
-   mouse_r       = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_RIGHT);
+   if (Config.Joy2Mouse && menu_mode == menu_out)
+   {
+      float joy_mouse_x, joy_mouse_y;
+      Joystick_GetMouseDelta(0, &joy_mouse_x, &joy_mouse_y);
+      Mouse_Event(0, joy_mouse_x, joy_mouse_y);
+   }
 
-   if(!mbL && mouse_l)
    {
-      mbL         = true;
-      Mouse_Event(1,1.0,0);
-   }
-   else if(mbL && !mouse_l)
-   {
-      mbL         = false;
-      Mouse_Event(1,0,0);
-   }
-   if(!mbR && mouse_r)
-   {
-      mbR         = true;
-      Mouse_Event(2,1.0,0);
-   }
-   else if(mbR && !mouse_r)
-   {
-      mbR         = false;
-      Mouse_Event(2,0,0);
+      mouse_l = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_LEFT);
+      mouse_r = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_RIGHT);
+
+      if (!mbL && mouse_l)
+      {
+         mbL = true;
+         Mouse_Event(1, 1.0f, 0.0f);
+      }
+      else if (mbL && !mouse_l)
+      {
+         mbL = false;
+         Mouse_Event(1, 0.0f, 0.0f);
+      }
+      if (!mbR && mouse_r)
+      {
+         mbR = true;
+         Mouse_Event(2, 1.0f, 0.0f);
+      }
+      else if (mbR && !mouse_r)
+      {
+         mbR = false;
+         Mouse_Event(2, 0.0f, 0.0f);
+      }
    }
 
    for(i = 0; i < 320; i++)
       Core_Key_State[i] = input_state_cb(0, RETRO_DEVICE_KEYBOARD, 0, i) ? 0x80: 0;
 
-   Core_Key_State[RETROK_XFX] = 0;
 
-   /* Joypad Key for Menu */
-   if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_L2))
+   sync_controller_types();
+
+   /* The PX68K menu is a Joy2Key target (default: RetroPad L2) and works
+    * from either logical port. */
+   if (Joystick_IsMenuPressed())
       Core_Key_State[RETROK_F12] = 0x80;
 
-   if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_R2))  /*Joypad key for touroku key in order to enable MIDI when preseed on start up in Wolfteam games*/
-      Core_Key_State[RETROK_SCROLLOCK] = 0x80;
-
-   if (Config.joy1_select_mapping)
-   {
-      /* Joypad Key for Mapping */
-      if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0,
-               RETRO_DEVICE_ID_JOYPAD_SELECT))
-         Core_Key_State[RETROK_XFX] = 0x80;
-   }
 
    if(memcmp( Core_Key_State,Core_old_Key_State , sizeof(Core_Key_State) ) )
       handle_retrok();

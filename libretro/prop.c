@@ -65,8 +65,7 @@ static void LoadDefaults(void)
 	Config.ToneMapFile[0] = 0;
 	Config.MIDIDelay = Config.BufferSize*5;
 	Config.MIDIAutoDelay = 1;
-	Config.VbtnSwap = 0;
-	Config.JoyOrMouse = 1;
+	Config.Joy2Mouse = 0;
 
 	Config.NoWaitMode = 0;
 	Config.AdjustFrameRates = 1;

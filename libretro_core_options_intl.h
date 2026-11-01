@@ -50,12 +50,22 @@ struct retro_core_option_v2_category option_cats_fr[] = {
       NULL,
    },
    {
-      "audio",
+      "input",
       NULL,
       NULL,
    },
    {
-      "input",
+      "p1_joy2key",
+      NULL,
+      NULL,
+   },
+   {
+      "p2_joy2key",
+      NULL,
+      NULL,
+   },
+   {
+      "audio",
       NULL,
       NULL,
    },
@@ -145,72 +155,388 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
       "2MB"
    },
    {
-      "px68k_analog",
-      "Utiliser l'analogique",
+      "px68k_j2k_p1_up",
+      "P1 Joy2Key UP",
       NULL,
+      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
       NULL,
-      NULL,
-      "input",
+      "p1_joy2key",
       {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL,       NULL },
+         PX68K_P1_JOY2KEY_VALUES
       },
-      "disabled"
+      "up"
    },
    {
-      "px68k_joytype1",
-      "Type de manette du joueur 1",
+      "px68k_j2k_p1_down",
+      "P1 Joy2Key Down",
       NULL,
-      "Définit le type de manette du joueur 1.",
+      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
       NULL,
-      "input",
+      "p1_joy2key",
       {
-         { "Default (2 Buttons)",  "Défaut (2 Boutons)" },
-         { "CPSF-MD (8 Buttons)",  "CPSF-MD (8 Boutons)" },
-         { "CPSF-SFC (8 Buttons)", "CPSF-SFC (8 Boutons)" },
-         { "Cyberstick (Digital)", NULL },
-         { "Cyberstick (Analog)",  NULL },
-         { NULL,                   NULL },
+         PX68K_P1_JOY2KEY_VALUES
       },
-      "Default (2 Buttons)"
+      "down"
    },
    {
-      "px68k_joytype2",
-      "Type de manette du joueur 2",
+      "px68k_j2k_p1_left",
+      "P1 Joy2Key Left",
       NULL,
-      "Définit le type de manette du joueur 2.",
+      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
       NULL,
-      "input",
+      "p1_joy2key",
       {
-         { "Default (2 Buttons)",  "Défaut (2 Boutons)" },
-         { "CPSF-MD (8 Buttons)",  "CPSF-MD (8 Boutons)" },
-         { "CPSF-SFC (8 Buttons)", "CPSF-SFC (8 Boutons)" },
-         { NULL,                   NULL },
+         PX68K_P1_JOY2KEY_VALUES
       },
-      "Default (2 Buttons)"
+      "left"
    },
    {
-      "px68k_joy1_select",
-      "Mappage de la manette du joueur 1",
+      "px68k_j2k_p1_right",
+      "P1 Joy2Key Right",
       NULL,
-      "Attribue une touche du clavier au bouton SELECT de la manette, car certains jeux utilisent ces touches comme bouton Démarrer ou Insérer une pièce.",
+      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
       NULL,
-      "input",
+      "p1_joy2key",
       {
-         { "Default", "Défaut" },
-         { "XF1",     NULL },
-         { "XF2",     NULL },
-         { "XF3",     NULL },
-         { "XF4",     NULL },
-         { "XF5",     NULL },
-         { "OPT1",    NULL },
-         { "OPT2",    NULL },
-         { "F1",      NULL },
-         { "F2",      NULL },
-         { NULL,      NULL },
+         PX68K_P1_JOY2KEY_VALUES
       },
-      "Default"
+      "right"
+   },
+   {
+      "px68k_j2k_p1_b",
+      "P1 Joy2Key B",
+      NULL,
+      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      NULL,
+      "p1_joy2key",
+      {
+         PX68K_P1_JOY2KEY_VALUES
+      },
+      "none"
+   },
+   {
+      "px68k_j2k_p1_y",
+      "P1 Joy2Key Y",
+      NULL,
+      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      NULL,
+      "p1_joy2key",
+      {
+         PX68K_P1_JOY2KEY_VALUES
+      },
+      "x"
+   },
+   {
+      "px68k_j2k_p1_select",
+      "P1 Joy2Key Select",
+      NULL,
+      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      NULL,
+      "p1_joy2key",
+      {
+         PX68K_P1_JOY2KEY_VALUES
+      },
+      "opt2"
+   },
+   {
+      "px68k_j2k_p1_start",
+      "P1 Joy2Key Start",
+      NULL,
+      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      NULL,
+      "p1_joy2key",
+      {
+         PX68K_P1_JOY2KEY_VALUES
+      },
+      "opt1"
+   },
+   {
+      "px68k_j2k_p1_a",
+      "P1 Joy2Key A",
+      NULL,
+      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      NULL,
+      "p1_joy2key",
+      {
+         PX68K_P1_JOY2KEY_VALUES
+      },
+      "none"
+   },
+   {
+      "px68k_j2k_p1_x",
+      "P1 Joy2Key X",
+      NULL,
+      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      NULL,
+      "p1_joy2key",
+      {
+         PX68K_P1_JOY2KEY_VALUES
+      },
+      "return"
+   },
+   {
+      "px68k_j2k_p1_l",
+      "P1 Joy2Key L",
+      NULL,
+      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      NULL,
+      "p1_joy2key",
+      {
+         PX68K_P1_JOY2KEY_VALUES
+      },
+      "shift"
+   },
+   {
+      "px68k_j2k_p1_r",
+      "P1 Joy2Key R",
+      NULL,
+      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      NULL,
+      "p1_joy2key",
+      {
+         PX68K_P1_JOY2KEY_VALUES
+      },
+      "ctrl"
+   },
+   {
+      "px68k_j2k_p1_l2",
+      "P1 Joy2Key L2",
+      NULL,
+      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      NULL,
+      "p1_joy2key",
+      {
+         PX68K_P1_JOY2KEY_VALUES
+      },
+      "menu"
+   },
+   {
+      "px68k_j2k_p1_r2",
+      "P1 Joy2Key R2",
+      NULL,
+      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      NULL,
+      "p1_joy2key",
+      {
+         PX68K_P1_JOY2KEY_VALUES
+      },
+      "touroku"
+   },
+   {
+      "px68k_j2k_p1_l3",
+      "P1 Joy2Key L3",
+      NULL,
+      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      NULL,
+      "p1_joy2key",
+      {
+         PX68K_P1_JOY2KEY_VALUES
+      },
+      "none"
+   },
+   {
+      "px68k_j2k_p1_r3",
+      "P1 Joy2Key R3",
+      NULL,
+      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      NULL,
+      "p1_joy2key",
+      {
+         PX68K_P1_JOY2KEY_VALUES
+      },
+      "none"
+   },
+   {
+      "px68k_j2k_p2_up",
+      "P2 Joy2Key UP",
+      NULL,
+      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      NULL,
+      "p2_joy2key",
+      {
+         PX68K_JOY2KEY_VALUES
+      },
+      "up"
+   },
+   {
+      "px68k_j2k_p2_down",
+      "P2 Joy2Key Down",
+      NULL,
+      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      NULL,
+      "p2_joy2key",
+      {
+         PX68K_JOY2KEY_VALUES
+      },
+      "down"
+   },
+   {
+      "px68k_j2k_p2_left",
+      "P2 Joy2Key Left",
+      NULL,
+      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      NULL,
+      "p2_joy2key",
+      {
+         PX68K_JOY2KEY_VALUES
+      },
+      "left"
+   },
+   {
+      "px68k_j2k_p2_right",
+      "P2 Joy2Key Right",
+      NULL,
+      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      NULL,
+      "p2_joy2key",
+      {
+         PX68K_JOY2KEY_VALUES
+      },
+      "right"
+   },
+   {
+      "px68k_j2k_p2_b",
+      "P2 Joy2Key B",
+      NULL,
+      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      NULL,
+      "p2_joy2key",
+      {
+         PX68K_JOY2KEY_VALUES
+      },
+      "none"
+   },
+   {
+      "px68k_j2k_p2_y",
+      "P2 Joy2Key Y",
+      NULL,
+      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      NULL,
+      "p2_joy2key",
+      {
+         PX68K_JOY2KEY_VALUES
+      },
+      "x"
+   },
+   {
+      "px68k_j2k_p2_select",
+      "P2 Joy2Key Select",
+      NULL,
+      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      NULL,
+      "p2_joy2key",
+      {
+         PX68K_JOY2KEY_VALUES
+      },
+      "opt2"
+   },
+   {
+      "px68k_j2k_p2_start",
+      "P2 Joy2Key Start",
+      NULL,
+      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      NULL,
+      "p2_joy2key",
+      {
+         PX68K_JOY2KEY_VALUES
+      },
+      "opt1"
+   },
+   {
+      "px68k_j2k_p2_a",
+      "P2 Joy2Key A",
+      NULL,
+      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      NULL,
+      "p2_joy2key",
+      {
+         PX68K_JOY2KEY_VALUES
+      },
+      "none"
+   },
+   {
+      "px68k_j2k_p2_x",
+      "P2 Joy2Key X",
+      NULL,
+      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      NULL,
+      "p2_joy2key",
+      {
+         PX68K_JOY2KEY_VALUES
+      },
+      "return"
+   },
+   {
+      "px68k_j2k_p2_l",
+      "P2 Joy2Key L",
+      NULL,
+      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      NULL,
+      "p2_joy2key",
+      {
+         PX68K_JOY2KEY_VALUES
+      },
+      "shift"
+   },
+   {
+      "px68k_j2k_p2_r",
+      "P2 Joy2Key R",
+      NULL,
+      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      NULL,
+      "p2_joy2key",
+      {
+         PX68K_JOY2KEY_VALUES
+      },
+      "ctrl"
+   },
+   {
+      "px68k_j2k_p2_l2",
+      "P2 Joy2Key L2",
+      NULL,
+      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      NULL,
+      "p2_joy2key",
+      {
+         PX68K_JOY2KEY_VALUES
+      },
+      "menu"
+   },
+   {
+      "px68k_j2k_p2_r2",
+      "P2 Joy2Key R2",
+      NULL,
+      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      NULL,
+      "p2_joy2key",
+      {
+         PX68K_JOY2KEY_VALUES
+      },
+      "touroku"
+   },
+   {
+      "px68k_j2k_p2_l3",
+      "P2 Joy2Key L3",
+      NULL,
+      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      NULL,
+      "p2_joy2key",
+      {
+         PX68K_JOY2KEY_VALUES
+      },
+      "none"
+   },
+   {
+      "px68k_j2k_p2_r3",
+      "P2 Joy2Key R3",
+      NULL,
+      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      NULL,
+      "p2_joy2key",
+      {
+         PX68K_JOY2KEY_VALUES
+      },
+      "none"
    },
    {
       "px68k_sc55_emulation",
@@ -485,31 +811,59 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
    /* from PX68K Menu */
    {
       "px68k_joy_mouse",
-      "Manette / souris",
+      "Joy2Mouse",
       NULL,
-      "Sélectionner la [souris] ou la [manette] pour contrôler le pointeur de souris dans les jeux.",
+      "Ajoute le déplacement de la souris avec la croix directionnelle et le stick analogique gauche du joueur 1. Attribuez Mouse Btn1 et Mouse Btn2 aux commandes P1 Joy2Key pour utiliser les clics.",
       NULL,
       "input",
       {
-         { "Mouse",    "Souris" },
-         { "Joystick", "Manette" }, /* unimplemented yet */
+         { "disabled", "désactivé" },
+         { "enabled",  "activé" },
          { NULL,       NULL },
       },
-      "Mouse"
+      "disabled"
    },
    {
-      "px68k_vbtn_swap",
-      "Echange des boutons",
+      "px68k_joy2mouse_analog_speed",
+      "Joy2Mouse Analog speed",
       NULL,
-      "Echange le BOUTON1 et le BOUTON2 quand une manette 2 boutons est sélectionné.",
+      "Vitesse maximale du déplacement de la souris avec le stick analogique gauche, en unités souris par image.",
       NULL,
       "input",
       {
-         { "TRIG1 TRIG2", "BOUTON1 BOUTON2" },
-         { "TRIG2 TRIG1", "BOUTON2 BOUTON1" },
-         { NULL,          NULL },
+         { "1", NULL }, { "2", NULL }, { "4", NULL }, { "6", NULL },
+         { "8", NULL }, { "10", NULL }, { "12", NULL }, { "16", NULL },
+         { "20", NULL }, { "24", NULL }, { NULL, NULL },
       },
-      "TRIG1 TRIG2"
+      "12"
+   },
+   {
+      "px68k_joy2mouse_analog_deadzone",
+      "Joy2Mouse Analog deadzone",
+      NULL,
+      "Zone morte du stick analogique en pourcentage. Augmentez cette valeur si le pointeur dérive lorsque le stick est relâché.",
+      NULL,
+      "input",
+      {
+         { "0", NULL }, { "5", NULL }, { "10", NULL }, { "12.5", NULL },
+         { "15", NULL }, { "20", NULL }, { "25", NULL }, { "30", NULL },
+         { "40", NULL }, { "50", NULL }, { NULL, NULL },
+      },
+      "12.5"
+   },
+   {
+      "px68k_joy2mouse_digital_speed",
+      "Joy2Mouse Digital speed",
+      NULL,
+      "Vitesse de déplacement de la souris avec la croix directionnelle, en unités souris par image.",
+      NULL,
+      "input",
+      {
+         { "1", NULL }, { "2", NULL }, { "3", NULL }, { "4", NULL },
+         { "5", NULL }, { "6", NULL }, { "8", NULL }, { "10", NULL },
+         { "12", NULL }, { NULL, NULL },
+      },
+      "6"
    },
    {
       "px68k_no_wait_mode",

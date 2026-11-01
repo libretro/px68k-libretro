@@ -23,25 +23,20 @@ typedef struct
 	int MIDIDelay;
 	int MIDIAutoDelay;
 	char FDDImage[2][MAX_PATH];
-	int VbtnSwap;
-	int JoyOrMouse;
+	int Joy2Mouse;
 	int NoWaitMode;
 	uint8_t FrameRate;
 	int AdjustFrameRates;
 	int AudioDesyncHack;
 	int MenuFontSize; /* font size of menu, 0 = normal, 1 = large */
 	int MenuLinesJump; /* Left/Right navigation step, 5 to 50 */
-	int joy1_select_mapping; /* used for keyboard to joypad map for P1 Select */
 	int save_fdd_path;
 	int save_hdd_path;
 	/* Cpu clock in MHz */
 	int clockmhz;
 	/* RAM Size = size * 1024 * 1024 */
 	int ram_size;
-	/* Set controller type for each player to use
-	 * 0 = Standard 2-buttons gamepad
-	 * 1 = CPSF-MD (8 Buttons
-	 * 2 = CPSF-SFC (8 Buttons) */
+	/* Emulated controller type selected through RetroPad subclasses. */
 	int JOY_TYPE[2];
 } Win68Conf;
 
