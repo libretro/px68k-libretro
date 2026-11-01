@@ -203,30 +203,6 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
       "right"
    },
    {
-      "px68k_j2k_p1_b",
-      "P1 Joy2Key B",
-      NULL,
-      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
-      NULL,
-      "p1_joy2key",
-      {
-         PX68K_P1_JOY2KEY_VALUES
-      },
-      "none"
-   },
-   {
-      "px68k_j2k_p1_y",
-      "P1 Joy2Key Y",
-      NULL,
-      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
-      NULL,
-      "p1_joy2key",
-      {
-         PX68K_P1_JOY2KEY_VALUES
-      },
-      "x"
-   },
-   {
       "px68k_j2k_p1_select",
       "P1 Joy2Key Select",
       NULL,
@@ -236,7 +212,7 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
       {
          PX68K_P1_JOY2KEY_VALUES
       },
-      "opt2"
+      "esc"
    },
    {
       "px68k_j2k_p1_start",
@@ -248,7 +224,7 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
       {
          PX68K_P1_JOY2KEY_VALUES
       },
-      "opt1"
+      "return"
    },
    {
       "px68k_j2k_p1_a",
@@ -260,7 +236,19 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
       {
          PX68K_P1_JOY2KEY_VALUES
       },
-      "none"
+      "z"
+   },
+   {
+      "px68k_j2k_p1_b",
+      "P1 Joy2Key B",
+      NULL,
+      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      NULL,
+      "p1_joy2key",
+      {
+         PX68K_P1_JOY2KEY_VALUES
+      },
+      "x"
    },
    {
       "px68k_j2k_p1_x",
@@ -272,7 +260,19 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
       {
          PX68K_P1_JOY2KEY_VALUES
       },
-      "return"
+      "x"
+   },
+   {
+      "px68k_j2k_p1_y",
+      "P1 Joy2Key Y",
+      NULL,
+      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      NULL,
+      "p1_joy2key",
+      {
+         PX68K_P1_JOY2KEY_VALUES
+      },
+      "z"
    },
    {
       "px68k_j2k_p1_l",
@@ -284,7 +284,7 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
       {
          PX68K_P1_JOY2KEY_VALUES
       },
-      "shift"
+      "opt1"
    },
    {
       "px68k_j2k_p1_r",
@@ -296,7 +296,7 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
       {
          PX68K_P1_JOY2KEY_VALUES
       },
-      "ctrl"
+      "opt2"
    },
    {
       "px68k_j2k_p1_l2",
@@ -320,7 +320,7 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
       {
          PX68K_P1_JOY2KEY_VALUES
       },
-      "touroku"
+      "space"
    },
    {
       "px68k_j2k_p1_l3",
@@ -332,7 +332,7 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
       {
          PX68K_P1_JOY2KEY_VALUES
       },
-      "none"
+      "mouse_btn1"
    },
    {
       "px68k_j2k_p1_r3",
@@ -344,7 +344,7 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
       {
          PX68K_P1_JOY2KEY_VALUES
       },
-      "none"
+      "mouse_btn2"
    },
    {
       "px68k_j2k_p2_up",
@@ -395,30 +395,6 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
       "right"
    },
    {
-      "px68k_j2k_p2_b",
-      "P2 Joy2Key B",
-      NULL,
-      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
-      NULL,
-      "p2_joy2key",
-      {
-         PX68K_JOY2KEY_VALUES
-      },
-      "none"
-   },
-   {
-      "px68k_j2k_p2_y",
-      "P2 Joy2Key Y",
-      NULL,
-      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
-      NULL,
-      "p2_joy2key",
-      {
-         PX68K_JOY2KEY_VALUES
-      },
-      "x"
-   },
-   {
       "px68k_j2k_p2_select",
       "P2 Joy2Key Select",
       NULL,
@@ -428,7 +404,7 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
       {
          PX68K_JOY2KEY_VALUES
       },
-      "opt2"
+      "esc"
    },
    {
       "px68k_j2k_p2_start",
@@ -440,7 +416,7 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
       {
          PX68K_JOY2KEY_VALUES
       },
-      "opt1"
+      "return"
    },
    {
       "px68k_j2k_p2_a",
@@ -452,7 +428,19 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
       {
          PX68K_JOY2KEY_VALUES
       },
-      "none"
+      "z"
+   },
+   {
+      "px68k_j2k_p2_b",
+      "P2 Joy2Key B",
+      NULL,
+      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      NULL,
+      "p2_joy2key",
+      {
+         PX68K_JOY2KEY_VALUES
+      },
+      "x"
    },
    {
       "px68k_j2k_p2_x",
@@ -464,7 +452,19 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
       {
          PX68K_JOY2KEY_VALUES
       },
-      "return"
+      "x"
+   },
+   {
+      "px68k_j2k_p2_y",
+      "P2 Joy2Key Y",
+      NULL,
+      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      NULL,
+      "p2_joy2key",
+      {
+         PX68K_JOY2KEY_VALUES
+      },
+      "z"
    },
    {
       "px68k_j2k_p2_l",
@@ -476,7 +476,7 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
       {
          PX68K_JOY2KEY_VALUES
       },
-      "shift"
+      "opt1"
    },
    {
       "px68k_j2k_p2_r",
@@ -488,7 +488,7 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
       {
          PX68K_JOY2KEY_VALUES
       },
-      "ctrl"
+      "opt2"
    },
    {
       "px68k_j2k_p2_l2",
@@ -512,7 +512,7 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
       {
          PX68K_JOY2KEY_VALUES
       },
-      "touroku"
+      "space"
    },
    {
       "px68k_j2k_p2_l3",
@@ -524,7 +524,7 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
       {
          PX68K_JOY2KEY_VALUES
       },
-      "none"
+      "touroku"
    },
    {
       "px68k_j2k_p2_r3",
@@ -536,7 +536,7 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
       {
          PX68K_JOY2KEY_VALUES
       },
-      "none"
+      "shift"
    },
    {
       "px68k_sc55_emulation",
