@@ -6,6 +6,9 @@
 
 #define KeyBufSize 128
 
+#define P6K_UP   1
+#define P6K_DOWN 2
+
 extern	uint8_t	KeyBuf[KeyBufSize];
 extern	uint8_t	KeyBufWP;
 extern	uint8_t	KeyBufRP;
@@ -19,7 +22,6 @@ void send_keycode(uint8_t code, int flag);
 int Keyboard_get_key_ptr(int x, int y);
 int Keyboard_IsSwKeyboard(void);
 
-#define	RETROK_XFX	333
 /* https://gamesx.com/wiki/doku.php?id=x68000:keycodes */
 #define	KBD_XF1		0x55
 #define	KBD_XF2		0x56

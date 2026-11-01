@@ -31,6 +31,14 @@ int PIA_StateAction(StateMem *sm, int load, int data_only)
 
 	int ret = PX68KSS_StateAction(sm, load, data_only, StateRegs, "X68K_PIA", false);
 
+   /* JoyPortData is the software-visible PIA strobe latch. It is not stored
+    * in the PIA savestate, so reconstruct it from the restored Port C bits. */
+   if (ret && load)
+   {
+      Joystick_Write(0, (pia.PortC & 0x10) ? 0xff : 0x00);
+      Joystick_Write(1, (pia.PortC & 0x20) ? 0xff : 0x00);
+   }
+
 	return ret;
 }
 
@@ -40,6 +48,11 @@ void PIA_Init(void)
 	pia.PortB = 0xff;
 	pia.PortC = 0x0b;
 	pia.Ctrl = 0;
+
+   /* The PIA reset value leaves both joystick select lines low. Keep the
+    * joystick-side strobe latches synchronized with Port C on every reset. */
+   Joystick_Write(0, 0x00);
+   Joystick_Write(1, 0x00);
 }
 
 void FASTCALL PIA_Write(uint32_t adr, uint8_t data)

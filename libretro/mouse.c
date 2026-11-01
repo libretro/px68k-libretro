@@ -37,8 +37,7 @@ static uint8_t MouseSW   = 0;
 
 void Mouse_Init(void)
 {
-	if (Config.JoyOrMouse)
-		Mouse_StartCapture(1);
+	Mouse_StartCapture(1);
 }
 
 /*
