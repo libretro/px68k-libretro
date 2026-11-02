@@ -33,7 +33,12 @@
 
 void Joystick_Init(void);
 void Joystick_Cleanup(void);
-void Joystick_SetKeyMapping(unsigned port, unsigned input, const char *value);
+int Joystick_SetKeyMapping(unsigned port, unsigned input, const char *value);
+const char *Joystick_GetKeyMappingLabel(unsigned port, unsigned input);
+int Joystick_GetJoy2KeyAction(int type, unsigned retropad_button);
+unsigned Joystick_GetJoy2KeyRetropadId(unsigned action);
+const char *Joystick_GetJoy2KeyActionName(unsigned action);
+const char *Joystick_GetJoy2KeyOptionName(unsigned action);
 int Joystick_HasKeyMapping(unsigned port, unsigned input);
 int Joystick_IsMenuPressed(void);
 const char *Joystick_NativeLabel(int type, unsigned retropad_button);
