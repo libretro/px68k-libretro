@@ -1338,50 +1338,21 @@ run_pmain:
 
 static void retro_set_controller_descriptors(void)
 {
-   static const unsigned input_ids[16] = {
-      RETRO_DEVICE_ID_JOYPAD_A, RETRO_DEVICE_ID_JOYPAD_B,
-      RETRO_DEVICE_ID_JOYPAD_X, RETRO_DEVICE_ID_JOYPAD_Y,
-      RETRO_DEVICE_ID_JOYPAD_SELECT, RETRO_DEVICE_ID_JOYPAD_START,
-      RETRO_DEVICE_ID_JOYPAD_RIGHT, RETRO_DEVICE_ID_JOYPAD_LEFT,
-      RETRO_DEVICE_ID_JOYPAD_UP, RETRO_DEVICE_ID_JOYPAD_DOWN,
-      RETRO_DEVICE_ID_JOYPAD_R, RETRO_DEVICE_ID_JOYPAD_L,
-      RETRO_DEVICE_ID_JOYPAD_R2, RETRO_DEVICE_ID_JOYPAD_L2,
-      RETRO_DEVICE_ID_JOYPAD_R3, RETRO_DEVICE_ID_JOYPAD_L3
-   };
    static const char *default_labels[16] = {
       "A", "B", "X", "Y", "Select", "Start", "Right", "Left",
       "Up", "Down", "R", "L", "R2", "L2", "R3", "L3"
    };
-   static const char *md_labels[16] = {
-      "MD A", "MD B", "MD Y", "MD X", "Mode", "Start",
-      "Right", "Left", "Up", "Down", "MD C", "MD Z",
-      "P1 Joy2Key R2", "PX68K Menu", "P1 Joy2Key R3", "P1 Joy2Key L3"
-   };
-   static const char *sfc_labels[16] = {
-      "SFC Y", "SFC B", "SFC X", "SFC L", "Select", "Start",
-      "Right", "Left", "Up", "Down", "SFC A", "SFC R",
-      "P1 Joy2Key R2", "PX68K Menu", "P1 Joy2Key R3", "P1 Joy2Key L3"
-   };
    static const char *cyber_d_labels[16] = {
       "A", "B", "C", "D", "Select", "Start",
       "Right", "Left", "Up", "Down", "E2", "E1",
-      NULL, "PX68K Menu", NULL, NULL
+      NULL, NULL, NULL, NULL
    };
    static const char *cyber_a_labels[16] = {
       "A", "B", "C", "D", "Select", "Start",
       NULL, NULL, NULL, NULL, "E2", "E1",
-      "P1 Joy2Key Start", "PX68K Menu", NULL, NULL
+      NULL, NULL, NULL, NULL
    };
-   static const char *two_button_labels[16] = {
-      "Button 1", "Button 2", NULL, NULL,
-      NULL, NULL, "Right", "Left", "Up", "Down", NULL, NULL,
-      NULL, "Joy2Key L2", NULL, NULL
-   };
-   static const char *joy2key_names[16] = {
-      "A", "B", "X", "Y", "Select", "Start", "Right", "Left",
-      "Up", "Down", "R", "L", "R2", "L2", "R3", "L3"
-   };
-   static char dynamic_labels[2][16][40];
+   static char dynamic_labels[2][16][80];
    unsigned port;
    unsigned count = 0;
 
@@ -1396,8 +1367,6 @@ static void retro_set_controller_descriptors(void)
 
       switch (Config.JOY_TYPE[port])
       {
-         case PAD_CPSF_MD:      labels = md_labels; break;
-         case PAD_CPSF_SFC:     labels = sfc_labels; break;
          case PAD_CYBERSTICK_D: labels = cyber_d_labels; break;
          case PAD_CYBERSTICK_A: labels = cyber_a_labels; break;
          default: break;
@@ -1405,52 +1374,31 @@ static void retro_set_controller_descriptors(void)
 
       for (i = 0; i < 16 && count < 63; i++)
       {
+         unsigned retropad_button = Joystick_GetJoy2KeyRetropadId(i);
          const char *label = labels[i];
          const char *native_label =
-            Joystick_NativeLabel(Config.JOY_TYPE[port], input_ids[i]);
+            Joystick_NativeLabel(Config.JOY_TYPE[port], retropad_button);
 
          /* CPSF labels come from the same table that drives the emulated
           * signals, so the descriptors always match the real behaviour. */
          if (native_label)
             label = native_label;
 
-         if (Config.JOY_TYPE[port] == PAD_JOY2KEY)
          {
-            if (i == 13)
-               snprintf(dynamic_labels[port][i], sizeof(dynamic_labels[port][i]),
-                     "PX68K Menu (P%u Joy2Key L2)", port + 1);
-            else
-               snprintf(dynamic_labels[port][i], sizeof(dynamic_labels[port][i]),
-                     "P%u Joy2Key %s", port + 1, joy2key_names[i]);
-            label = dynamic_labels[port][i];
-         }
-         else if (Config.JOY_TYPE[port] == PAD_2BUTTON)
-         {
-            if (i == 2 || i == 3 || i == 4 || i == 5 ||
-                i == 10 || i == 11 || i == 12 || i == 14 || i == 15)
+            int action = Joystick_GetJoy2KeyAction(
+                  Config.JOY_TYPE[port], retropad_button);
+            if (action >= 0)
             {
-               snprintf(dynamic_labels[port][i], sizeof(dynamic_labels[port][i]),
-                     "P%u Joy2Key %s", port + 1, joy2key_names[i]);
-               label = dynamic_labels[port][i];
-            }
-            else if (i == 13)
-               label = "PX68K Menu (Joy2Key L2)";
-         }
-         else if (Config.JOY_TYPE[port] == PAD_CPSF_MD ||
-                  Config.JOY_TYPE[port] == PAD_CPSF_SFC ||
-                  Config.JOY_TYPE[port] == PAD_CYBERSTICK_D ||
-                  Config.JOY_TYPE[port] == PAD_CYBERSTICK_A)
-         {
-            if (i == 12 || i == 14 || i == 15 ||
-                (Config.JOY_TYPE[port] == PAD_CYBERSTICK_A &&
-                 (i >= 6 && i <= 9)))
-            {
-               if (Config.JOY_TYPE[port] == PAD_CYBERSTICK_A && i == 12)
+               const char *key_label =
+                  Joystick_GetKeyMappingLabel(port, (unsigned)action);
+               if (action == 13 && !strcmp(key_label, "Menu"))
                   snprintf(dynamic_labels[port][i], sizeof(dynamic_labels[port][i]),
-                        "P%u Joy2Key Start", port + 1);
+                        "PX68K Menu (J2K %s [Menu])",
+                        Joystick_GetJoy2KeyActionName((unsigned)action));
                else
                   snprintf(dynamic_labels[port][i], sizeof(dynamic_labels[port][i]),
-                        "P%u Joy2Key %s", port + 1, joy2key_names[i]);
+                        "J2K %s [%s]",
+                        Joystick_GetJoy2KeyActionName((unsigned)action), key_label);
                label = dynamic_labels[port][i];
             }
          }
@@ -1458,7 +1406,7 @@ static void retro_set_controller_descriptors(void)
          input_descs[count].port = port;
          input_descs[count].device = RETRO_DEVICE_JOYPAD;
          input_descs[count].index = 0;
-         input_descs[count].id = input_ids[i];
+         input_descs[count].id = retropad_button;
          input_descs[count].description = label;
          count++;
       }
@@ -1665,22 +1613,24 @@ static void update_variables(int running)
    }
 
    {
-      static const char *joy2key_controls[16] = {
-         "a", "b", "x", "y", "select", "start", "right", "left",
-         "up", "down", "r", "l", "r2", "l2", "r3", "l3"
-      };
       unsigned port, input;
+      int descriptors_changed = 0;
       char joy2key_option[40];
       for (port = 0; port < 2; port++)
          for (input = 0; input < 16; input++)
          {
+            const char *option_name = Joystick_GetJoy2KeyOptionName(input);
+            if (!option_name)
+               continue;
             snprintf(joy2key_option, sizeof(joy2key_option),
-                  "px68k_j2k_p%u_%s", port + 1, joy2key_controls[input]);
+                  "px68k_j2k_p%u_%s", port + 1, option_name);
             var.key = joy2key_option;
             var.value = NULL;
             if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-               Joystick_SetKeyMapping(port, input, var.value);
+               descriptors_changed |= Joystick_SetKeyMapping(port, input, var.value);
          }
+      if (descriptors_changed)
+         retro_set_controller_descriptors();
    }
 
    var.key = "px68k_cpuspeed";

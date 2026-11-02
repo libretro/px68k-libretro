@@ -404,7 +404,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "px68k_j2k_p1_up",
       "P1 Joy2Key UP",
       NULL,
-      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      "Select a keyboard Key to assign to this logical Joy2Key action, it can then be mapped in Controls (exit and reopen the menu to refresh J2K key labels there).",
       NULL,
       "p1_joy2key",
       {
@@ -416,7 +416,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "px68k_j2k_p1_down",
       "P1 Joy2Key Down",
       NULL,
-      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      "Select a keyboard Key to assign to this logical Joy2Key action, it can then be mapped in Controls (exit and reopen the menu to refresh J2K key labels there).",
       NULL,
       "p1_joy2key",
       {
@@ -428,7 +428,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "px68k_j2k_p1_left",
       "P1 Joy2Key Left",
       NULL,
-      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      "Select a keyboard Key to assign to this logical Joy2Key action, it can then be mapped in Controls (exit and reopen the menu to refresh J2K key labels there).",
       NULL,
       "p1_joy2key",
       {
@@ -440,7 +440,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "px68k_j2k_p1_right",
       "P1 Joy2Key Right",
       NULL,
-      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      "Select a keyboard Key to assign to this logical Joy2Key action, it can then be mapped in Controls (exit and reopen the menu to refresh J2K key labels there).",
       NULL,
       "p1_joy2key",
       {
@@ -452,7 +452,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "px68k_j2k_p1_select",
       "P1 Joy2Key Select",
       NULL,
-      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      "Select a keyboard Key to assign to this logical Joy2Key action, it can then be mapped in Controls (exit and reopen the menu to refresh J2K key labels there).",
       NULL,
       "p1_joy2key",
       {
@@ -464,7 +464,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "px68k_j2k_p1_start",
       "P1 Joy2Key Start",
       NULL,
-      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      "Select a keyboard Key to assign to this logical Joy2Key action, it can then be mapped in Controls (exit and reopen the menu to refresh J2K key labels there).",
       NULL,
       "p1_joy2key",
       {
@@ -476,7 +476,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "px68k_j2k_p1_a",
       "P1 Joy2Key A",
       NULL,
-      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      "Select a keyboard Key to assign to this logical Joy2Key action, it can then be mapped in Controls (exit and reopen the menu to refresh J2K key labels there).",
       NULL,
       "p1_joy2key",
       {
@@ -488,7 +488,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "px68k_j2k_p1_b",
       "P1 Joy2Key B",
       NULL,
-      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      "Select a keyboard Key to assign to this logical Joy2Key action, it can then be mapped in Controls (exit and reopen the menu to refresh J2K key labels there).",
       NULL,
       "p1_joy2key",
       {
@@ -500,7 +500,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "px68k_j2k_p1_x",
       "P1 Joy2Key X",
       NULL,
-      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      "Select a keyboard Key to assign to this logical Joy2Key action, it can then be mapped in Controls (exit and reopen the menu to refresh J2K key labels there).",
       NULL,
       "p1_joy2key",
       {
@@ -512,7 +512,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "px68k_j2k_p1_y",
       "P1 Joy2Key Y",
       NULL,
-      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      "Select a keyboard Key to assign to this logical Joy2Key action, it can then be mapped in Controls (exit and reopen the menu to refresh J2K key labels there).",
       NULL,
       "p1_joy2key",
       {
@@ -524,7 +524,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "px68k_j2k_p1_l",
       "P1 Joy2Key L",
       NULL,
-      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      "Select a keyboard Key to assign to this logical Joy2Key action, it can then be mapped in Controls (exit and reopen the menu to refresh J2K key labels there).",
       NULL,
       "p1_joy2key",
       {
@@ -536,7 +536,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "px68k_j2k_p1_r",
       "P1 Joy2Key R",
       NULL,
-      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      "Select a keyboard Key to assign to this logical Joy2Key action, it can then be mapped in Controls (exit and reopen the menu to refresh J2K key labels there).",
       NULL,
       "p1_joy2key",
       {
@@ -548,7 +548,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "px68k_j2k_p1_l2",
       "P1 Joy2Key L2",
       NULL,
-      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      "Select a keyboard Key to assign to this logical Joy2Key action, it can then be mapped in Controls (exit and reopen the menu to refresh J2K key labels there).",
       NULL,
       "p1_joy2key",
       {
@@ -560,7 +560,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "px68k_j2k_p1_r2",
       "P1 Joy2Key R2",
       NULL,
-      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      "Select a keyboard Key to assign to this logical Joy2Key action, it can then be mapped in Controls (exit and reopen the menu to refresh J2K key labels there).",
       NULL,
       "p1_joy2key",
       {
@@ -572,7 +572,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "px68k_j2k_p1_l3",
       "P1 Joy2Key L3",
       NULL,
-      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      "Select a keyboard Key to assign to this logical Joy2Key action, it can then be mapped in Controls (exit and reopen the menu to refresh J2K key labels there).",
       NULL,
       "p1_joy2key",
       {
@@ -584,7 +584,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "px68k_j2k_p1_r3",
       "P1 Joy2Key R3",
       NULL,
-      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      "Select a keyboard Key to assign to this logical Joy2Key action, it can then be mapped in Controls (exit and reopen the menu to refresh J2K key labels there).",
       NULL,
       "p1_joy2key",
       {
@@ -596,7 +596,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "px68k_j2k_p2_up",
       "P2 Joy2Key UP",
       NULL,
-      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      "Select a keyboard Key to assign to this logical Joy2Key action, it can then be mapped in Controls (exit and reopen the menu to refresh J2K key labels there).",
       NULL,
       "p2_joy2key",
       {
@@ -608,7 +608,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "px68k_j2k_p2_down",
       "P2 Joy2Key Down",
       NULL,
-      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      "Select a keyboard Key to assign to this logical Joy2Key action, it can then be mapped in Controls (exit and reopen the menu to refresh J2K key labels there).",
       NULL,
       "p2_joy2key",
       {
@@ -620,7 +620,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "px68k_j2k_p2_left",
       "P2 Joy2Key Left",
       NULL,
-      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      "Select a keyboard Key to assign to this logical Joy2Key action, it can then be mapped in Controls (exit and reopen the menu to refresh J2K key labels there).",
       NULL,
       "p2_joy2key",
       {
@@ -632,7 +632,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "px68k_j2k_p2_right",
       "P2 Joy2Key Right",
       NULL,
-      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      "Select a keyboard Key to assign to this logical Joy2Key action, it can then be mapped in Controls (exit and reopen the menu to refresh J2K key labels there).",
       NULL,
       "p2_joy2key",
       {
@@ -644,7 +644,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "px68k_j2k_p2_select",
       "P2 Joy2Key Select",
       NULL,
-      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      "Select a keyboard Key to assign to this logical Joy2Key action, it can then be mapped in Controls (exit and reopen the menu to refresh J2K key labels there).",
       NULL,
       "p2_joy2key",
       {
@@ -656,7 +656,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "px68k_j2k_p2_start",
       "P2 Joy2Key Start",
       NULL,
-      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      "Select a keyboard Key to assign to this logical Joy2Key action, it can then be mapped in Controls (exit and reopen the menu to refresh J2K key labels there).",
       NULL,
       "p2_joy2key",
       {
@@ -668,7 +668,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "px68k_j2k_p2_a",
       "P2 Joy2Key A",
       NULL,
-      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      "Select a keyboard Key to assign to this logical Joy2Key action, it can then be mapped in Controls (exit and reopen the menu to refresh J2K key labels there).",
       NULL,
       "p2_joy2key",
       {
@@ -680,7 +680,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "px68k_j2k_p2_b",
       "P2 Joy2Key B",
       NULL,
-      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      "Select a keyboard Key to assign to this logical Joy2Key action, it can then be mapped in Controls (exit and reopen the menu to refresh J2K key labels there).",
       NULL,
       "p2_joy2key",
       {
@@ -692,7 +692,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "px68k_j2k_p2_x",
       "P2 Joy2Key X",
       NULL,
-      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      "Select a keyboard Key to assign to this logical Joy2Key action, it can then be mapped in Controls (exit and reopen the menu to refresh J2K key labels there).",
       NULL,
       "p2_joy2key",
       {
@@ -704,7 +704,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "px68k_j2k_p2_y",
       "P2 Joy2Key Y",
       NULL,
-      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      "Select a keyboard Key to assign to this logical Joy2Key action, it can then be mapped in Controls (exit and reopen the menu to refresh J2K key labels there).",
       NULL,
       "p2_joy2key",
       {
@@ -716,7 +716,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "px68k_j2k_p2_l",
       "P2 Joy2Key L",
       NULL,
-      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      "Select a keyboard Key to assign to this logical Joy2Key action, it can then be mapped in Controls (exit and reopen the menu to refresh J2K key labels there).",
       NULL,
       "p2_joy2key",
       {
@@ -728,7 +728,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "px68k_j2k_p2_r",
       "P2 Joy2Key R",
       NULL,
-      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      "Select a keyboard Key to assign to this logical Joy2Key action, it can then be mapped in Controls (exit and reopen the menu to refresh J2K key labels there).",
       NULL,
       "p2_joy2key",
       {
@@ -740,7 +740,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "px68k_j2k_p2_l2",
       "P2 Joy2Key L2",
       NULL,
-      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      "Select a keyboard Key to assign to this logical Joy2Key action, it can then be mapped in Controls (exit and reopen the menu to refresh J2K key labels there).",
       NULL,
       "p2_joy2key",
       {
@@ -752,7 +752,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "px68k_j2k_p2_r2",
       "P2 Joy2Key R2",
       NULL,
-      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      "Select a keyboard Key to assign to this logical Joy2Key action, it can then be mapped in Controls (exit and reopen the menu to refresh J2K key labels there).",
       NULL,
       "p2_joy2key",
       {
@@ -764,7 +764,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "px68k_j2k_p2_l3",
       "P2 Joy2Key L3",
       NULL,
-      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      "Select a keyboard Key to assign to this logical Joy2Key action, it can then be mapped in Controls (exit and reopen the menu to refresh J2K key labels there).",
       NULL,
       "p2_joy2key",
       {
@@ -776,7 +776,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "px68k_j2k_p2_r3",
       "P2 Joy2Key R3",
       NULL,
-      "Select the X68000 keyboard key emitted when this logical Joy2Key action is activated in RetroArch Controls.",
+      "Select a keyboard Key to assign to this logical Joy2Key action, it can then be mapped in Controls (exit and reopen the menu to refresh J2K key labels there).",
       NULL,
       "p2_joy2key",
       {

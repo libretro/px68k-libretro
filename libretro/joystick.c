@@ -7,6 +7,7 @@
 #include "keyboard.h"
 #include "mouse.h"
 #include <string.h>
+#include <ctype.h>
 
 #include "libretro.h"
 extern retro_input_state_t input_state_cb;
@@ -231,18 +232,49 @@ static const Joy2KeyName Joy2KeyNames[] =
    { "opt2", KBD_OPT2 }, { NULL, 0 }
 };
 
-/* Joy2Key options are indexed in a logical order, not libretro's button-ID
- * order. */
-static const uint8_t Joy2KeyIds[16] = {
-   RETRO_DEVICE_ID_JOYPAD_A, RETRO_DEVICE_ID_JOYPAD_B,
-   RETRO_DEVICE_ID_JOYPAD_X, RETRO_DEVICE_ID_JOYPAD_Y,
-   RETRO_DEVICE_ID_JOYPAD_SELECT, RETRO_DEVICE_ID_JOYPAD_START,
-   RETRO_DEVICE_ID_JOYPAD_RIGHT, RETRO_DEVICE_ID_JOYPAD_LEFT,
-   RETRO_DEVICE_ID_JOYPAD_UP, RETRO_DEVICE_ID_JOYPAD_DOWN,
-   RETRO_DEVICE_ID_JOYPAD_R, RETRO_DEVICE_ID_JOYPAD_L,
-   RETRO_DEVICE_ID_JOYPAD_R2, RETRO_DEVICE_ID_JOYPAD_L2,
-   RETRO_DEVICE_ID_JOYPAD_R3, RETRO_DEVICE_ID_JOYPAD_L3
+/* One authoritative definition for logical Joy2Key actions. Keep the
+ * action order stable: core-option keys, labels and RetroPad IDs all derive
+ * from this table. */
+typedef struct
+{
+   unsigned retropad_button;
+   const char *name;
+   const char *option;
+} Joy2KeyAction;
+
+static const Joy2KeyAction Joy2KeyActions[16] = {
+   { RETRO_DEVICE_ID_JOYPAD_A,      "A",      "a" },
+   { RETRO_DEVICE_ID_JOYPAD_B,      "B",      "b" },
+   { RETRO_DEVICE_ID_JOYPAD_X,      "X",      "x" },
+   { RETRO_DEVICE_ID_JOYPAD_Y,      "Y",      "y" },
+   { RETRO_DEVICE_ID_JOYPAD_SELECT, "Select", "select" },
+   { RETRO_DEVICE_ID_JOYPAD_START,  "Start",  "start" },
+   { RETRO_DEVICE_ID_JOYPAD_RIGHT,  "Right",  "right" },
+   { RETRO_DEVICE_ID_JOYPAD_LEFT,   "Left",   "left" },
+   { RETRO_DEVICE_ID_JOYPAD_UP,     "Up",     "up" },
+   { RETRO_DEVICE_ID_JOYPAD_DOWN,   "Down",   "down" },
+   { RETRO_DEVICE_ID_JOYPAD_R,      "R",      "r" },
+   { RETRO_DEVICE_ID_JOYPAD_L,      "L",      "l" },
+   { RETRO_DEVICE_ID_JOYPAD_R2,     "R2",     "r2" },
+   { RETRO_DEVICE_ID_JOYPAD_L2,     "L2",     "l2" },
+   { RETRO_DEVICE_ID_JOYPAD_R3,     "R3",     "r3" },
+   { RETRO_DEVICE_ID_JOYPAD_L3,     "L3",     "l3" }
 };
+
+unsigned Joystick_GetJoy2KeyRetropadId(unsigned action)
+{
+   return action < 16 ? Joy2KeyActions[action].retropad_button : 0xff;
+}
+
+const char *Joystick_GetJoy2KeyActionName(unsigned action)
+{
+   return action < 16 ? Joy2KeyActions[action].name : "";
+}
+
+const char *Joystick_GetJoy2KeyOptionName(unsigned action)
+{
+   return action < 16 ? Joy2KeyActions[action].option : NULL;
+}
 
 /* Resolve each logical Joy2Key action to the RetroPad input slot exposed by
  * the selected controller's input descriptors. The action index is stable
@@ -260,33 +292,47 @@ static uint8_t joy2key_action_button(int type, unsigned action)
          if (action == 2 || action == 3 || action == 4 || action == 5 ||
              action == 10 || action == 11 || action == 12 || action == 13 ||
              action == 14 || action == 15)
-            return Joy2KeyIds[action];
+            return Joy2KeyActions[action].retropad_button;
          break;
       case PAD_CPSF_MD:
       case PAD_CPSF_SFC:
          /* The eight-button layouts leave R2, L2, R3 and L3 for Joy2Key. */
          if (action >= 12)
-            return Joy2KeyIds[action];
+            return Joy2KeyActions[action].retropad_button;
          break;
       case PAD_CYBERSTICK_D:
          /* R2/L2/R3/L3 are the spare digital inputs. */
          if (action >= 12)
-            return Joy2KeyIds[action];
+            return Joy2KeyActions[action].retropad_button;
          break;
       case PAD_CYBERSTICK_A:
-         /* Physical CyberStick Start/Select remain native. Its R2 slot is
-          * labelled as the logical Joy2Key Start action in RetroArch. */
+         /* The analog stick axes are native. The digital D-pad is otherwise
+          * unused, so expose it as Joy2Key; R2 is the logical Start slot.
+          * Physical CyberStick Start/Select remain native. */
+         if (action >= 6 && action <= 9)
+            return Joy2KeyActions[action].retropad_button;
          if (action == 5)
             return RETRO_DEVICE_ID_JOYPAD_R2;
-         if (action == 13 || action == 14 || action == 15)
-            return Joy2KeyIds[action];
+         if (action >= 13)
+            return Joy2KeyActions[action].retropad_button;
          break;
       case PAD_JOY2KEY:
-         return Joy2KeyIds[action];
+         return Joy2KeyActions[action].retropad_button;
       default:
          break;
    }
    return 0xff;
+}
+
+/* Return the logical Joy2Key action assigned to a RetroPad button, or -1
+ * when that button is reserved for a native control or is unavailable. */
+int Joystick_GetJoy2KeyAction(int type, unsigned retropad_button)
+{
+   unsigned action;
+   for (action = 0; action < 16; action++)
+      if (joy2key_action_button(type, action) == retropad_button)
+         return (int)action;
+   return -1;
 }
 
 
@@ -357,12 +403,12 @@ static void joy2key_update(unsigned port, uint32_t state, int send_keys)
    }
 }
 
-void Joystick_SetKeyMapping(unsigned port, unsigned input, const char *value)
+int Joystick_SetKeyMapping(unsigned port, unsigned input, const char *value)
 {
    unsigned i;
    uint8_t code = 0;
    if (port >= 2 || input >= 16 || !value)
-      return;
+      return 0;
    if (!strcmp(value, "menu"))
       code = JOY2KEY_MENU;
    else if (!strcmp(value, "mouse_btn1"))
@@ -377,12 +423,69 @@ void Joystick_SetKeyMapping(unsigned port, unsigned input, const char *value)
          break;
       }
    }
-   if (Joy2KeyPrevious[port][input] && Joy2KeyPrevious[port][input] != code)
+   if (Joy2KeyMap[port][input] == code)
+      return 0;
+   if (Joy2KeyPrevious[port][input])
    {
       joy2key_release(Joy2KeyPrevious[port][input]);
       Joy2KeyPrevious[port][input] = 0;
    }
    Joy2KeyMap[port][input] = code;
+   return 1;
+}
+
+/* Human-readable label for the currently selected output of a logical
+ * Joy2Key action. Single-character keys stay lowercase (e.g. "z"). */
+const char *Joystick_GetKeyMappingLabel(unsigned port, unsigned input)
+{
+   static char label[32];
+   unsigned i;
+   const char *name = NULL;
+   uint8_t code;
+   size_t out = 0;
+   int capitalize = 1;
+
+   if (port >= 2 || input >= 16)
+      return "None";
+
+   code = Joy2KeyMap[port][input];
+   if (!code)
+      return "None";
+   if (code == JOY2KEY_MENU)
+      return "Menu";
+   if (code == JOY2KEY_MOUSE_BTN1)
+      return "Mouse 1";
+   if (code == JOY2KEY_MOUSE_BTN2)
+      return "Mouse 2";
+
+   for (i = 0; Joy2KeyNames[i].name; i++)
+      if (Joy2KeyNames[i].code == code)
+      {
+         name = Joy2KeyNames[i].name;
+         break;
+      }
+   if (!name)
+      return "Unknown";
+
+   if (strlen(name) == 1)
+      return name;
+
+   while (*name && out + 1 < sizeof(label))
+   {
+      if (*name == '_')
+      {
+         label[out++] = ' ';
+         capitalize = 1;
+      }
+      else
+      {
+         label[out++] = capitalize ? (char)toupper((unsigned char)*name) : *name;
+         capitalize = 0;
+      }
+      name++;
+   }
+   label[out] = '\0';
+   return label;
 }
 
 int Joystick_HasKeyMapping(unsigned port, unsigned input)
@@ -622,7 +725,7 @@ static uint16_t get_px68k_input(int port)
 {
    uint32_t i   = 0;
    uint32_t res = 0;
-   for (i = 0; i <= RETRO_DEVICE_ID_JOYPAD_R3; i++)
+   for (i = 0; i <= RETRO_DEVICE_ID_JOYPAD_L3; i++)
       res |= input_state_cb(port, RETRO_DEVICE_JOYPAD, 0, i) ? (1 << i) : 0;
    return res;
 }
