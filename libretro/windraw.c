@@ -653,8 +653,13 @@ void WinDraw_DrawLine(void)
 			WinDraw_DrawGrpLineNonSP(opaq);
 		}
 	}
-	else if ( ((VCReg1[0]&0x03)==0x01)&&(tron)&&(gon)&&(VCReg2[0]&0x10) )
+	else if ( ((VCReg1[0]&0x03)==0x01)&&(tron)&&(VCReg2[0]&0x10) )
 	{
+		/* MAME keeps ordinary pixels from the special-priority GRP
+		 * layer in the graphics bitmap at that layer's priority.
+		 * They must be drawn even when no second GRP layer is enabled
+		 * (gon is false); only the bit-0 pixels remain deferred to
+		 * WinDraw_DrawPriLine(). */
 		WinDraw_DrawGrpLineNonSP(opaq);
 		opaq = 0;
 	}
