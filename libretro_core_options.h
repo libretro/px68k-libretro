@@ -43,6 +43,7 @@ struct retro_core_option_v2_category option_cats_us[] = {
 #define PX68K_JOY2KEY_VALUES \
    { "none", "None" }, \
    { "menu", "PX68K Menu" }, \
+   { "osd_keyboard", "OSD Keyboard" }, \
    { "esc", "Escape" }, \
    { "1", "1" }, \
    { "2", "2" }, \
@@ -160,6 +161,7 @@ struct retro_core_option_v2_category option_cats_us[] = {
 #define PX68K_P1_JOY2KEY_VALUES \
    { "none", "None" }, \
    { "menu", "PX68K Menu" }, \
+   { "osd_keyboard", "OSD Keyboard" }, \
    { "mouse_btn1", "Mouse Btn1" }, \
    { "mouse_btn2", "Mouse Btn2" }, \
    { "esc", "Escape" }, \
@@ -399,6 +401,173 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       },
       "6"
    },
+   {
+      "px68k_osd_keyboard_theme",
+      "OSD Keyboard Theme",
+      NULL,
+      "Style and color theme for the OSD keyboard.",
+      NULL,
+      "input",
+      {
+         { "flat_light", "Flat Light" },
+         { "flat_dark",  "Flat Dark" },
+         { "3D_light", "3D Light" },
+         { "3D_dark",  "3D Dark" },
+         { NULL, NULL },
+      },
+      "3D_dark"
+   },
+   {
+      "px68k_osd_keyboard_labels",
+      "OSD Keyboard Special Key Labels",
+      NULL,
+      "Latin: the keys are labelled KAN, ROM, COD, KIG, TOR, HIR and ZEN. Japanese: they show the captions printed on a real X68000 keyboard.",
+      NULL,
+      "input",
+      {
+         { "latin",    "Latin" },
+         { "japanese", "Japanese" },
+         { NULL, NULL },
+      },
+      "latin"
+   },
+   {
+      "px68k_osd_keyboard_layout",
+      "OSD Keyboard Layout",
+      NULL,
+      "Choose how the game is displayed while the OSD keyboard is open.",
+      NULL,
+      "input",
+      {
+         { "game_above", "Game above keyboard" },
+         { "fullscreen", "Fullscreen behind keyboard" },
+         { NULL, NULL },
+      },
+      "fullscreen"
+   },
+   {
+      "px68k_osd_keyboard_opacity",
+      "OSD Keyboard Opacity",
+      NULL,
+      "Opacity of the on-screen keyboard, from 0% to 100% in 5% steps (right raises it, left lowers it). Lower values let the game show through when the layout is 'Fullscreen behind keyboard'; with 'Game above keyboard' the keyboard fades towards black. At 0% the keyboard is invisible but still works.",
+      NULL,
+      "input",
+      {
+         { "0", "0%" }, { "5", "5%" }, { "10", "10%" }, { "15", "15%" },
+         { "20", "20%" }, { "25", "25%" }, { "30", "30%" }, { "35", "35%" },
+         { "40", "40%" }, { "45", "45%" }, { "50", "50%" }, { "55", "55%" },
+         { "60", "60%" }, { "65", "65%" }, { "70", "70%" }, { "75", "75%" },
+         { "80", "80%" }, { "85", "85%" }, { "90", "90%" }, { "95", "95%" },
+         { "100", "100%" },
+         { NULL, NULL },
+      },
+      "100"
+   },
+   {
+      "px68k_osd_keyboard_cursor_tint",
+      "OSD Keyboard Active Key Tint",
+      NULL,
+      "Face colour of the currently selected key.",
+      NULL,
+      "input",
+      {
+         { "off", "Off" }, { "ffffff", "White" },
+         { "a0a0a0", "Grey" }, { "000000", "Black" }, { "ff9999", "Red (pale)" },
+         { "ff0000", "Red (vivid)" }, { "8e0b0b", "Red (deep)" }, { "ffc999", "Orange (pale)" },
+         { "ff7700", "Orange (vivid)" }, { "8e480b", "Orange (deep)" }, { "fff199", "Yellow (pale)" },
+         { "ffdd00", "Yellow (vivid)" }, { "8e7c0b", "Yellow (deep)" }, { "99ff99", "Green (pale)" },
+         { "00ff00", "Green (vivid)" }, { "0b8e0b", "Green (deep)" }, { "99ffff", "Cyan (pale)" },
+         { "00ffff", "Cyan (vivid)" }, { "0b8e8e", "Cyan (deep)" }, { "99b8ff", "Blue (pale)" },
+         { "004cff", "Blue (vivid)" }, { "0b328e", "Blue (deep)" }, { "cf99ff", "Purple (pale)" },
+         { "8800ff", "Purple (vivid)" }, { "510b8e", "Purple (deep)" }, { "ff99e0", "Magenta (pale)" },
+         { "ff00b2", "Magenta (vivid)" }, { "8e0b67", "Magenta (deep)" },
+         { NULL, NULL },
+      },
+      "fff199"
+   },
+   {
+      "px68k_osd_keyboard_cursor_frame",
+      "OSD Keyboard Selection Frame",
+      NULL,
+      "Colour of the square drawn around the selected key.",
+      NULL,
+      "input",
+      {
+         { "off", "Off" }, { "ffffff", "White" },
+         { "a0a0a0", "Grey" }, { "000000", "Black" }, { "ff9999", "Red (pale)" },
+         { "ff0000", "Red (vivid)" }, { "8e0b0b", "Red (deep)" }, { "ffc999", "Orange (pale)" },
+         { "ff7700", "Orange (vivid)" }, { "8e480b", "Orange (deep)" }, { "fff199", "Yellow (pale)" },
+         { "ffdd00", "Yellow (vivid)" }, { "8e7c0b", "Yellow (deep)" }, { "99ff99", "Green (pale)" },
+         { "00ff00", "Green (vivid)" }, { "0b8e0b", "Green (deep)" }, { "99ffff", "Cyan (pale)" },
+         { "00ffff", "Cyan (vivid)" }, { "0b8e8e", "Cyan (deep)" }, { "99b8ff", "Blue (pale)" },
+         { "004cff", "Blue (vivid)" }, { "0b328e", "Blue (deep)" }, { "cf99ff", "Purple (pale)" },
+         { "8800ff", "Purple (vivid)" }, { "510b8e", "Purple (deep)" }, { "ff99e0", "Magenta (pale)" },
+         { "ff00b2", "Magenta (vivid)" }, { "8e0b67", "Magenta (deep)" },
+         { NULL, NULL },
+      },
+      "ffffff"
+   },
+   {
+      "px68k_osd_keyboard_hover",
+      "OSD Keyboard Mouse Hover",
+      NULL,
+      "When enabled, the selected key follows the mouse cursor as it moves over the on-screen keyboard. The selection only changes when the mouse actually moves, so it never fights gamepad navigation.",
+      NULL,
+      "input",
+      {
+         { "enabled",  "Enabled" },
+         { "disabled", "Disabled" },
+         { NULL, NULL },
+      },
+      "enabled"
+   },
+   {
+      "px68k_osd_keyboard_feedback",
+      "OSD Keyboard Press Feedback",
+      NULL,
+      "Visual reaction when a key is touched, clicked or pressed from the pad. Flash: the key lights up and fades out after release, so even a quick tap is visible. Flash + key press: the key also sinks while pressed.",
+      NULL,
+      "input",
+      {
+         { "off",   "Off" },
+         { "flash", "Flash" },
+         { "full",  "Flash + key press" },
+         { NULL, NULL },
+      },
+      "full"
+   },
+   {
+      "px68k_key_repeat_delay",
+      "Key Repeat Delay",
+      NULL,
+      "Time a key must be held before it starts repeating. 'Machine' follows whatever the X68000 software programs into the keyboard (500 ms by default).",
+      NULL,
+      "input",
+      {
+         { "machine", "Machine (X68000 setting)" },
+         { "off",     "Off (no key repeat)" },
+         { "200",  "200 ms" }, { "300",  "300 ms" }, { "400",  "400 ms" },
+         { "500",  "500 ms" }, { "700",  "700 ms" }, { "1000", "1000 ms" },
+         { NULL, NULL },
+      },
+      "machine"
+   },
+   {
+      "px68k_key_repeat_interval",
+      "Key Repeat Interval",
+      NULL,
+      "Time between repeats once a held key is repeating. 'Machine' follows the X68000 setting (110 ms by default).",
+      NULL,
+      "input",
+      {
+         { "machine", "Machine (X68000 setting)" },
+         { "30",  "30 ms" },  { "50",  "50 ms" },  { "75",  "75 ms" },
+         { "100", "100 ms" }, { "150", "150 ms" }, { "200", "200 ms" },
+         { "300", "300 ms" },
+         { NULL, NULL },
+      },
+      "machine"
+   },
 
    {
       "px68k_j2k_p1_up",
@@ -566,7 +735,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       {
          PX68K_P1_JOY2KEY_VALUES
       },
-      "space"
+      "osd_keyboard"
    },
    {
       "px68k_j2k_p1_l3",
