@@ -144,6 +144,11 @@ static int ClkUsed        = 0;
 
 uint32_t retrow           = 800;
 uint32_t retroh           = 600;
+/* Keep the full OSD keyboard visible even when the emulated mode is low-res. */
+static bool osd_video_geometry_active = false;
+static uint16_t osd_video_buffer[800 * 512];
+#define OSD_VIDEO_WIDTH  768
+#define OSD_VIDEO_HEIGHT 512
 int CHANGEAV              = 0;
 int CHANGEAV_TIMING       = 0; /* Separate change of geometry from change of refresh rate */
 int VID_MODE              = MODE_NORM; /* what framerate we start in */
@@ -1758,6 +1763,29 @@ static void update_variables(int running)
          Config.MenuLinesJump = jump;
    }
 
+   {
+      /* Keyboard repeat: follow the X68000's own setting unless overridden. */
+      int repeat_delay = -1, repeat_interval = -1;
+
+      var.key   = "px68k_key_repeat_delay";
+      var.value = NULL;
+      if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+      {
+         if (!strcmp(var.value, "off"))
+            repeat_delay = 0;
+         else if (strcmp(var.value, "machine"))
+            repeat_delay = atoi(var.value);
+      }
+      var.key   = "px68k_key_repeat_interval";
+      var.value = NULL;
+      if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+      {
+         if (strcmp(var.value, "machine"))
+            repeat_interval = atoi(var.value);
+      }
+      Keyboard_SetRepeatOptions(repeat_delay, repeat_interval);
+   }
+
    var.key    = "px68k_save_fdd_path";
    var.value  = NULL;
 
@@ -2847,17 +2875,26 @@ void retro_run(void)
    {
       Joystick_Update(0, -1, 0);
       Joystick_Update(0, -1, 1);
+      Keyboard_OSDPointerUpdate();
+      if (FRAMERATE > 0.0f)
+         Keyboard_RepeatTick((unsigned)(1000000.0f / FRAMERATE));
 
       WinX68k_Exec();
    }
+   else
+      Keyboard_OSDReleaseAll(); /* PX68K menu: no OSD key may stay held */
 
    /* Physical mouse input remains available. Joy2Mouse adds P1 controller
     * movement as a second source without consuming native joystick buttons. */
    mouse_x = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_X);
    mouse_y = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_Y);
+   /* While the OSD keyboard is open, touch/mouse input belongs to it:
+    * the emulated mouse stays idle (Android maps touches to the mouse). */
+   if (menu_mode == menu_out && Keyboard_IsSwKeyboard())
+      mouse_x = mouse_y = 0;
    Mouse_Event(0, mouse_x, mouse_y);
 
-   if (Config.Joy2Mouse && menu_mode == menu_out)
+   if (Config.Joy2Mouse && menu_mode == menu_out && !Keyboard_IsSwKeyboard())
    {
       float joy_mouse_x, joy_mouse_y;
       Joystick_GetMouseDelta(0, &joy_mouse_x, &joy_mouse_y);
@@ -2867,6 +2904,8 @@ void retro_run(void)
    {
       mouse_l = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_LEFT);
       mouse_r = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_RIGHT);
+      if (menu_mode == menu_out && Keyboard_IsSwKeyboard())
+         mouse_l = mouse_r = 0;
 
       if (!mbL && mouse_l)
       {
@@ -2974,10 +3013,113 @@ void retro_run(void)
          geom.max_width = 800;
          geom.max_height = 600;
          geom.aspect_ratio = 4.0f / 3.0f;
-         environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &geom);
+         if (!(menu_mode == menu_out && Keyboard_IsSwKeyboard()))
+            environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &geom);
          CHANGEAV = 0;
       }
    }
    soundbuf_size = next_audio_frame_size();
-   video_cb(videoBuffer, retrow, retroh, /*retrow*/ 800 << 1);
+   {
+      bool osd_visible = (menu_mode == menu_out) && Keyboard_IsSwKeyboard();
+      if (osd_visible)
+      {
+         struct retro_variable osd_layout_var = {
+            "px68k_osd_keyboard_layout", NULL
+         };
+         int fullscreen_layout = 1;
+         if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &osd_layout_var) &&
+               osd_layout_var.value &&
+               !strcmp(osd_layout_var.value, "game_above"))
+            fullscreen_layout = 0;
+         {
+            struct retro_variable opacity_var = {
+               "px68k_osd_keyboard_opacity", NULL
+            };
+            struct retro_variable theme_var = {
+               "px68k_osd_keyboard_theme", NULL
+            };
+            int opacity = 100, dark = 1, look3d = 1;
+            if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &opacity_var) &&
+                  opacity_var.value)
+               opacity = atoi(opacity_var.value);
+            if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &theme_var) &&
+                  theme_var.value && strstr(theme_var.value, "light"))
+               dark = 0;
+            if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &theme_var) &&
+                  theme_var.value && strstr(theme_var.value, "flat"))
+               look3d = 0;
+            WinDraw_SetOSDKeyboardStyle(opacity, dark, look3d);
+            {
+               struct retro_variable tint_var = {
+                  "px68k_osd_keyboard_cursor_tint", NULL
+               };
+               struct retro_variable frame_var = {
+                  "px68k_osd_keyboard_cursor_frame", NULL
+               };
+               const char *tint = "fff199", *frame = "ffffff";
+               if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &tint_var) &&
+                     tint_var.value)
+                  tint = tint_var.value;
+               if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &frame_var) &&
+                     frame_var.value)
+                  frame = frame_var.value;
+               WinDraw_SetOSDKeyboardCursor(tint, frame);
+            }
+            {
+               struct retro_variable hover_var = {
+                  "px68k_osd_keyboard_hover", NULL
+               };
+               struct retro_variable fb_var = {
+                  "px68k_osd_keyboard_feedback", NULL
+               };
+               int hover = 1, feedback = 2;
+               if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &hover_var) &&
+                     hover_var.value && !strcmp(hover_var.value, "disabled"))
+                  hover = 0;
+               if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &fb_var) &&
+                     fb_var.value)
+               {
+                  if (!strcmp(fb_var.value, "off"))
+                     feedback = 0;
+                  else if (!strcmp(fb_var.value, "flash"))
+                     feedback = 1;
+               }
+               {
+                  struct retro_variable lbl_var = {
+                     "px68k_osd_keyboard_labels", NULL
+                  };
+                  int japanese = 0;
+                  if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &lbl_var) &&
+                        lbl_var.value && !strcmp(lbl_var.value, "japanese"))
+                     japanese = 1;
+                  WinDraw_SetOSDKeyboardLabels(japanese);
+               }
+               Keyboard_SetOSDHover(hover);
+               WinDraw_SetOSDKeyboardFeedback(feedback);
+            }
+         }
+         WinDraw_DrawOSDKeyboard(osd_video_buffer, videoBuffer,
+               retrow, retroh, fullscreen_layout);
+      }
+
+      /* Keep the frontend viewport at the keyboard's 768x512 reference
+       * resolution while it is visible. retrow/retroh continue tracking the
+       * emulated mode, so closing the keyboard restores the latest game size. */
+      if (osd_visible != osd_video_geometry_active)
+      {
+         struct retro_game_geometry geom;
+         osd_video_geometry_active = osd_visible;
+         geom.base_width = osd_visible ? OSD_VIDEO_WIDTH : retrow;
+         geom.base_height = osd_visible ? OSD_VIDEO_HEIGHT : retroh;
+         geom.max_width = 800;
+         geom.max_height = 600;
+         geom.aspect_ratio = 4.0f / 3.0f;
+         environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &geom);
+      }
+
+      if (osd_visible)
+         video_cb(osd_video_buffer, OSD_VIDEO_WIDTH, OSD_VIDEO_HEIGHT, 800 << 1);
+      else
+         video_cb(videoBuffer, retrow, retroh, 800 << 1);
+   }
 }
