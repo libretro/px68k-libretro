@@ -80,12 +80,13 @@ The integration checks these locations:
     ├── sc55_rom2.bin
     ├── sc55_waverom1.bin
     ├── sc55_waverom2.bin
-    └── sc55_waverom3.bin```
+    └── sc55_waverom3.bin
+```
 
 Important: The current PX68K version uses filename-based discovery. It doesn't yet have PrBoom's full SHA-256 ROM identification, so the expected filenames matter.
 If you already have your ROMs installed for PrBoom, you shouldn't need to duplicate the files—just make sure they're named correctly and stored in a directory the core searches.
-
-px68k:
+```
+PX68K:
 ひっそりぃ(hissorii)/sakahi
 http://hissorii.blog45.fc2.com (ひっそりぃドットコム)
 http://emuhani.seesaa.net      (えみゅはに - Emulator Hacking 日記)
@@ -96,3 +97,4 @@ Twitter: @hissorii_com
 SC-55 emulation:
 Copyright (C) 2021, 2024 nukeykt
 Copyright (C) 2024-2026 J.C. Moyer
+```
