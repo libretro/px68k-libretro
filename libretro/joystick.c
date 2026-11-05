@@ -27,7 +27,8 @@ static uint8_t JoyPortData[2];
 #define JOY_MOUSE_DEFAULT_DEADZONE 4096
 #define JOY2KEY_MOUSE_BTN1 0xfe
 #define JOY2KEY_MOUSE_BTN2 0xfd
-#define JOY2KEY_MENU       0xff
+#define JOY2KEY_OSD_KEYBOARD 0xfc
+#define JOY2KEY_MENU         0xff
 
 static float JoyMouseAnalogSpeed = 12.0f;
 static float JoyMouseDigitalSpeed = 6.0f;
@@ -311,9 +312,7 @@ static uint8_t joy2key_action_button(int type, unsigned action)
           * Physical CyberStick Start/Select remain native. */
          if (action >= 6 && action <= 9)
             return Joy2KeyActions[action].retropad_button;
-         if (action == 5)
-            return RETRO_DEVICE_ID_JOYPAD_R2;
-         if (action >= 13)
+         if (action >= 12)
             return Joy2KeyActions[action].retropad_button;
          break;
       case PAD_JOY2KEY:
@@ -348,7 +347,7 @@ static uint8_t Joy2KeyRefs[256];
 
 static void joy2key_release(uint8_t code)
 {
-   if (code && code != JOY2KEY_MENU && Joy2KeyRefs[code])
+   if (code && code != JOY2KEY_MENU && code != JOY2KEY_OSD_KEYBOARD && Joy2KeyRefs[code])
    {
       Joy2KeyRefs[code]--;
       if (!Joy2KeyRefs[code])
@@ -365,7 +364,7 @@ static void joy2key_release(uint8_t code)
 
 static void joy2key_press(uint8_t code)
 {
-   if (code && code != JOY2KEY_MENU)
+   if (code && code != JOY2KEY_MENU && code != JOY2KEY_OSD_KEYBOARD)
    {
       if (!Joy2KeyRefs[code])
       {
@@ -385,22 +384,48 @@ static void joy2key_press(uint8_t code)
  * resolved to the slot advertised by the active controller's descriptors.
  * Native controls have no Joy2Key slot. With send_keys == 0 (menu open or
  * software keyboard), held keys are released and no new key is pressed. */
-static void joy2key_update(unsigned port, uint32_t state, int send_keys)
+static void joy2key_update(unsigned port, uint32_t state, int send_keys,
+      int allow_toggle)
 {
    unsigned action;
    for (action = 0; action < 16; action++)
    {
       uint8_t button = joy2key_action_button(Config.JOY_TYPE[port], action);
-      uint8_t down = (send_keys && button != 0xff &&
-            (state & (1u << button))) ? 1 : 0;
       uint8_t code = Joy2KeyMap[port][action];
       uint8_t old_code = Joy2KeyPrevious[port][action];
-      if (old_code && old_code != 0xff && (!down || old_code != code))
+      /* OSD toggle remains live while the keyboard is visible. */
+      uint8_t down = ((code == JOY2KEY_OSD_KEYBOARD ? allow_toggle : send_keys) &&
+            button != 0xff && (state & (1u << button))) ? 1 : 0;
+      if (old_code && old_code != JOY2KEY_MENU &&
+            old_code != JOY2KEY_OSD_KEYBOARD && (!down || old_code != code))
          joy2key_release(old_code);
-      if (down && code && code != 0xff && (!old_code || old_code != code))
+      if (down && code == JOY2KEY_OSD_KEYBOARD && old_code != code)
+         Keyboard_ToggleSwKeyboard();
+      else if (down && code && code != JOY2KEY_MENU &&
+            code != JOY2KEY_OSD_KEYBOARD && (!old_code || old_code != code))
          joy2key_press(code);
       Joy2KeyPrevious[port][action] = down ? code : 0;
    }
+}
+
+/* RetroPad buttons currently assigned to the OSD-keyboard toggle or the
+ * PX68K menu. They never act as OSD navigation, so the toggle always has
+ * priority over the keyboard's own controls. */
+static uint32_t joy2key_reserved_mask(unsigned port)
+{
+   unsigned action;
+   uint32_t mask = 0;
+   for (action = 0; action < 16; action++)
+   {
+      uint8_t code = Joy2KeyMap[port][action];
+      uint8_t button;
+      if (code != JOY2KEY_OSD_KEYBOARD && code != JOY2KEY_MENU)
+         continue;
+      button = joy2key_action_button(Config.JOY_TYPE[port], action);
+      if (button != 0xff)
+         mask |= 1u << button;
+   }
+   return mask;
 }
 
 int Joystick_SetKeyMapping(unsigned port, unsigned input, const char *value)
@@ -411,6 +436,8 @@ int Joystick_SetKeyMapping(unsigned port, unsigned input, const char *value)
       return 0;
    if (!strcmp(value, "menu"))
       code = JOY2KEY_MENU;
+   else if (!strcmp(value, "osd_keyboard"))
+      code = JOY2KEY_OSD_KEYBOARD;
    else if (!strcmp(value, "mouse_btn1"))
       code = JOY2KEY_MOUSE_BTN1;
    else if (!strcmp(value, "mouse_btn2"))
@@ -453,6 +480,8 @@ const char *Joystick_GetKeyMappingLabel(unsigned port, unsigned input)
       return "None";
    if (code == JOY2KEY_MENU)
       return "Menu";
+   if (code == JOY2KEY_OSD_KEYBOARD)
+      return "OSD Keyboard";
    if (code == JOY2KEY_MOUSE_BTN1)
       return "Mouse 1";
    if (code == JOY2KEY_MOUSE_BTN2)
@@ -725,10 +754,13 @@ static uint16_t get_px68k_input(int port)
 {
    uint32_t i   = 0;
    uint32_t res = 0;
-   for (i = 0; i <= RETRO_DEVICE_ID_JOYPAD_L3; i++)
+   for (i = 0; i <= RETRO_DEVICE_ID_JOYPAD_R3; i++)
       res |= input_state_cb(port, RETRO_DEVICE_JOYPAD, 0, i) ? (1 << i) : 0;
    return res;
 }
+
+static uint32_t JoyBlock[2];
+static uint8_t  JoyWasOsd[2];
 
 void FASTCALL Joystick_Update(int is_menu, int key, int port)
 {
@@ -757,8 +789,53 @@ void FASTCALL Joystick_Update(int is_menu, int key, int port)
     * controller-specific RetroPad slot exposed by the input descriptors;
     * native controls have no Joy2Key slot and therefore cannot be stolen.
     * This reuses the already-polled input bitmask and adds no polling pass. */
+   /* Buttons that were held when the OSD keyboard closed stay masked until
+    * released, so navigation presses never reach the game afterwards. */
+   if (JoyBlock[port])
+   {
+      JoyBlock[port] &= res;
+      res &= ~JoyBlock[port];
+   }
+
    joy2key_update((unsigned)port, res,
-         !is_menu && !Keyboard_IsSwKeyboard());
+         !is_menu && !Keyboard_IsSwKeyboard(), !is_menu);
+
+   if (!is_menu)
+   {
+      if (Keyboard_IsSwKeyboard())
+      {
+         /* The OSD keyboard owns the pad: navigation never reaches the
+          * emulated joystick, whose lines are forced to idle. */
+         uint32_t osd_pad = res & ~joy2key_reserved_mask((unsigned)port);
+         if (Config.JOY_TYPE[port] != PAD_NONE)
+         {
+            int ax = input_state_cb(port, RETRO_DEVICE_ANALOG,
+                  RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_X);
+            int ay = input_state_cb(port, RETRO_DEVICE_ANALOG,
+                  RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_Y);
+            if (ax < -16384) osd_pad |= 1u << RETRO_DEVICE_ID_JOYPAD_LEFT;
+            if (ax >  16384) osd_pad |= 1u << RETRO_DEVICE_ID_JOYPAD_RIGHT;
+            if (ay < -16384) osd_pad |= 1u << RETRO_DEVICE_ID_JOYPAD_UP;
+            if (ay >  16384) osd_pad |= 1u << RETRO_DEVICE_ID_JOYPAD_DOWN;
+         }
+         Keyboard_OSDPadUpdate((unsigned)port, osd_pad);
+         JoyWasOsd[port]  = 1;
+         p_JoyState[0]    = 0xff;
+         p_JoyState[1]    = 0xff;
+         AnalogState[0]   = 0x80;
+         AnalogState[1]   = 0x80;
+         AnalogState[2]   = 0x80;
+         return;
+      }
+      if (JoyWasOsd[port])
+      {
+         /* Just closed: keep everything currently held away from the game
+          * until it is released (the toggle/menu buttons excepted). */
+         JoyWasOsd[port] = 0;
+         JoyBlock[port]  = res & ~joy2key_reserved_mask((unsigned)port);
+         res &= ~JoyBlock[port];
+      }
+   }
 
    /* Build the legacy joystick/menu state only from controls belonging
     * to the selected emulated device. In particular, unused RetroPad

@@ -919,6 +919,1148 @@ static void draw_str(char *cp)
 	}
 }
 
+
+/* Original Sharp X68000 software-keyboard geometry (800x218). */
+struct osd_keyboard_key
+{
+   int x, y, w, h;
+   char *label;
+   uint8_t code;
+};
+
+static struct osd_keyboard_key osd_keyboard_keys[] = {
+#include "keytbl.inc"
+};
+
+#define OSD_KEYBOARD_X_ORIGIN 17
+#define OSD_KEYBOARD_Y_ORIGIN 191
+#define OSD_KEYBOARD_Y_OFFSET 98
+#define OSD_KB_REGION_Y (188 + OSD_KEYBOARD_Y_OFFSET)
+#define OSD_KB_REGION_H 226
+
+static void osd_fill_rect(uint16_t *dst, int pitch, int x, int y,
+      int w, int h, uint16_t color)
+{
+   int row, col;
+   for (row = 0; row < h; row++)
+      for (col = 0; col < w; col++)
+         dst[(y + row) * pitch + x + col] = color;
+}
+
+static int osd_scale_x(int value)
+{
+   /* Fit the original 800-wide keyboard drawing into the 768-wide output. */
+   return (value * 24 + 12) / 25;
+}
+
+/* Number of entries in the key table (the table is terminated by x < 0). */
+int WinDraw_OSDKeyCount(void)
+{
+   static int count = -1;
+   if (count < 0)
+   {
+      count = 0;
+      while (osd_keyboard_keys[count].x >= 0)
+         count++;
+   }
+   return count;
+}
+
+/* Rectangle and X68000 scancode of a key in 768x512 output coordinates.
+ * This is the single source of truth shared by the renderer, the gamepad
+ * navigation and the pointer hit test. Any output pointer may be NULL.
+ * A scancode of 0 marks a layout dummy (not a real key). */
+int WinDraw_OSDKeyInfo(int index, int *x, int *y, int *w, int *h,
+      uint8_t *code)
+{
+   const struct osd_keyboard_key *k;
+   if (index < 0 || index >= WinDraw_OSDKeyCount())
+      return 0;
+   k = &osd_keyboard_keys[index];
+   if (x)    *x    = osd_scale_x(OSD_KEYBOARD_X_ORIGIN + k->x);
+   if (y)    *y    = OSD_KEYBOARD_Y_ORIGIN + OSD_KEYBOARD_Y_OFFSET + k->y;
+   if (w)    *w    = osd_scale_x(k->w);
+   if (h)    *h    = k->h;
+   if (code) *code = k->code;
+   return 1;
+}
+
+/* Alternate legends. Columns: Shift, hiragana, hiragana+Shift, katakana,
+ * katakana+Shift, romaji, romaji+Shift. A NULL falls back to the plain
+ * legend of that mode (or the base label); an empty string means the key
+ * types nothing visible in that layer (Shift+kana on the "_" key types a
+ * space, Shift+0 types nothing). The kana layout is the JIS one; the romaji
+ * entries are what the guest's romaji input mode really types. Kana strings
+ * are Shift-JIS, which is what the ROM-font text renderer expects. */
+struct osd_legend
+{
+   uint8_t code;
+   const char *shift, *hira, *hira_shift, *kata, *kata_shift, *rom, *rom_shift;
+};
+
+static const struct osd_legend osd_legends[] = {
+   { 0x02, "!", "\x82\xca", NULL, "\x83\x6b", NULL, NULL, NULL },
+   { 0x03, "\"", "\x82\xd3", NULL, "\x83\x74", NULL, NULL, NULL },
+   { 0x04, "#", "\x82\xa0", "\x82\x9f", "\x83\x41", "\x83\x40", NULL, NULL },
+   { 0x05, "$", "\x82\xa4", "\x82\xa3", "\x83\x45", "\x83\x44", NULL, NULL },
+   { 0x06, "%", "\x82\xa6", "\x82\xa5", "\x83\x47", "\x83\x46", NULL, NULL },
+   { 0x07, "&", "\x82\xa8", "\x82\xa7", "\x83\x49", "\x83\x48", NULL, NULL },
+   { 0x08, "'", "\x82\xe2", "\x82\xe1", "\x83\x84", "\x83\x83", NULL, NULL },
+   { 0x09, "(", "\x82\xe4", "\x82\xe3", "\x83\x86", "\x83\x85", NULL, NULL },
+   { 0x0a, ")", "\x82\xe6", "\x82\xe5", "\x83\x88", "\x83\x87", NULL, NULL },
+   { 0x0b, "", "\x82\xed", "\x82\xf0", "\x83\x8f", "\x83\x92", NULL, NULL },
+   { 0x0c, "=", "\x82\xd9", NULL, "\x83\x7a", NULL, NULL, NULL },
+   { 0x0d, "~", "\x82\xd6", NULL, "\x83\x77", NULL, NULL, NULL },
+   { 0x0e, "|", "\x81\x5b", NULL, "\x81\x5b", NULL, NULL, NULL },
+   { 0x11, NULL, "\x82\xbd", NULL, "\x83\x5e", NULL, NULL, NULL },
+   { 0x12, NULL, "\x82\xc4", NULL, "\x83\x65", NULL, NULL, NULL },
+   { 0x13, NULL, "\x82\xa2", "\x82\xa1", "\x83\x43", "\x83\x42", NULL, NULL },
+   { 0x14, NULL, "\x82\xb7", NULL, "\x83\x58", NULL, NULL, NULL },
+   { 0x15, NULL, "\x82\xa9", NULL, "\x83\x4a", NULL, NULL, NULL },
+   { 0x16, NULL, "\x82\xf1", NULL, "\x83\x93", NULL, NULL, NULL },
+   { 0x17, NULL, "\x82\xc8", NULL, "\x83\x69", NULL, NULL, NULL },
+   { 0x18, NULL, "\x82\xc9", NULL, "\x83\x6a", NULL, NULL, NULL },
+   { 0x19, NULL, "\x82\xe7", NULL, "\x83\x89", NULL, NULL, NULL },
+   { 0x1a, NULL, "\x82\xb9", NULL, "\x83\x5a", NULL, NULL, NULL },
+   { 0x1b, "`", "\x81\x4a", NULL, "\x81\x4a", NULL, "\x81\x4a", "\x81\x4b" },
+   { 0x1c, "{", "\x81\x4b", "\x81\x75", "\x81\x4b", "\x81\x75", "\x81\x75", NULL },
+   { 0x1e, NULL, "\x82\xbf", NULL, "\x83\x60", NULL, NULL, NULL },
+   { 0x1f, NULL, "\x82\xc6", NULL, "\x83\x67", NULL, NULL, NULL },
+   { 0x20, NULL, "\x82\xb5", NULL, "\x83\x56", NULL, NULL, NULL },
+   { 0x21, NULL, "\x82\xcd", NULL, "\x83\x6e", NULL, NULL, NULL },
+   { 0x22, NULL, "\x82\xab", NULL, "\x83\x4c", NULL, NULL, NULL },
+   { 0x23, NULL, "\x82\xad", NULL, "\x83\x4e", NULL, NULL, NULL },
+   { 0x24, NULL, "\x82\xdc", NULL, "\x83\x7d", NULL, NULL, NULL },
+   { 0x25, NULL, "\x82\xcc", NULL, "\x83\x6d", NULL, NULL, NULL },
+   { 0x26, NULL, "\x82\xe8", NULL, "\x83\x8a", NULL, NULL, NULL },
+   { 0x27, "+", "\x82\xea", NULL, "\x83\x8c", NULL, NULL, NULL },
+   { 0x28, "*", "\x82\xaf", NULL, "\x83\x50", NULL, NULL, NULL },
+   { 0x29, "}", "\x82\xde", "\x81\x76", "\x83\x80", "\x81\x76", "\x81\x76", NULL },
+   { 0x2a, NULL, "\x82\xc2", "\x82\xc1", "\x83\x63", "\x83\x62", NULL, NULL },
+   { 0x2b, NULL, "\x82\xb3", NULL, "\x83\x54", NULL, NULL, NULL },
+   { 0x2c, NULL, "\x82\xbb", NULL, "\x83\x5c", NULL, NULL, NULL },
+   { 0x2d, NULL, "\x82\xd0", NULL, "\x83\x71", NULL, NULL, NULL },
+   { 0x2e, NULL, "\x82\xb1", NULL, "\x83\x52", NULL, NULL, NULL },
+   { 0x2f, NULL, "\x82\xdd", NULL, "\x83\x7e", NULL, NULL, NULL },
+   { 0x30, NULL, "\x82\xe0", NULL, "\x83\x82", NULL, NULL, NULL },
+   { 0x31, "<", "\x82\xcb", "\x81\x41", "\x83\x6c", "\x81\x41", "\x81\x41", NULL },
+   { 0x32, ">", "\x82\xe9", "\x81\x42", "\x83\x8b", "\x81\x42", "\x81\x42", NULL },
+   { 0x33, "?", "\x82\xdf", "\x81\x45", "\x83\x81", "\x81\x45", "\x81\x45", NULL },
+   { 0x34, "_", "\x82\xeb", "", "\x83\x8d", "", NULL, NULL },
+   { 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL }
+};
+
+/* Pick the legend for a legend layer (see Keyboard_LegendLayer): 0 base,
+ * 1 Shift, 2/3 hiragana plain/Shift, 4/5 katakana plain/Shift, 6/7 romaji
+ * plain/Shift. */
+static const char *osd_label_for(const struct osd_keyboard_key *k, int layer)
+{
+   const struct osd_legend *l;
+   const char *label = k->label;
+
+   if (layer)
+   {
+      for (l = osd_legends; l->code; l++)
+         if (l->code == k->code)
+         {
+            if (layer >= 6)
+            {
+               if (layer == 7)
+                  label = l->rom_shift ? l->rom_shift
+                        : (l->shift ? l->shift : label);
+               else
+                  label = l->rom ? l->rom : label;
+            }
+            else
+            {
+               const char *plain = (layer >= 4) ? l->kata : l->hira;
+               const char *shifted = (layer >= 4) ? l->kata_shift : l->hira_shift;
+               if (layer == 1)
+                  label = l->shift ? l->shift : label;
+               else if (layer & 1)
+                  label = shifted ? shifted : (plain ? plain : label);
+               else
+                  label = plain ? plain : label;
+            }
+            break;
+         }
+   }
+   /* The key left of right Shift only types "_" together with Shift. */
+   if (k->code == 0x34 && layer == 0)
+      label = "";
+   return label;
+}
+
+/* The layout is a set of horizontal lines (bands). A key belongs to every
+ * band it overlaps by at least 8 pixels, so the tall RET/ENT keys span two
+ * lines and the left/right cursor keys straddle two. Gamepad navigation uses
+ * this so horizontal travel never leaves the current line. */
+#define OSD_LINE_COUNT 6
+static const int osd_line_top[OSD_LINE_COUNT] = { 2, 48, 82, 116, 150, 184 };
+
+int WinDraw_OSDKeyLines(int index)
+{
+   int i, mask = 0;
+   if (index < 0 || index >= WinDraw_OSDKeyCount())
+      return 0;
+   for (i = 0; i < OSD_LINE_COUNT; i++)
+   {
+      int lo = osd_keyboard_keys[index].y;
+      int hi = lo + osd_keyboard_keys[index].h;
+      if (osd_line_top[i] > lo) lo = osd_line_top[i];
+      if (osd_line_top[i] + 32 < hi) hi = osd_line_top[i] + 32;
+      if (hi - lo >= 8)
+         mask |= 1 << i;
+   }
+   return mask;
+}
+
+/* ---- Appearance (core options): theme and opacity ---- */
+struct osd_theme
+{
+   uint16_t surround, deck_outer, deck_inner;
+   uint16_t face, bevel, highlight;
+   uint16_t label, kana_label;
+   uint16_t held, selected, led_border;
+   /* Optional bevelled rim around the keyboard (flat look): ring colour, light
+    * line (top/left), mid line, dark line (bottom). rim == 0 uses the plain
+    * surround/deck rectangles. */
+   int rim;
+   uint16_t rim_ring, rim_light, rim_mid, rim_dark;
+};
+
+static const struct osd_theme osd_themes[2] = {
+   /* Light: the original look. */
+   { 0x2104, 0x4208, 0x3186,
+     0xef7d, 0x0841, 0xffff,
+     0x0000, 0x0014,
+     0xfd20, 0xbf1f, 0x0841,
+     0, 0, 0, 0, 0 },
+   /* Dark: near-black keys with white legends, a darker bottom/right bevel
+    * and a faint top highlight, inside a bevelled rim around a black deck. */
+   { 0x1082, 0x1082, 0x1082,
+     0x2104, 0x18c3, 0x2945,
+     0xffff, 0x7d5f,
+     0xb2c0, 0x0190, 0x4a49,
+     1, 0x18c3, 0x5acb, 0x2945, 0x0000 }
+};
+
+/* Selection cursor colours (core options). Mode 0: theme default, 1: off,
+ * 2: custom colour. */
+/* Defaults match the core options: pale yellow tint, white frame. */
+static int osd_tint_mode = 2, osd_frame_mode = 2;
+static uint16_t osd_tint_color = 0xff93, osd_frame_color = 0xffff;
+
+static int osd_parse_cursor(const char *value, uint16_t *color)
+{
+   unsigned long n;
+   unsigned r, g, b;
+   if (!value || !strcmp(value, "default"))
+      return 0;
+   if (!strcmp(value, "off"))
+      return 1;
+   n = strtoul(value, NULL, 16);
+   r = (unsigned)((n >> 16) & 0xff);
+   g = (unsigned)((n >> 8) & 0xff);
+   b = (unsigned)(n & 0xff);
+   *color = (uint16_t)(((r >> 3) << 11) | ((g >> 2) << 5) | (b >> 3));
+   return 2;
+}
+
+/* Values are "default", "off" or an RRGGBB hex colour. */
+void WinDraw_SetOSDKeyboardCursor(const char *tint, const char *frame)
+{
+   osd_tint_mode  = osd_parse_cursor(tint,  &osd_tint_color);
+   osd_frame_mode = osd_parse_cursor(frame, &osd_frame_color);
+}
+
+/* Black or white legend, whichever reads better on the given face colour. */
+static uint16_t osd_contrast(uint16_t c)
+{
+   unsigned r = (((c >> 11) & 31) * 255) / 31;
+   unsigned g = (((c >> 5) & 63) * 255) / 63;
+   unsigned b = ((c & 31) * 255) / 31;
+   return ((r * 30 + g * 59 + b * 11) / 100 > 140) ? 0x0000 : 0xffff;
+}
+
+/* Defaults match the core options: dark theme, 3D look. */
+static int osd_theme_index = 1;
+static int osd_opacity = 100;
+static int osd_look = 1; /* 0 flat, 1 3D */
+static int osd_jp_labels = 0; /* special keys with their Japanese captions */
+
+void WinDraw_SetOSDKeyboardLabels(int japanese)
+{
+   osd_jp_labels = japanese ? 1 : 0;
+}
+
+static int osd_feedback = 2; /* press feedback: 0 off, 1 flash, 2 flash + key press */
+
+void WinDraw_SetOSDKeyboardFeedback(int mode)
+{
+   osd_feedback = mode < 0 ? 0 : (mode > 2 ? 2 : mode);
+}
+
+/* Mix two RGB565 colours, t = 0..255 (0 = a, 255 = b). */
+static uint16_t osd_blend565(uint16_t a, uint16_t b, int t)
+{
+   int r = ((a >> 11) & 31) + ((((b >> 11) & 31) - ((a >> 11) & 31)) * t) / 255;
+   int g = ((a >> 5) & 63) + ((((b >> 5) & 63) - ((a >> 5) & 63)) * t) / 255;
+   int bl = (a & 31) + (((b & 31) - (a & 31)) * t) / 255;
+   return (uint16_t)((r << 11) | (g << 5) | bl);
+}
+
+void WinDraw_SetOSDKeyboardStyle(int opacity_percent, int dark_theme,
+      int look_3d)
+{
+   osd_look = look_3d ? 1 : 0;
+   if (opacity_percent < 0) opacity_percent = 0;
+   if (opacity_percent > 100) opacity_percent = 100;
+   osd_opacity = opacity_percent;
+   osd_theme_index = dark_theme ? 1 : 0;
+}
+
+/* Cursor-key arrows are drawn, not typed: a 16 pixel arrow (triangular head
+ * plus shaft) built for "up" and mirrored/rotated for the other directions.
+ * code: 0x3b left, 0x3c up, 0x3d right, 0x3e down. cx/cy is the centre. */
+static void osd_draw_arrow(uint16_t *dst, int cx, int cy, int code,
+      uint16_t color)
+{
+   int dx, dy;
+   for (dy = -8; dy <= 8; dy++)
+      for (dx = -8; dx <= 8; dx++)
+      {
+         int u, v;
+         switch (code)
+         {
+            case 0x3b: u = dy;  v = dx;  break; /* left  */
+            case 0x3d: u = dy;  v = -dx; break; /* right */
+            case 0x3e: u = dx;  v = -dy; break; /* down  */
+            default:   u = dx;  v = dy;  break; /* up    */
+         }
+         if (u < 0) u = -u;
+         if ((v >= -8 && v <= -1 && u <= v + 8) ||  /* head */
+             (v >= 0 && v <= 7 && u <= 2))          /* shaft */
+            dst[(cy + dy) * 800 + cx + dx] = color;
+      }
+}
+
+static void osd_draw_frame(uint16_t *dst, int x, int y, int w, int h,
+      int t, uint16_t color)
+{
+   osd_fill_rect(dst, 800, x, y, w, t, color);
+   osd_fill_rect(dst, 800, x, y + h - t, w, t, color);
+   osd_fill_rect(dst, 800, x, y, t, h, color);
+   osd_fill_rect(dst, 800, x + w - t, y, t, h, color);
+}
+
+/* ---- 3D look ----
+ * Raised keycaps built from a dark skirt, a chamfer ring (light on the top
+ * and left, dark on the bottom and right, with a small specular tick in the
+ * corner) and a face with a soft vertical gradient and a slightly darker
+ * recessed "dish" under the legend, on a grey body around a black deck.
+ * Gradients are ordered-dithered so they do not band in RGB565. */
+struct osd_look3d
+{
+   uint32_t body_top, body_bottom, body_light, body_dark, deck, skirt;
+   uint32_t ring_light, ring_dark, spec, face_top, face_bottom;
+   int dish_percent;
+};
+
+static const struct osd_look3d osd_looks3d[2] = {
+   /* Light theme */
+   { 0x4a4a4a, 0x383838, 0x8c8c8c, 0x161616, 0x1e1e1e, 0x707070,
+     0xffffff, 0xa8a8a8, 0xffffff, 0xf4f4f4, 0xd6d6d6, 95 },
+   /* Dark theme, after the reference prototype */
+   { 0x343434, 0x2a2a2a, 0x585858, 0x141414, 0x080808, 0x040404,
+     0x5c5c5c, 0x181818, 0xc4c4c4, 0x323232, 0x3e3e3e, 86 }
+};
+
+static const unsigned char osd_bayer4[4][4] = {
+   {  0,  8,  2, 10 },
+   { 12,  4, 14,  6 },
+   {  3, 11,  1,  9 },
+   { 15,  7, 13,  5 }
+};
+
+static int osd_clamp8(int v)
+{
+   return v < 0 ? 0 : (v > 255 ? 255 : v);
+}
+
+static uint16_t osd_pack(int r, int g, int b)
+{
+   r = osd_clamp8(r);
+   g = osd_clamp8(g);
+   b = osd_clamp8(b);
+   return (uint16_t)((((r * 31 + 127) / 255) << 11) |
+         (((g * 63 + 127) / 255) << 5) | ((b * 31 + 127) / 255));
+}
+
+static uint16_t osd_pack_dither(int x, int y, int r, int g, int b)
+{
+   int t = osd_bayer4[y & 3][x & 3];
+   r = osd_clamp8(r + (t >> 1));
+   g = osd_clamp8(g + (t >> 2));
+   b = osd_clamp8(b + (t >> 1));
+   return (uint16_t)(((r >> 3) << 11) | ((g >> 2) << 5) | (b >> 3));
+}
+
+static uint16_t osd_pack24(uint32_t c)
+{
+   return osd_pack((int)((c >> 16) & 0xff), (int)((c >> 8) & 0xff),
+         (int)(c & 0xff));
+}
+
+static uint16_t osd_avg565(uint16_t a, uint16_t b)
+{
+   return (uint16_t)(((a & 0xf7de) >> 1) + ((b & 0xf7de) >> 1));
+}
+
+static int osd_lerp(int a, int b, int pos, int span)
+{
+   return span <= 1 ? a : a + ((b - a) * pos) / (span - 1);
+}
+
+/* Coverage of pixel (xx,yy) of a w x h rectangle with corner radius r (0-2):
+ * 0 outside, 1 half covered (blended), 2 fully covered. */
+static int osd_corner(int w, int h, int r, int xx, int yy)
+{
+   int ex = xx < w - 1 - xx ? xx : w - 1 - xx;
+   int ey = yy < h - 1 - yy ? yy : h - 1 - yy;
+   if (r <= 0 || ex >= r || ey >= r)
+      return 2;
+   if (r == 1)
+      return 1;
+   if (ex + ey == 0)
+      return 0;
+   if (ex + ey == 1)
+      return 1;
+   return 2;
+}
+
+static void osd_put(uint16_t *dst, int x, int y, uint16_t c, int cover)
+{
+   if (cover == 2)
+      dst[y * 800 + x] = c;
+   else if (cover == 1)
+      dst[y * 800 + x] = osd_avg565(dst[y * 800 + x], c);
+}
+
+static void osd_round_fill(uint16_t *dst, int x, int y, int w, int h, int r,
+      uint16_t color)
+{
+   int xx, yy;
+   for (yy = 0; yy < h; yy++)
+      for (xx = 0; xx < w; xx++)
+         osd_put(dst, x + xx, y + yy, color, osd_corner(w, h, r, xx, yy));
+}
+
+static void osd_draw_body_3d(uint16_t *dst, int y_offset,
+      const struct osd_look3d *lk)
+{
+   /* The frame is widened by 4 pixels on each side (there is spare room
+    * there); vertically it must stay inside the keyboard area. */
+   int bx = osd_scale_x(14) - 4, by = 188 + y_offset;
+   int bw = osd_scale_x(772) + 8, bh = 226;
+   int xx, yy;
+   uint16_t light = osd_pack24(lk->body_light);
+   uint16_t dark  = osd_pack24(lk->body_dark);
+
+   for (yy = 0; yy < bh; yy++)
+   {
+      int r = osd_lerp((int)((lk->body_top >> 16) & 0xff),
+            (int)((lk->body_bottom >> 16) & 0xff), yy, bh);
+      int g = osd_lerp((int)((lk->body_top >> 8) & 0xff),
+            (int)((lk->body_bottom >> 8) & 0xff), yy, bh);
+      int b = osd_lerp((int)(lk->body_top & 0xff),
+            (int)(lk->body_bottom & 0xff), yy, bh);
+      for (xx = 0; xx < bw; xx++)
+         osd_put(dst, bx + xx, by + yy,
+               osd_pack_dither(bx + xx, by + yy, r, g, b),
+               osd_corner(bw, bh, 2, xx, yy));
+   }
+   /* Edge lines: light on the top/left, dark on the bottom/right. */
+   for (xx = 2; xx < bw - 2; xx++)
+   {
+      dst[by * 800 + bx + xx] = light;
+      dst[(by + bh - 1) * 800 + bx + xx] = dark;
+   }
+   for (yy = 2; yy < bh - 2; yy++)
+   {
+      dst[(by + yy) * 800 + bx] = light;
+      dst[(by + yy) * 800 + bx + bw - 1] = dark;
+   }
+   /* Black deck the keys sit in. */
+   osd_round_fill(dst, osd_scale_x(17), 191 + y_offset, osd_scale_x(766), 218,
+         2, osd_pack24(lk->deck));
+}
+
+/* One keycap. base != 0 uses the 565 colour in "face" (held, selected or a
+ * custom tint) instead of the theme's face gradient. The face rectangle is
+ * returned so legends and arrows can be centred in it. */
+static void osd_draw_key_3d(uint16_t *dst, int x, int y, int w, int h,
+      const struct osd_look3d *lk, int base, uint16_t face,
+      int flash, uint16_t flash_color, int sink,
+      int *fx, int *fy, int *fw, int *fh)
+{
+   int tall = (h >= 24);
+   /* A pressed key sinks one pixel into its skirt. */
+   int cx = x + 1, cy = y + 1 + sink, cw = w - 3, ch = tall ? h - 4 : h - 3;
+   int ring = tall ? 2 : 1; /* chamfer width; short keys need the room */
+   int ax = cx + ring, ay = cy + ring;
+   int aw = cw - 2 * ring, ah = ch - 2 * ring;
+   int tr, tg, tb, br, bg, bb, xx, yy;
+   int use_dish = (ah >= 18 && aw >= 14);
+   int lr, lg, lb, dr, dg, db;
+   uint16_t spec = osd_pack24(lk->spec);
+
+   if (base)
+   {
+      int r = (((face >> 11) & 31) * 255) / 31;
+      int g = (((face >> 5) & 63) * 255) / 63;
+      int b = ((face & 31) * 255) / 31;
+      tr = r * 88 / 100;  tg = g * 88 / 100;  tb = b * 88 / 100;
+      br = r * 108 / 100 + 4; bg = g * 108 / 100 + 4; bb = b * 108 / 100 + 4;
+   }
+   else
+   {
+      tr = (int)((lk->face_top >> 16) & 0xff);
+      tg = (int)((lk->face_top >> 8) & 0xff);
+      tb = (int)(lk->face_top & 0xff);
+      br = (int)((lk->face_bottom >> 16) & 0xff);
+      bg = (int)((lk->face_bottom >> 8) & 0xff);
+      bb = (int)(lk->face_bottom & 0xff);
+   }
+
+   if (flash > 0)
+   {
+      /* Press feedback: blend the face gradient towards the flash colour. */
+      int r = (((flash_color >> 11) & 31) * 255) / 31;
+      int g = (((flash_color >> 5) & 63) * 255) / 63;
+      int b = ((flash_color & 31) * 255) / 31;
+      tr += (r * 88 / 100 - tr) * flash / 255;
+      tg += (g * 88 / 100 - tg) * flash / 255;
+      tb += (b * 88 / 100 - tb) * flash / 255;
+      br += (r * 108 / 100 + 4 - br) * flash / 255;
+      bg += (g * 108 / 100 + 4 - bg) * flash / 255;
+      bb += (b * 108 / 100 + 4 - bb) * flash / 255;
+   }
+
+   /* Skirt, then the cap filled with the dark chamfer colour. */
+   osd_round_fill(dst, x, y, w, h, 2, osd_pack24(lk->skirt));
+   osd_round_fill(dst, cx, cy, cw, ch, 1, osd_pack24(lk->ring_dark));
+
+   /* Chamfer: outer light line on the top/left, outer dark line on the
+    * bottom/right; with a 2 pixel chamfer an inner, softer line follows. */
+   lr = (int)((lk->ring_light >> 16) & 0xff);
+   lg = (int)((lk->ring_light >> 8) & 0xff);
+   lb = (int)(lk->ring_light & 0xff);
+   dr = (int)((lk->ring_dark >> 16) & 0xff);
+   dg = (int)((lk->ring_dark >> 8) & 0xff);
+   db = (int)(lk->ring_dark & 0xff);
+   for (xx = 1; xx < cw - 1; xx++)
+      dst[cy * 800 + cx + xx] = osd_pack24(lk->ring_light);
+   for (yy = 1; yy < ch - 1; yy++)
+      dst[(cy + yy) * 800 + cx] = osd_pack24(lk->ring_light);
+   if (ring == 2)
+   {
+      uint16_t l1 = osd_pack((lr + tr) / 2, (lg + tg) / 2, (lb + tb) / 2);
+      uint16_t d1 = osd_pack((dr + br) / 2, (dg + bg) / 2, (db + bb) / 2);
+      for (xx = 1; xx < cw - 2; xx++)
+         dst[(cy + 1) * 800 + cx + xx] = l1;
+      for (yy = 1; yy < ch - 2; yy++)
+         dst[(cy + yy) * 800 + cx + 1] = l1;
+      for (xx = 2; xx < cw - 1; xx++)
+         dst[(cy + ch - 2) * 800 + cx + xx] = d1;
+      for (yy = 2; yy < ch - 1; yy++)
+         dst[(cy + yy) * 800 + cx + cw - 2] = d1;
+   }
+
+   for (yy = 0; yy < ah; yy++)
+   {
+      int r = osd_lerp(tr, br, yy, ah);
+      int g = osd_lerp(tg, bg, yy, ah);
+      int b = osd_lerp(tb, bb, yy, ah);
+      for (xx = 0; xx < aw; xx++)
+      {
+         int pr = r, pg = g, pb = b;
+         if (use_dish && xx >= 2 && xx < aw - 2 && yy >= 2 && yy < ah - 2 &&
+               osd_corner(aw - 4, ah - 4, 1, xx - 2, yy - 2) == 2)
+         {
+            pr = r * lk->dish_percent / 100;
+            pg = g * lk->dish_percent / 100;
+            pb = b * lk->dish_percent / 100;
+         }
+         dst[(ay + yy) * 800 + ax + xx] =
+               osd_pack_dither(ax + xx, ay + yy, pr, pg, pb);
+      }
+   }
+
+   /* Specular tick in the top-left corner of the chamfer. */
+   osd_put(dst, cx + 2, cy, spec, 2);
+   osd_put(dst, cx + 1, cy + 1, spec, 2);
+   osd_put(dst, cx, cy + 2, spec, 1);
+
+   *fx = ax; *fy = ay; *fw = aw; *fh = ah;
+}
+
+/* Keycap LED: a small glossy lens straddling the bottom edge of the key. */
+static void osd_draw_led_3d(uint16_t *dst, int x, int y, int w, int h,
+      int green, int lit)
+{
+   int bx = x + w / 2 - 8, by = y + h - 7, xx, yy;
+   int tr, tg, tb, br, bg, bb, dr, dg, db;
+
+   if (green)
+   {
+      if (lit) { tr = 60; tg = 255; tb = 40; br = 10; bg = 190; bb = 2; dr = 250; dg = 255; db = 250; }
+      else     { tr = 18; tg = 96;  tb = 18; br = 10; bg = 62;  bb = 10; dr = 84;  dg = 120; db = 84; }
+   }
+   else
+   {
+      if (lit) { tr = 255; tg = 44; tb = 40; br = 190; bg = 6; bb = 5; dr = 255; dg = 235; db = 238; }
+      else     { tr = 104; tg = 14; tb = 14; br = 66;  bg = 8; bb = 8; dr = 120; dg = 84;  db = 84; }
+   }
+   osd_round_fill(dst, bx, by, 16, 8, 1, osd_pack(br * 40 / 100, bg * 40 / 100,
+         bb * 40 / 100));
+   for (yy = 0; yy < 6; yy++)
+   {
+      uint16_t c = osd_pack(osd_lerp(tr, br, yy, 6), osd_lerp(tg, bg, yy, 6),
+            osd_lerp(tb, bb, yy, 6));
+      for (xx = 0; xx < 14; xx++)
+         dst[(by + 1 + yy) * 800 + bx + 1 + xx] = c;
+   }
+   for (yy = 3; yy <= 4; yy++)
+      for (xx = 6; xx <= 9; xx++)
+         dst[(by + yy) * 800 + bx + xx] = osd_pack(dr, dg, db);
+}
+
+/* Return-key glyph: stem on the right, shaft to the left, arrow head. */
+static void osd_draw_return(uint16_t *dst, int cx, int cy, uint16_t color)
+{
+   int dx, dy;
+   for (dy = -7; dy <= 7; dy++)
+      for (dx = -8; dx <= 8; dx++)
+      {
+         int stem  = (dx >= 4 && dx <= 6 && dy >= -6 && dy <= 2);
+         int shaft = (dy >= 0 && dy <= 2 && dx >= -4 && dx <= 6);
+         int head  = (dx >= -8 && dx <= -3 &&
+               (dy - 1 >= 0 ? dy - 1 : 1 - dy) <= dx + 8);
+         if (stem || shaft || head)
+            dst[(cy + dy) * 800 + cx + dx] = color;
+      }
+}
+
+/* Bevelled rim of the flat dark look. Measured from the reference: the ring
+ * colour fills the frame; the top has a light line on row 1 and a mid line on
+ * row 2, the left a light line on column 0 and a mid line on column 1, the
+ * right a mid line on its outermost column, and the bottom a mid line then a
+ * dark line. The corners are slightly rounded: pixels outside the rounding are
+ * left untouched so the game shows through, and the anti-aliased ones are
+ * blended. The deck is the rectangle inside. */
+static void osd_draw_rim_flat(uint16_t *dst, int y_offset,
+      const struct osd_theme *th)
+{
+   int bx = osd_scale_x(14), by = 188 + y_offset;
+   int bw = osd_scale_x(772), bh = 226;
+   int x, y, i;
+   /* Pixels outside the rounded corners (restored) and half-covered ones. */
+   static const int outside[][2] = { {0,0}, {1,0}, {0,1} };
+   int out_n = 3;
+   uint16_t saved[8];
+   int ox[8], oy[8], n = 0;
+   int aax[3], aay[3];
+   uint16_t aabg[3];
+
+   for (i = 0; i < out_n; i++)
+   {
+      ox[n] = outside[i][0]; oy[n] = outside[i][1]; n++;
+   }
+   ox[n] = bw - 1; oy[n] = 0; n++;                 /* top-right */
+   ox[n] = 0;      oy[n] = bh - 2; n++;            /* bottom-left */
+   ox[n] = 0;      oy[n] = bh - 1; n++;
+   ox[n] = 1;      oy[n] = bh - 1; n++;
+   for (i = 0; i < n; i++)
+      saved[i] = dst[(by + oy[i]) * 800 + bx + ox[i]];
+   aax[0] = 2; aay[0] = 0;
+   aax[1] = 1; aay[1] = 1;
+   aax[2] = 2; aay[2] = bh - 1;
+   for (i = 0; i < 3; i++)
+      aabg[i] = dst[(by + aay[i]) * 800 + bx + aax[i]];
+
+   osd_fill_rect(dst, 800, bx, by, bw, bh, th->rim_ring);
+   for (x = 2; x < bw - 1; x++)
+      dst[(by + 1) * 800 + bx + x] = th->rim_light;
+   for (x = 1; x <= bw - 4; x++)
+      dst[(by + 2) * 800 + bx + x] = th->rim_mid;
+   for (y = 3; y <= bh - 3; y++)
+      dst[(by + y) * 800 + bx] = th->rim_light;
+   for (y = 2; y <= bh - 3; y++)
+   {
+      dst[(by + y) * 800 + bx + 1] = th->rim_mid;
+      dst[(by + y) * 800 + bx + bw - 1] = th->rim_mid;
+   }
+   for (x = 2; x <= bw - 2; x++)
+      dst[(by + bh - 2) * 800 + bx + x] = th->rim_mid;
+   for (x = 3; x < bw; x++)
+      dst[(by + bh - 1) * 800 + bx + x] = th->rim_dark;
+
+   for (i = 0; i < n; i++)
+      dst[(by + oy[i]) * 800 + bx + ox[i]] = saved[i];
+   for (i = 0; i < 3; i++)
+      dst[(by + aay[i]) * 800 + bx + aax[i]] = osd_avg565(aabg[i],
+            dst[(by + aay[i]) * 800 + bx + aax[i]]);
+
+   /* The deck the keys sit in. */
+   osd_fill_rect(dst, 800, osd_scale_x(17), 191 + y_offset,
+         osd_scale_x(766), 218, th->deck_inner);
+}
+
+/* Lighten an RGB565 colour towards white by pct percent. */
+static uint16_t osd_lighten565(uint16_t c, int pct)
+{
+   int r = (c >> 11) & 31, g = (c >> 5) & 63, b = c & 31;
+   r += ((31 - r) * pct) / 100;
+   g += ((63 - g) * pct) / 100;
+   b += ((31 - b) * pct) / 100;
+   return (uint16_t)((r << 11) | (g << 5) | b);
+}
+
+/* ---- Japanese captions of the special keys ----
+ * The real keycaps of these keys carry Japanese text. Each caption is one or
+ * two lines of full-width Shift-JIS characters. The ROM font only has 16x16
+ * full-width glyphs, far too large for a 30 pixel key, so they are scaled
+ * down (area averaged, alpha blended) to whatever size fits. */
+struct osd_special
+{
+   uint8_t code;
+   const char *line1, *line2;
+};
+
+static const struct osd_special osd_specials[] = {
+   { 0x5a, "\x82\xa9\x82\xc8", NULL },        /* KANA: kana */
+   { 0x5b, "\x83\x8d\x81\x5b", "\x83\x7d\x8e\x9a" },          /* ROMAJI: roma-ji */
+   { 0x5c, "\x83\x52\x81\x5b\x83\x68", "\x93\xfc\x97\xcd" },          /* CODE: code input */
+   { 0x52, "\x8b\x4c\x8d\x86", "\x93\xfc\x97\xcd" },          /* KIGOU: symbol input */
+   { 0x53, "\x93\x6f\x98\x5e", NULL },        /* TOUROKU: registration */
+   { 0x5f, "\x82\xd0\x82\xe7", "\x82\xaa\x82\xc8" },          /* HIRAGANA */
+   { 0x60, "\x91\x53\x8a\x70", NULL },        /* ZENKAKU: full width */
+   { 0, NULL, NULL }
+};
+
+static const struct osd_special *osd_find_special(uint8_t code)
+{
+   const struct osd_special *sp;
+   for (sp = osd_specials; sp->code; sp++)
+      if (sp->code == code)
+         return sp;
+   return NULL;
+}
+
+/* Draw one 16x16 ROM glyph scaled to size x size (8..16), anti-aliased by
+ * exact area coverage and blended over whatever is already there. */
+static void osd_draw_glyph_scaled(uint16_t *dst, int x, int y, uint16_t sjis,
+      int size, uint16_t color)
+{
+   uint32_t f = get_font_addr(sjis, 16);
+   int dx, dy, i, j;
+
+   if (f == (uint32_t)-1 || size < 1)
+      return;
+   for (dy = 0; dy < size; dy++)
+   {
+      int ylo = dy * 16, yhi = (dy + 1) * 16;
+      for (dx = 0; dx < size; dx++)
+      {
+         int xlo = dx * 16, xhi = (dx + 1) * 16;
+         long ink = 0;
+         int alpha;
+         for (j = ylo / size; j <= (yhi - 1) / size && j < 16; j++)
+         {
+            int lo = ylo > j * size ? ylo : j * size;
+            int hi = yhi < (j + 1) * size ? yhi : (j + 1) * size;
+            int wy = hi - lo;
+            uint8_t row0 = FONT[f + j * 2], row1 = FONT[f + j * 2 + 1];
+            if (wy <= 0)
+               continue;
+            for (i = xlo / size; i <= (xhi - 1) / size && i < 16; i++)
+            {
+               int l2 = xlo > i * size ? xlo : i * size;
+               int h2 = xhi < (i + 1) * size ? xhi : (i + 1) * size;
+               int wx = h2 - l2;
+               int bit = i < 8 ? (row0 >> (7 - i)) & 1 : (row1 >> (15 - i)) & 1;
+               if (wx > 0 && bit)
+                  ink += (long)wx * wy;
+            }
+         }
+         /* total area per destination pixel is 16 * 16 units; boost a little
+          * so thin strokes stay legible after shrinking */
+         alpha = (int)((ink * 255 * 5) / (256L * 4));
+         if (alpha > 255)
+            alpha = 255;
+         if (alpha >= 20)
+            dst[(y + dy) * 800 + x + dx] =
+                  osd_blend565(dst[(y + dy) * 800 + x + dx], color, alpha);
+      }
+   }
+}
+
+/* Draw a special key's caption centred in the key. lock >= 0 means the key
+ * has a keycap LED in its bottom rows, which is kept clear. */
+static void osd_draw_special(uint16_t *dst, int x, int y, int w, int h,
+      int fx, int fy, int fw, int fh, int lock, int sink,
+      const struct osd_special *sp, uint16_t color)
+{
+   int c1 = (int)(strlen(sp->line1) / 2);
+   int c2 = sp->line2 ? (int)(strlen(sp->line2) / 2) : 0;
+   int maxc = c1 > c2 ? c1 : c2, lines = sp->line2 ? 2 : 1;
+   int avail_w = w - 4;
+   int avail_h = lock >= 0 ? (y + h - 8) - fy : fh;
+   int size = avail_w / maxc, top, n, li;
+
+   if (avail_h / lines < size)
+      size = avail_h / lines;
+   if (size > 12)
+      size = 12;
+   if (size < 8)
+      size = 8;
+   top = fy + (avail_h - lines * size) / 2 + sink;
+   for (li = 0; li < lines; li++)
+   {
+      const char *line = li ? sp->line2 : sp->line1;
+      int chars = (int)(strlen(line) / 2);
+      int gx = fx + (fw - chars * size) / 2;
+      for (n = 0; n < chars; n++)
+         osd_draw_glyph_scaled(dst, gx + n * size, top + li * size,
+               (uint16_t)(((unsigned char)line[n * 2] << 8) |
+               (unsigned char)line[n * 2 + 1]), size, color);
+   }
+}
+
+static void osd_draw_keyboard(uint16_t *dst, int y_offset)
+{
+   const struct osd_theme *th = &osd_themes[osd_theme_index];
+   int i, x, y, w, h;
+   uint8_t code;
+   uint16_t old_color, old_bg;
+   int old_fs, old_x, old_y;
+   int layer;
+   const char *label;
+
+   /* Legends follow the emulated keyboard: Shift (physical, Joy2Key or
+    * OSD-latched) and the KANA lock. */
+   layer = Keyboard_LegendLayer();
+
+   /* Keyboard surround and recessed deck. */
+   if (osd_look)
+      osd_draw_body_3d(dst, y_offset, &osd_looks3d[osd_theme_index]);
+   else if (th->rim)
+      osd_draw_rim_flat(dst, y_offset, th);
+   else
+   {
+      osd_fill_rect(dst, 800, osd_scale_x(14), 188 + y_offset,
+            osd_scale_x(772), 226, th->surround);
+      osd_fill_rect(dst, 800, osd_scale_x(17), 191 + y_offset,
+            osd_scale_x(766), 218, th->deck_outer);
+      osd_fill_rect(dst, 800, osd_scale_x(20), 194 + y_offset,
+            osd_scale_x(760), 212, th->deck_inner);
+   }
+
+   old_color = p6m.mcolor;
+   old_bg    = p6m.mbcolor;
+   old_fs    = p6m.mfs;
+   old_x     = p6m.ml_x;
+   old_y     = p6m.ml_y;
+   p6m.sbp   = dst;
+   p6m.mfs   = 16;
+
+   for (i = 0; WinDraw_OSDKeyInfo(i, &x, &y, &w, &h, &code); i++)
+   {
+      uint16_t face = th->face;
+      uint16_t text_color = th->label, kana_color = th->kana_label;
+      int state, lock;
+      int led_green = (code == 0x5f || code == 0x60); /* HIR, ZEN */
+      int fx, fy, fw, fh;  /* area the legend is centred in */
+      int state_face = 0;  /* 3D: face colour comes from a state */
+      int flash = 0, sink = 0;
+
+      if (code == 0)
+         continue;
+
+      /* Bit 0: gamepad/touch selection. Bit 1: key currently held down
+       * (or a latched modifier). */
+      state = Keyboard_OSDKeyState(i, code);
+      lock = Keyboard_LockKeyState(code);
+      if (state & 2)
+      {
+         face = th->held; /* held: orange */
+         state_face = 1;
+      }
+      else if (state & 1)
+      {
+         /* Selected: theme blue by default, or the chosen tint (Off keeps
+          * the normal key colour). */
+         if (osd_tint_mode == 0)
+         {
+            face = th->selected;
+            state_face = 1;
+         }
+         else if (osd_tint_mode == 2)
+         {
+            face = osd_tint_color;
+            state_face = 1;
+            text_color = kana_color = osd_contrast(face);
+         }
+      }
+
+      /* Press feedback: a key touched, clicked or pressed from the pad
+       * lights up and fades after release; in mode 2 it also sinks while
+       * pressed. A held key (or latched modifier) stays lit. */
+      if (osd_feedback > 0)
+      {
+         flash = (state & 2) ? 0 : Keyboard_OSDKeyFlash(code);
+         if (osd_feedback >= 2 && ((state & 2) || flash >= 128))
+            sink = 1;
+      }
+
+      if (osd_look)
+         osd_draw_key_3d(dst, x, y, w, h, &osd_looks3d[osd_theme_index],
+               state_face, face, flash, th->held, sink, &fx, &fy, &fw, &fh);
+      else
+      {
+         if (flash > 0)
+            face = osd_blend565(face, th->held, flash);
+         /* Raised keycap with a dark lower/right bevel; a pressed key has a
+          * thinner bevel and no highlight. */
+         osd_fill_rect(dst, 800, x, y, w, h, th->bevel);
+         osd_fill_rect(dst, 800, x, y, w - 2 + sink, h - 2 + sink, face);
+         if (!(state & 2) && !sink)
+         {
+            /* The accent line follows the selection colours: a lighter shade
+             * of the key's tint, or the frame colour when the tint is Off. */
+            uint16_t accent = th->highlight;
+            if (state & 1)
+            {
+               /* same fallback as the frame: both Off -> default frame */
+               int fm = (osd_frame_mode == 1 && osd_tint_mode == 1)
+                     ? 0 : osd_frame_mode;
+               if (osd_tint_mode != 1)
+                  accent = osd_lighten565(face, 35);
+               else if (fm != 1)
+                  accent = fm == 2 ? osd_frame_color : 0xf800;
+            }
+            osd_fill_rect(dst, 800, x + 2, y + 2, w - 6, 2, accent);
+         }
+         fx = x; fy = y; fw = w - 2 + sink; fh = h - 2 + sink;
+      }
+      if (state & 1)
+      {
+         /* Selection frame: red by default; if both the tint and the frame
+          * are Off, fall back to the default so the cursor stays visible. */
+         int mode = osd_frame_mode;
+         if (mode == 1 && osd_tint_mode == 1)
+            mode = 0;
+         if (mode != 1)
+            osd_draw_frame(dst, x, y, w, h, 2,
+                  mode == 2 ? osd_frame_color : 0xf800);
+      }
+      if (lock >= 0 && osd_look)
+         osd_draw_led_3d(dst, x, y, w, h, led_green, lock > 0);
+      else if (lock >= 0)
+      {
+         /* Keycap LED of the lock keys, just above the key's bottom edge
+          * like the real keyboard. Bright when the OS has lit it: red on
+          * KANA, ROMAJI, CODE, CAPS and INS, green on HIRAGANA and ZENKAKU.
+          * The key face itself is not tinted. */
+         osd_fill_rect(dst, 800, x + w / 2 - 6, y + h - 7, 12, 7, th->led_border);
+         osd_fill_rect(dst, 800, x + w / 2 - 5, y + h - 6, 10, 5,
+               led_green ? (lock ? 0x07e0 : 0x0320)
+                         : (lock ? 0xf800 : 0x6000));
+      }
+
+      if (code >= 0x3b && code <= 0x3e)
+      {
+         osd_draw_arrow(dst, fx + fw / 2, fy + fh / 2, code, text_color);
+         continue;
+      }
+      if (osd_look && code == 0x1d)
+      {
+         osd_draw_return(dst, fx + fw / 2, fy + fh / 2, text_color);
+         continue;
+      }
+
+      if (osd_jp_labels && osd_find_special(code))
+      {
+         osd_draw_special(dst, x, y, w, h, fx, fy, fw, fh, lock, sink,
+               osd_find_special(code), text_color);
+         continue;
+      }
+
+      label = osd_label_for(&osd_keyboard_keys[i], layer);
+      if (label && label[0])
+      {
+         int len = (int)strlen(label);
+         /* Kana legends are blue so the active mode is obvious; keys whose
+          * legend does not change keep black text. */
+         p6m.mcolor = (layer >= 2 && strcmp(label,
+               osd_label_for(&osd_keyboard_keys[i], layer & 1)) != 0)
+               ? kana_color : text_color;
+         if (osd_look)
+         {
+            /* Transparent glyphs (background colour 0) so the face gradient
+             * shows through; centred in the face. */
+            p6m.mbcolor = 0;
+            p6m.ml_x = fx + (fw - len * 8) / 2;
+            p6m.ml_y = fh >= 16 ? fy + (fh - 16) / 2 : fy - (16 - fh) / 2;
+            if (lock >= 0)
+               p6m.ml_y -= 2; /* leave room for the keycap LED */
+         }
+         else if (h < 24)
+         {
+            /* Short keys (F1-F10 are 18 high): a small 8x8 legend, spaces
+             * removed, drawn transparently in the 12 rows below the 2 pixel
+             * accent line, so it never covers the accent line or the bevel. */
+            char small[8];
+            int sl = 0, si;
+            for (si = 0; label[si] && sl < 7; si++)
+               if (label[si] != ' ')
+                  small[sl++] = label[si];
+            small[sl] = 0;
+            p6m.mfs = 8;
+            p6m.mbcolor = 0;
+            p6m.ml_x = fx + (fw - sl * 8) / 2;
+            p6m.ml_y = y + 6 + sink;
+            draw_str(small);
+            p6m.mfs = 16;
+            continue;
+         }
+         else
+         {
+            p6m.mbcolor = face;
+            p6m.ml_x = x + (w - len * 8) / 2;
+            p6m.ml_y = y + (h - 16) / 2;
+            p6m.ml_y += sink;
+         }
+         draw_str((char *)label);
+      }
+   }
+
+   /* Restore menu text state: this renderer shares the ROM-font machinery. */
+   p6m.mcolor = old_color;
+   p6m.mbcolor = old_bg;
+   p6m.mfs = old_fs;
+   p6m.ml_x = old_x;
+   p6m.ml_y = old_y;
+}
+
+void WinDraw_DrawOSDKeyboard(uint16_t *dst, const uint16_t *src,
+      unsigned src_width, unsigned src_height, int fullscreen)
+{
+   unsigned x, y, draw_w, draw_h, max_h;
+   unsigned xoff, yoff;
+   unsigned sx, sy;
+   unsigned sx0, sy0, sx1, sy1;
+   unsigned r, g, b;
+   double x0, x1, y0, y1, wx, wy, weight;
+   double sum_r, sum_g, sum_b;
+
+   if (!dst || !src || !src_width || !src_height)
+      return;
+
+   /* Start with a clean presentation surface. Never modify ScrBuf: games
+    * which do not redraw a still frame must not retain the keyboard. */
+   memset(dst, 0, 800 * 512 * sizeof(uint16_t));
+
+   max_h = fullscreen ? 512 : 286;
+   if (src_width * max_h > src_height * 768)
+   {
+      draw_h = max_h;
+      draw_w = (src_width * draw_h) / src_height;
+   }
+   else
+   {
+      draw_w = 768;
+      draw_h = (src_height * draw_w) / src_width;
+   }
+   if (draw_w > 768) draw_w = 768;
+   if (draw_h > max_h) draw_h = max_h;
+   xoff = (768 - draw_w) / 2;
+   yoff = (max_h - draw_h) / 2;
+
+   /* Area resampling avoids the severe aliasing produced by nearest-neighbour
+    * reduction, especially on the X68000's thin Japanese glyphs and UI lines.
+    * Each destination pixel receives the weighted average of the source
+    * pixels covered by its footprint. This is used for both up- and down-
+    * scaling and preserves the source aspect ratio. */
+   for (y = 0; y < draw_h; y++)
+   {
+      y0 = (double)y * (double)src_height / (double)draw_h;
+      y1 = (double)(y + 1) * (double)src_height / (double)draw_h;
+      sy0 = (unsigned)y0;
+      sy1 = (unsigned)(y1 + 0.999999);
+      for (x = 0; x < draw_w; x++)
+      {
+         x0 = (double)x * (double)src_width / (double)draw_w;
+         x1 = (double)(x + 1) * (double)src_width / (double)draw_w;
+         sx0 = (unsigned)x0;
+         sx1 = (unsigned)(x1 + 0.999999);
+         sum_r = sum_g = sum_b = weight = 0.0;
+
+         for (sy = sy0; sy < sy1; sy++)
+         {
+            wy = ((y1 < (double)(sy + 1)) ? y1 : (double)(sy + 1)) -
+                 ((y0 > (double)sy) ? y0 : (double)sy);
+            for (sx = sx0; sx < sx1; sx++)
+            {
+               uint16_t pixel;
+               pixel = src[sy * 800 + sx];
+               wx = ((x1 < (double)(sx + 1)) ? x1 : (double)(sx + 1)) -
+                    ((x0 > (double)sx) ? x0 : (double)sx);
+               weight = wx * wy;
+               sum_r += (double)((pixel >> 11) & 0x1f) * weight;
+               sum_g += (double)((pixel >> 5) & 0x3f) * weight;
+               sum_b += (double)(pixel & 0x1f) * weight;
+            }
+         }
+         weight = (x1 - x0) * (y1 - y0);
+         r = (unsigned)(sum_r / weight + 0.5);
+         g = (unsigned)(sum_g / weight + 0.5);
+         b = (unsigned)(sum_b / weight + 0.5);
+         dst[(y + yoff) * 800 + x + xoff] =
+               (uint16_t)((r << 11) | (g << 5) | b);
+      }
+   }
+
+   if (osd_opacity < 100)
+   {
+      /* Compose the keyboard opaquely, then mix it with what was behind it
+       * (the game in fullscreen layout, black otherwise). */
+      static uint16_t background[OSD_KB_REGION_H * 800];
+      int px, py, a = (osd_opacity * 256) / 100;
+      uint16_t *region = dst + OSD_KB_REGION_Y * 800;
+
+      memcpy(background, region, sizeof(background));
+      osd_draw_keyboard(dst, OSD_KEYBOARD_Y_OFFSET);
+      for (py = 0; py < OSD_KB_REGION_H; py++)
+         for (px = 0; px < 768; px++)
+         {
+            uint16_t k = region[py * 800 + px];
+            uint16_t b = background[py * 800 + px];
+            unsigned r, g, bl;
+            if (k == b)
+               continue;
+            r  = ((((k >> 11) & 0x1f) * a) + (((b >> 11) & 0x1f) * (256 - a))) >> 8;
+            g  = ((((k >> 5)  & 0x3f) * a) + (((b >> 5)  & 0x3f) * (256 - a))) >> 8;
+            bl = ((((k)       & 0x1f) * a) + (((b)       & 0x1f) * (256 - a))) >> 8;
+            region[py * 800 + px] = (uint16_t)((r << 11) | (g << 5) | bl);
+         }
+   }
+   else
+      osd_draw_keyboard(dst, OSD_KEYBOARD_Y_OFFSET);
+}
+
+
 int WinDraw_MenuInit(void)
 {
 	p6m.sbp     = menu_buffer;

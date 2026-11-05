@@ -22,6 +22,10 @@ int MFP_StateAction(StateMem *sm, int load, int data_only)
 	{
 		SFARRAY(MFP, 24),
 	   SFVAR(LastKey),
+	   SFVAR(kbd_led),
+	   SFVAR(kbd_led_seen),
+	   SFVAR(kbd_repeat_delay_ms),
+	   SFVAR(kbd_repeat_interval_ms),
 	   SFARRAY(Timer_Reload, 4),
 	   SFARRAY32(Timer_Tick, 4),
 
@@ -238,6 +242,8 @@ void FASTCALL MFP_Write(uint32_t adr, uint8_t data)
             MFP[reg] = data | 0x80; /* Tx is always enabled */
             break;
          case MFP_UDR:
+            /* Host -> keyboard commands (LED control, repeat timing). */
+            Keyboard_HostCommand(data);
             break;
          case MFP_TACR:
          case MFP_TBCR:
