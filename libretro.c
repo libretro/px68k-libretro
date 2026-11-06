@@ -87,21 +87,26 @@ const float framerates[2][2] = {
  * "actual" is the true rate; with Adjust Frame Rates enabled the frontend is
  * given a nearby friendlier rate and the audio clock is scaled to match.
  */
-static float px68k_fps_actual(void)
+/* The rates must be exact, not rounded: the sound renderer produces
+ * 44100 * frame_clocks / 10MHz samples per emulated frame and the frontend
+ * consumes 44100 / fps per frame.  Rounding fps to 2 decimals made the two
+ * differ by up to 0.016%, which is a missing sample every few frames and is
+ * heard as crackling. */
+static double px68k_fps_actual(void)
 {
-   return floorf(1e9f / (float)CRTC_FrameClocks()) / 100.0f;
+   return 1e7 / (double)CRTC_FrameClocks();
 }
 
-static float px68k_fps_compat(float actual)
+static double px68k_fps_compat(double actual)
 {
-   if (actual >= 58.0f)
-      return 60.0f;
-   return floorf(actual * 2.0f + 0.5f) / 2.0f;
+   if (actual >= 58.0)
+      return 60.0;
+   return floor(actual * 2.0 + 0.5) / 2.0;
 }
 
-static float px68k_current_framerate(void)
+static double px68k_current_framerate(void)
 {
-   float a = px68k_fps_actual();
+   double a = px68k_fps_actual();
    return Config.AdjustFrameRates ? px68k_fps_compat(a) : a;
 }
 
@@ -207,9 +212,9 @@ static void px68k_fill_geometry(struct retro_game_geometry *g)
 int CHANGEAV              = 0;
 int CHANGEAV_TIMING       = 0; /* Separate change of geometry from change of refresh rate */
 int VID_MODE              = MODE_NORM; /* what framerate we start in */
-static float FRAMERATE;
+static double FRAMERATE;
 uint32_t libretro_supports_input_bitmasks = 0;
-
+ 
 static int16_t soundbuf[1024 * 2];
 /* Legacy timer module linkage; no longer used to gate emulated frames. */
 unsigned int total_usec = (unsigned int)-1;
@@ -225,11 +230,11 @@ static int fb_audio_clock(int clock)
 {
    double ratio, scaled;
    int result;
-   float actual = px68k_fps_actual();
+   double actual = px68k_fps_actual();
    if (!Config.AdjustFrameRates)
    {
       fb_audio_clock_remainder = 0.0;
-      fb_audio_last_mode = (int)(actual * 100.0f);
+      fb_audio_last_mode = (int)(actual * 100.0);
       fb_audio_last_adjust = 0;
       return clock;
    }
@@ -239,7 +244,7 @@ static int fb_audio_clock(int clock)
       fb_audio_last_mode = (int)(actual * 100.0f);
       fb_audio_last_adjust = Config.AdjustFrameRates;
    }
-   ratio = (double)actual / (double)px68k_fps_compat(actual);
+   ratio = actual / px68k_fps_compat(actual);
    scaled = (double)clock * ratio + fb_audio_clock_remainder;
    result = (int)scaled;
    fb_audio_clock_remainder = scaled - (double)result;
@@ -249,9 +254,9 @@ static int fb_audio_clock(int clock)
 static int next_audio_frame_size(void)
 {
    int frames;
-   if (FRAMERATE <= 0.0f)
+   if (FRAMERATE <= 0.0)
       return 0;
-   audio_frame_fraction += (double)SOUNDRATE / (double)FRAMERATE;
+   audio_frame_fraction += (double)SOUNDRATE / FRAMERATE;
    frames = (int)audio_frame_fraction;
    audio_frame_fraction -= frames;
    if (frames > 1024) frames = 1024;
@@ -2948,8 +2953,8 @@ void retro_run(void)
       Joystick_Update(0, -1, 0);
       Joystick_Update(0, -1, 1);
       Keyboard_OSDPointerUpdate();
-      if (FRAMERATE > 0.0f)
-         Keyboard_RepeatTick((unsigned)(1000000.0f / FRAMERATE));
+      if (FRAMERATE > 0.0)
+         Keyboard_RepeatTick((unsigned)(1000000.0 / FRAMERATE));
 
       WinX68k_Exec();
    }
