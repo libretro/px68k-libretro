@@ -639,7 +639,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       {
          PX68K_P1_JOY2KEY_VALUES
       },
-      "return"
+      "xf1"
    },
    {
       "px68k_j2k_p1_a",
@@ -831,7 +831,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       {
          PX68K_JOY2KEY_VALUES
       },
-      "return"
+      "xf1"
    },
    {
       "px68k_j2k_p2_a",
