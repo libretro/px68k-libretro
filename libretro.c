@@ -79,6 +79,35 @@ const float framerates[2][2] = {
    { MODE_NORM_COMPAT, MODE_HIGH_COMPAT }
 };
 
+/*
+ * Refresh rate follows the CRTC timing (R00, R04, R20) instead of the two
+ * fixed 61.46/55.46 Hz values: real modes run at e.g. 61.23, 60.46, 59.59,
+ * 57.89 or 53.49 Hz (verified against XM6 type G).
+ *
+ * "actual" is the true rate; with Adjust Frame Rates enabled the frontend is
+ * given a nearby friendlier rate and the audio clock is scaled to match.
+ */
+static float px68k_fps_actual(void)
+{
+   return floorf(1e9f / (float)CRTC_FrameClocks()) / 100.0f;
+}
+
+static float px68k_fps_compat(float actual)
+{
+   if (actual >= 58.0f)
+      return 60.0f;
+   return floorf(actual * 2.0f + 0.5f) / 2.0f;
+}
+
+static float px68k_current_framerate(void)
+{
+   float a = px68k_fps_actual();
+   return Config.AdjustFrameRates ? px68k_fps_compat(a) : a;
+}
+
+/* frame period the frontend was last told about, 100ns units */
+static uint32_t applied_frame_clk = 0;
+
 char	winx68k_dir[2048];
 char	winx68k_ini[2048];
 
@@ -143,12 +172,38 @@ static int FrameSkipQueue = 0;
 static int ClkUsed        = 0;
 
 uint32_t retrow           = 800;
+/* Display aspect of the active picture, derived from CRTC timing
+ * (see WinDraw_Draw). 4:3 means the window fills the whole screen. */
+float    retro_aspect      = 4.0f / 3.0f;
+/* core option px68k_aspect_ratio: 0 = X68000 (CRT timing), 1 = 4:3 (default), 2 = 1:1 */
+int      px68k_aspect_mode = 1;
 uint32_t retroh           = 600;
 /* Keep the full OSD keyboard visible even when the emulated mode is low-res. */
 static bool osd_video_geometry_active = false;
 static uint16_t osd_video_buffer[800 * 512];
 #define OSD_VIDEO_WIDTH  768
 #define OSD_VIDEO_HEIGHT 512
+
+/* Geometry the frontend should currently use: the keyboard's fixed 768x512
+ * 4:3 reference while it is visible, otherwise the emulated mode with the
+ * aspect ratio chosen by the "Aspect Ratio" option / CRTC timing. */
+static void px68k_fill_geometry(struct retro_game_geometry *g)
+{
+   g->max_width  = 800;
+   g->max_height = 600;
+   if (osd_video_geometry_active)
+   {
+      g->base_width   = OSD_VIDEO_WIDTH;
+      g->base_height  = OSD_VIDEO_HEIGHT;
+      g->aspect_ratio = 4.0f / 3.0f;
+   }
+   else
+   {
+      g->base_width   = retrow;
+      g->base_height  = retroh;
+      g->aspect_ratio = retro_aspect;
+   }
+}
 int CHANGEAV              = 0;
 int CHANGEAV_TIMING       = 0; /* Separate change of geometry from change of refresh rate */
 int VID_MODE              = MODE_NORM; /* what framerate we start in */
@@ -170,20 +225,21 @@ static int fb_audio_clock(int clock)
 {
    double ratio, scaled;
    int result;
+   float actual = px68k_fps_actual();
    if (!Config.AdjustFrameRates)
    {
       fb_audio_clock_remainder = 0.0;
-      fb_audio_last_mode = VID_MODE;
+      fb_audio_last_mode = (int)(actual * 100.0f);
       fb_audio_last_adjust = 0;
       return clock;
    }
-   if (fb_audio_last_mode != VID_MODE || fb_audio_last_adjust != Config.AdjustFrameRates)
+   if (fb_audio_last_mode != (int)(actual * 100.0f) || fb_audio_last_adjust != Config.AdjustFrameRates)
    {
       fb_audio_clock_remainder = 0.0;
-      fb_audio_last_mode = VID_MODE;
+      fb_audio_last_mode = (int)(actual * 100.0f);
       fb_audio_last_adjust = Config.AdjustFrameRates;
    }
-   ratio = (double)framerates[0][VID_MODE] / (double)framerates[1][VID_MODE];
+   ratio = (double)actual / (double)px68k_fps_compat(actual);
    scaled = (double)clock * ratio + fb_audio_clock_remainder;
    result = (int)scaled;
    fb_audio_clock_remainder = scaled - (double)result;
@@ -1875,6 +1931,20 @@ static void update_variables(int running)
          Config.FrameRate = 1;
    }
 
+   var.key     = "px68k_aspect_ratio";
+   var.value   = NULL;
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (!strcmp(var.value, "x68000"))
+         px68k_aspect_mode = 0;
+      else if (!strcmp(var.value, "1:1"))
+         px68k_aspect_mode = 2;
+      else
+         px68k_aspect_mode = 1; /* "4:3" */
+      /* WinDraw_Draw notices the new aspect and updates the geometry */
+   }
+
    var.key     = "px68k_adjust_frame_rates";
    var.value   = NULL;
 
@@ -1950,8 +2020,9 @@ void retro_get_system_info(struct retro_system_info *info)
 void retro_get_system_av_info(struct retro_system_av_info *info)
 {
    /* FIXME handle PAL/NTSC */
-   struct retro_game_geometry geom   = { retrow, retroh, 800, 600, 4.0 / 3.0 };
+   struct retro_game_geometry geom;
    struct retro_system_timing timing = { FRAMERATE, SOUNDRATE };
+   px68k_fill_geometry(&geom);
    info->geometry                    = geom;
    info->timing                      = timing;
 }
@@ -2335,7 +2406,8 @@ void retro_init(void)
    memset(Core_Key_State, 0, 512);
    memset(Core_old_Key_State, 0, sizeof(Core_old_Key_State));
 
-   FRAMERATE = framerates[Config.AdjustFrameRates][VID_MODE];
+   FRAMERATE = px68k_current_framerate();
+   applied_frame_clk = CRTC_FrameClocks();
 
 }
 
@@ -2663,7 +2735,7 @@ static void WinX68k_Exec(void)
 
    vline     = 0;
    clk_count = -ICount;
-   clk_total = (CRTC_Regs[0x29] & 0x10) ? VSYNC_HIGH : VSYNC_NORM;
+   clk_total = (int)CRTC_FrameClocks();
 
    clk_total = (clk_total*Config.clockmhz)/10;
    clkdiv    = Config.clockmhz;
@@ -2825,9 +2897,9 @@ static void WinX68k_Exec(void)
       WinDraw_Draw();
 
    t_end = timeGetTime();
-   if ((int)(t_end - t_start) > ((CRTC_Regs[0x29] & 0x10) ? 14 : 16))
+   if ((int)(t_end - t_start) > (CRTC_HighFreq() ? 14 : 16))
    {
-      FrameSkipQueue += ((t_end - t_start) / ((CRTC_Regs[0x29] & 0x10) ? 14 : 16)) + 1;
+      FrameSkipQueue += ((t_end - t_start) / (CRTC_HighFreq() ? 14 : 16)) + 1;
       if (FrameSkipQueue > 100)
          FrameSkipQueue = 100;
    }
@@ -2992,12 +3064,39 @@ void retro_run(void)
 
    audio_batch_cb((const int16_t*)soundbuf, soundbuf_size);
    /* TODO/FIXME - hardcoded pitch here */
+   {
+      /* Refresh-rate change detection: the new rate must persist for 3
+       * frames (mode switches write several registers, sometimes across
+       * frames) and differ by more than 0.1% before the frontend is told. */
+      static uint32_t pending_clk = 0;
+      static int stable_frames = 0;
+      uint32_t c = CRTC_FrameClocks();
+      uint32_t d = c > applied_frame_clk ? c - applied_frame_clk : applied_frame_clk - c;
+      if (applied_frame_clk && d * 1000u > applied_frame_clk)
+      {
+         if (c == pending_clk)
+            stable_frames++;
+         else
+         {
+            pending_clk = c;
+            stable_frames = 1;
+         }
+         if (stable_frames >= 3)
+         {
+            CHANGEAV_TIMING = 1;
+            stable_frames = 0;
+         }
+      }
+      else
+         stable_frames = 0;
+   }
    if (CHANGEAV || CHANGEAV_TIMING)
    {
       struct retro_system_av_info av;
       if (CHANGEAV_TIMING)
       {
-         FRAMERATE = framerates[Config.AdjustFrameRates][VID_MODE];
+         FRAMERATE = px68k_current_framerate();
+         applied_frame_clk = CRTC_FrameClocks();
          audio_frame_fraction = 0.0;
          retro_get_system_av_info(&av);
          environ_cb(RETRO_ENVIRONMENT_SET_SYSTEM_AV_INFO, &av);
@@ -3008,13 +3107,13 @@ void retro_run(void)
       else
       {
          struct retro_game_geometry geom;
-         geom.base_width = retrow;
-         geom.base_height = retroh;
-         geom.max_width = 800;
-         geom.max_height = 600;
-         geom.aspect_ratio = 4.0f / 3.0f;
-         if (!(menu_mode == menu_out && Keyboard_IsSwKeyboard()))
+         /* While the keyboard is up its own geometry stays in force; the
+          * latest game size/aspect is applied when it closes. */
+         if (!osd_video_geometry_active)
+         {
+            px68k_fill_geometry(&geom);
             environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &geom);
+         }
          CHANGEAV = 0;
       }
    }
@@ -3109,11 +3208,8 @@ void retro_run(void)
       {
          struct retro_game_geometry geom;
          osd_video_geometry_active = osd_visible;
-         geom.base_width = osd_visible ? OSD_VIDEO_WIDTH : retrow;
-         geom.base_height = osd_visible ? OSD_VIDEO_HEIGHT : retroh;
-         geom.max_width = 800;
-         geom.max_height = 600;
-         geom.aspect_ratio = 4.0f / 3.0f;
+         /* closing the keyboard restores the current game size AND aspect */
+         px68k_fill_geometry(&geom);
          environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &geom);
       }
 

@@ -30,6 +30,7 @@ extern "C" {
 
 struct retro_core_option_v2_category option_cats_us[] = {
    { "system",      "System",      "Change emulated hardware settings."                              },
+   { "video",       "Video",       "Change video output and aspect ratio settings."                  },
    { "input",       "Input",       "Change controller types and button mapping."                     },
    { "p1_joy2key",  "P1 Joy2Key",  "Map Player 1 RetroPad inputs to X68000 keyboard keys."            },
    { "p2_joy2key",  "P2 Joy2Key",  "Map Player 2 RetroPad inputs to X68000 keyboard keys."            },
@@ -288,6 +289,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
     * Changing "Show layer 1" is fine, but don't change "layer_1"/etc or the possible values ("Yes|No").
     * Adding more variables and rearranging them is safe. */
 
+
    {
       "px68k_cpu_emulation",
       "CPU Emulation",
@@ -343,6 +345,58 @@ struct retro_core_option_v2_definition option_defs_us[] = {
          { NULL,   NULL },
       },
       "2MB"
+   },
+   {
+      "px68k_aspect_ratio",
+      "Aspect Ratio",
+      NULL,
+      "Aspect ratio of the displayed picture. '4:3' stretches every picture to fill a 4:3 screen. 'X68000' reproduces what a real X68000 and its 4:3 monitor show: the size of the picture is computed from the CRTC and dot clock timing, so modes that use only part of the scan line or of the screen height (e.g. Cotton 512*256 Hi uses 75% of the width) get black borders. '1:1' shows square pixels at the core's raw resolution.",
+      NULL,
+      "video",
+      {
+         { "4:3",    "4:3 (fill screen)" },
+         { "x68000", "X68000 (CRT timing)" },
+         { "1:1",    "1:1 (square pixels)" },
+         { NULL,     NULL },
+      },
+      "4:3"
+   },
+   {
+      "px68k_adjust_frame_rates",
+      "Adjust Frame Rates",
+      NULL,
+      "For compatibility with modern displays, changes the 15KHz mode from 61.46 to 60Hz. Disable to get the real machine timing.",
+      NULL,
+      "video",
+      {
+         { "disabled", NULL},
+         { "enabled",  NULL},
+         { NULL,       NULL },
+      },
+      "enabled"
+   },
+   {
+      "px68k_frameskip",
+      "Frames Skip",
+      NULL,
+      "Choose how many frames will be skipped to improve performance at the expense of visual smoothness.",
+      NULL,
+      "video",
+      {
+         { "Full Frame",      NULL },
+         { "1/2 Frame",       NULL },
+         { "1/3 Frame",       NULL },
+         { "1/4 Frame",       NULL },
+         { "1/5 Frame",       NULL },
+         { "1/6 Frame",       NULL },
+         { "1/8 Frame",       NULL },
+         { "1/16 Frame",      NULL },
+         { "1/32 Frame",      NULL },
+         { "1/60 Frame",      NULL },
+         { "Auto Frame Skip", NULL },
+         { NULL,   NULL },
+      },
+      "Full Frame"
    },
    /* from PX68K Menu */
    {
@@ -1268,43 +1322,6 @@ struct retro_core_option_v2_definition option_defs_us[] = {
          { "50", NULL }, { NULL, NULL },
       },
       "10"
-   },
-   {
-      "px68k_frameskip",
-      "Frames Skip",
-      NULL,
-      "Choose how many frames will be skipped to improve performance at the expense of visual smoothness.",
-      NULL,
-      "advanced",
-      {
-         { "Full Frame",      NULL },
-         { "1/2 Frame",       NULL },
-         { "1/3 Frame",       NULL },
-         { "1/4 Frame",       NULL },
-         { "1/5 Frame",       NULL },
-         { "1/6 Frame",       NULL },
-         { "1/8 Frame",       NULL },
-         { "1/16 Frame",      NULL },
-         { "1/32 Frame",      NULL },
-         { "1/60 Frame",      NULL },
-         { "Auto Frame Skip", NULL },
-         { NULL,   NULL },
-      },
-      "Full Frame"
-   },
-   {
-      "px68k_adjust_frame_rates",
-      "Adjust Frame Rates",
-      NULL,
-      "For compatibility with modern displays, changes the 15KHz mode from 61.46 to 60Hz. Disable to get the real machine timing.",
-      NULL,
-      "advanced",
-      {
-         { "disabled", NULL},
-         { "enabled",  NULL},
-         { NULL,       NULL },
-      },
-      "enabled"
    },
    {
       "px68k_text_off",

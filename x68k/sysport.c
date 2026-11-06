@@ -35,6 +35,13 @@ int SysPort_StateAction(StateMem *sm, int load, int data_only)
 	return ret;
 }
 
+/* System port #4 ($E8E007) bit 1 = HRL: 0 -> dot clock dividers 1/2,1/3,1/6;
+ * 1 -> 1/2,1/4,1/8 (X68000 programmer's manual). */
+int SysPort_HRL(void)
+{
+	return (sysport.keyctrl >> 1) & 1;
+}
+
 void SysPort_Init(void)
 {
 	static uint8_t cputype[] = {

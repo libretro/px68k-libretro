@@ -50,6 +50,11 @@ struct retro_core_option_v2_category option_cats_fr[] = {
       NULL,
    },
    {
+      "video",
+      NULL,
+      NULL,
+   },
+   {
       "input",
       NULL,
       NULL,
