@@ -12,6 +12,8 @@
 #include	"bg.h"
 #include	"m68000.h"
 #include	"crtc.h"
+#include <math.h>
+#include "sysport.h"
 
 uint8_t	CRTC_Regs[24*2];
 uint8_t	CRTC_Mode = 0;
@@ -36,6 +38,7 @@ uint8_t	VCReg2[2] = {0, 0};
 uint8_t	CRTC_RCFlag[2] = {0, 0};
 int HSYNC_CLK = 324;
 extern int VID_MODE, CHANGEAV_TIMING;
+
 
 int CRTC_StateAction(StateMem *sm, int load, int data_only)
 {
@@ -185,6 +188,121 @@ void CRTC_Init(void)
 	TextScrollY = 0;
 }
 
+/*
+ * Which frame-rate class the emulated monitor timing belongs to.
+ * R20 bit 4 selects the *dot clock* family, not strictly the line rate:
+ * Cotton "448*240 Low" sets it while programming 15kHz timing
+ * (VTOTAL=259) and runs at 61.46Hz.  A 31kHz-class mode has VTOTAL ~568
+ * (24kHz ~440), so require a long frame as well as the bit.
+ */
+int CRTC_HighFreq(void)
+{
+   return (CRTC_Regs[0x29] & 0x10) && VLINE_TOTAL >= 300;
+}
+
+
+/*
+ * Dot clock / line timing model.
+ *
+ *   line period  = (R00+1) * 8 / dot clock
+ *   field period = (R04 + 1 [+ 0.5 if interlaced]) * line period
+ *
+ * Dot clock, from the oscillator table of the real-hardware "CRTC operator"
+ * tool (Taka2, 1994; 38.86363 and 69.55199 MHz oscillators, 50.35 MHz on
+ * later models), indexed by R20 HF (bit 4), R20 HD (bits 0-1) and HRL:
+ *
+ *   HF=0 HD=0 : 38.86363 / 8      HF=1 HD=0 : 69.55199 / 8 (HRL=1) or / 6 (HRL=0)
+ *   HF=0 HD=1 : 38.86363 / 4      HF=1 HD=1 : 69.55199 / 4 (HRL=1) or / 3 (HRL=0)
+ *                                 HF=1 HD=2 : 69.55199 / 2
+ *                                 HF=1 HD=3 : 50.35 / 2   (later models)
+ *
+ * HRL is system port #4 ($E8E007) bit 1; the programmer's manual describes
+ * it as selecting dividers 1/2,1/4,1/8 (1) or 1/2,1/3,1/6 (0), and both the
+ * IOCS ROM (it writes $0C/$0E to $E8E006) and the tool above set/clear
+ * bit 1 of $E8E007.
+ *
+ * Checked against XM6 type G's CRTC viewer for 22 modes of 8 games (Cotton,
+ * Chourensha, Akazucha, Baraduke, Dive On): frame rates agree to 0.01Hz and
+ * picture widths to <1%.  Real modes run at e.g. 61.46, 61.23, 60.46, 59.59,
+ * 57.89, 54.66 and 53.49Hz, NOT just "15kHz = 61.46 / 31kHz = 55.46".
+ *
+ * If the HRL-selected clock gives an implausible refresh rate (e.g. the game
+ * has not written HRL yet in the middle of a mode switch) the other divider
+ * is tried before giving up and using the legacy fixed rates.
+ */
+static int CRTC_Model(double *fdot_mhz, double *line_us, double *fps)
+{
+   unsigned r20 = CRTC_Regs[0x29];
+   unsigned hd = r20 & 3;
+   unsigned hf = (r20 >> 4) & 1;
+   unsigned chars = ((((unsigned)CRTC_Regs[0]) << 8) | CRTC_Regs[1]) & 1023;
+   double lines = (double)VLINE_TOTAL + 1.0;
+   int hrl = SysPort_HRL(), pass;
+   int interlace = hf ? ((r20 & 0x0c) == 0x08) : ((r20 & 0x04) != 0);
+
+   chars += 1;
+   if (chars < 16 || VLINE_TOTAL < 100)
+      return 0;
+   if (interlace)
+      lines += 0.5;     /* odd number of lines per frame, R04 counts a field */
+
+   for (pass = 0; pass < 2; pass++)
+   {
+      int h = pass ? !hrl : hrl;
+      double f, t, r;
+      if (!hf)
+      {
+         if (hd == 0)      f = 38.86363 / 8.0;
+         else if (hd == 1) f = 38.86363 / 4.0;
+         else return 0;               /* no 15kHz 768/1024 dot clock */
+      }
+      else if (hd == 0)    f = 69.55199 / (h ? 8.0 : 6.0);
+      else if (hd == 1)    f = 69.55199 / (h ? 4.0 : 3.0);
+      else if (hd == 2)    f = 69.55199 / 2.0;
+      else                 f = 50.35 / 2.0;
+      t = (double)chars * 8.0 / f;               /* microseconds */
+      r = 1e6 / (t * lines);
+      if (r >= 45.0 && r <= 72.0)
+      {
+         *fdot_mhz = f; *line_us = t; *fps = r;
+         return 1;
+      }
+   }
+   return 0;
+}
+
+uint32_t CRTC_FrameClocks(void)
+{
+   double f, t, fps;
+   if (CRTC_Model(&f, &t, &fps))
+      return (uint32_t)(1e7 / fps + 0.5);
+   return CRTC_HighFreq() ? VSYNC_HIGH : VSYNC_NORM; /* unknown timing */
+}
+
+/* A 4:3 monitor's visible scan time: ~52.7us on a 15.98kHz line, ~22.07us
+ * on a 31.5kHz line (XM6 draws 14.57 and 34.8 pixels/us on a 768 wide
+ * canvas); in-between line rates are interpolated. */
+float CRTC_WidthFraction(void)
+{
+   double f, t, fps, hkhz, full, w;
+   if (!CRTC_Model(&f, &t, &fps) || TextDotX < 8)
+      return 0.0f;
+   hkhz = 1000.0 / t;
+   if (hkhz <= 20.0)       full = 52.71;
+   else if (hkhz >= 28.0)  full = 22.07;
+   else                    full = 52.71 + (22.07 - 52.71) * (hkhz - 20.0) / 8.0;
+   w = ((double)TextDotX / f) / full;
+   return (float)w;
+}
+
+/* Lines that fill the whole screen height: 256, or 512 for real 512-line
+ * frames.  (R20 VD alone is not enough: Baraduke/Cotton set it on 261-line
+ * 15kHz frames and XM6 still draws 2 pixels per line.) */
+float CRTC_FullHeightLines(void)
+{
+   return ((CRTC_Regs[0x29] & 4) && VLINE_TOTAL >= 400) ? 512.0f : 256.0f;
+}
+
 static void CRTC_ScreenChanged(void)
 {
    static int last_vidmode = -1;
@@ -202,13 +320,11 @@ static void CRTC_ScreenChanged(void)
 	else
 		CRTC_VStep = 2;
    
-   VID_MODE = !!(CRTC_Regs[0x29]&0x10);
+   VID_MODE = CRTC_HighFreq() ? 1 : 0;
    
-   if (VID_MODE != last_vidmode)
-   {
-      last_vidmode = VID_MODE;
-      CHANGEAV_TIMING = 1;
-   }
+   last_vidmode = VID_MODE;
+   /* The refresh rate is re-evaluated (and debounced) once per frame in
+    * retro_run(), because it now depends on R00/R04/R20 together. */
 }
 
 uint8_t FASTCALL CRTC_Read(uint32_t adr)
@@ -247,7 +363,8 @@ void FASTCALL CRTC_Write(uint32_t adr, uint8_t data)
       {
          case 0x00:
          case 0x01:
-            /* HTOTAL */
+            /* HTOTAL: changes the line period, hence the frame period */
+            HSYNC_CLK = CRTC_FrameClocks()/(VLINE_TOTAL ? VLINE_TOTAL : 1);
             break;
          case 0x02:
          case 0x03:
@@ -269,7 +386,10 @@ void FASTCALL CRTC_Write(uint32_t adr, uint8_t data)
          case 0x08:
          case 0x09:
             VLINE_TOTAL = (((uint16_t)CRTC_Regs[8]<<8)+CRTC_Regs[9]) & 1023;
-            HSYNC_CLK = ((CRTC_Regs[0x29]&0x10)?VSYNC_HIGH:VSYNC_NORM)/VLINE_TOTAL;
+            HSYNC_CLK = CRTC_FrameClocks()/(VLINE_TOTAL ? VLINE_TOTAL : 1);
+            /* the frame-rate class depends on VTOTAL too */
+            TextDotY = CRTC_VEND-CRTC_VSTART;
+            CRTC_ScreenChanged();
             break;
          case 0x0a:
          case 0x0b:
@@ -292,7 +412,7 @@ void FASTCALL CRTC_Write(uint32_t adr, uint8_t data)
             TVRAM_SetAllDirty();
             break;
          case 0x29:
-            HSYNC_CLK = ((CRTC_Regs[0x29]&0x10)?VSYNC_HIGH:VSYNC_NORM)/VLINE_TOTAL;
+            HSYNC_CLK = CRTC_FrameClocks()/(VLINE_TOTAL ? VLINE_TOTAL : 1);
             TextDotY = CRTC_VEND-CRTC_VSTART;
             CRTC_ScreenChanged();
             break;

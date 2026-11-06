@@ -28,6 +28,10 @@ extern	uint32_t GrphScrollX[4];
 extern	uint32_t GrphScrollY[4];
 
 void CRTC_Init(void);
+int  CRTC_HighFreq(void);
+uint32_t CRTC_FrameClocks(void);   /* frame period in 100ns units (10MHz clocks) */
+float    CRTC_WidthFraction(void); /* picture width / full screen width, 0 = unknown */
+float    CRTC_FullHeightLines(void); /* lines that fill the screen height: 256 or 512 */
 
 void CRTC_RasterCopy(void);
 

@@ -69,20 +69,93 @@ void WinDraw_Cleanup(void)
 
 /* Forward declarations */
 extern uint32_t retrow, retroh;
+extern float retro_aspect;
 extern int CHANGEAV;
+
+/* Set to 0 to get the old behaviour (every window stretched to 4:3). */
+#ifndef PX68K_TIMING_ASPECT
+#define PX68K_TIMING_ASPECT 1
+#endif
+
+/*
+ * Physical size of the active picture on a 4:3 monitor, as a fraction of the
+ * full screen, derived from the CRTC and dot clock timing (see CRTC_Model in
+ * crtc.c).  This is what the "X68000" aspect ratio option uses:
+ *
+ *   width  = window time / visible scan time of the monitor
+ *   height = lines / 256 (or / 512 for real 512-line frames)
+ *
+ * so e.g. Cotton "512*256 Hi" (a 384 dot window on a 512 dot clock) fills 75%
+ * of the width, and a 224 line picture fills 87.5% of the height.  Checked
+ * against XM6 type G for 22 modes of 8 games.
+ */
+extern int px68k_aspect_mode;
+
+static float WinDraw_TimingAspect(uint32_t height)
+{
+	float wf, hf;
+
+	if (px68k_aspect_mode == 1)
+		return 4.0f / 3.0f;
+	if (px68k_aspect_mode == 2)
+		return (TextDotX && height) ? (float)TextDotX / (float)height : 4.0f / 3.0f;
+#if PX68K_TIMING_ASPECT
+	/* Width: share of the monitor's visible scan time that the picture
+	 * occupies, from the dot clock (see CRTC_Model). */
+	wf = CRTC_WidthFraction();
+	if (wf <= 0.0f)
+	{
+		/* timing not modelled: fall back to window / total line length */
+		uint32_t htotal = ((((uint32_t)CRTC_Regs[0]) << 8) | CRTC_Regs[1]) + 1;
+		if (htotal < 8 || TextDotX < 8)
+			return 4.0f / 3.0f;
+		wf = ((float)(TextDotX / 8) / (float)htotal) /
+		     ((VLINE_TOTAL < 400) ? (32.0f / 38.0f) : (32.0f / 46.0f));
+	}
+	if (wf > 1.0f)  wf = 1.0f;   /* overscan: fill the screen */
+	if (wf < 0.25f) wf = 0.25f;  /* transitional register values */
+
+	/* Height: a picture of N lines fills N/256 of the screen height
+	 * (N/512 for real 512-line frames); e.g. 224 lines = 87.5%. */
+	hf = (float)height / CRTC_FullHeightLines();
+	if (hf > 1.0f)  hf = 1.0f;
+	if (hf < 0.25f) hf = 0.25f;
+
+	return (4.0f / 3.0f) * wf / hf;
+#else
+	return 4.0f / 3.0f;
+#endif
+}
 
 void FASTCALL WinDraw_Draw(void)
 {
 	static int oldtextx = -1, oldtexty = -1;
+	static int oldaspect = -1;
+	uint32_t ey;
+	int asp;
 
-	if (oldtextx != TextDotX)
+	/* Lines the frame loop can really produce: it stops at VLINE_TOTAL, so a
+	 * window whose VEND lies beyond VTOTAL (Cotton "448*240Low": VEND=275,
+	 * VTOTAL=259) is shorter than VEND-VSTART. */
+	ey = TextDotY;
+	if (CRTC_VEND > VLINE_TOTAL && VLINE_TOTAL > CRTC_VSTART)
+		ey = (((uint32_t)VLINE_TOTAL - CRTC_VSTART) * CRTC_VStep) / 2;
+
+	if (oldtextx != (int)TextDotX)
 	{
 		oldtextx = TextDotX;
 		CHANGEAV=1;
 	}
-	if (oldtexty != TextDotY)
+	if (oldtexty != (int)ey)
 	{
-		oldtexty = TextDotY;
+		oldtexty = ey;
+		CHANGEAV=1;
+	}
+	retro_aspect = WinDraw_TimingAspect(ey);
+	asp = (int)(retro_aspect * 1000.0f);
+	if (oldaspect != asp)
+	{
+		oldaspect = asp;
 		CHANGEAV=1;
 	}
 
@@ -90,7 +163,7 @@ void FASTCALL WinDraw_Draw(void)
 	{
 		/* Clamp only frontend presentation dimensions; do not alter CRTC state. */
         retrow = TextDotX > 800 ? 800 : TextDotX;
-        retroh = TextDotY > 600 ? 600 : TextDotY;
+        retroh = ey > 600 ? 600 : ey;
         if (!retrow) retrow = 1;
         if (!retroh) retroh = 1;
 	}

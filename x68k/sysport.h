@@ -7,6 +7,7 @@
 extern	uint8_t	SysPort[7];
 
 void SysPort_Init(void);
+int  SysPort_HRL(void); /* $E8E007 bit 1: dot clock divider set */
 uint8_t FASTCALL SysPort_Read(uint32_t adr);
 void FASTCALL SysPort_Write(uint32_t adr, uint8_t data);
 int SysPort_StateAction(StateMem *sm, int load, int data_only);
