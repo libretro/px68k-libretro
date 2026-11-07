@@ -307,8 +307,8 @@ static void test_slot_recycling(void)
 {
    uint8_t *x = pattern(4096, 7), *y = pattern(4096, 8);
    struct zmember m;
-   char name[64], vpath[256], keep_path[600];
-   int i, keep, slot, first = -1;
+   char name[64], vpath[256], keep_path[600], config_path[800], expected[800], restored[256];
+   int i, keep, playlist_slot, slot, first = -1;
 
    m.name = "disk.xdf"; m.data = x; m.len = 4096; m.deflate = 1; m.claim_size = 0;
    CHECK(write_zip(tpath("keep.zip"), &m, 1));
@@ -316,6 +316,14 @@ static void test_slot_recycling(void)
    keep = px68k_zip_register_archive(keep_path);
    CHECK(keep >= 0);
    CHECK(px68k_zip_make_virtual_path(keep, "disk.xdf", Config.FDDImage[0], sizeof(Config.FDDImage[0])));
+   CHECK(px68k_zip_path_to_config(Config.FDDImage[0], config_path, sizeof(config_path)) == 1);
+   snprintf(expected, sizeof(expected), "%s#disk.xdf", keep_path);
+   CHECK(!strcmp(config_path, expected));
+
+   CHECK(write_zip(tpath("playlist.zip"), &m, 1));
+   playlist_slot = px68k_zip_register_archive(tpath("playlist.zip"));
+   CHECK(playlist_slot >= 0 && playlist_slot != keep);
+   px68k_zip_pin_playlist(playlist_slot);
 
    m.data = y;
    for (i = 0; i < 100; i++)
@@ -324,7 +332,7 @@ static void test_slot_recycling(void)
       if (i < 2)
          CHECK(write_zip(tpath(name), &m, 1));
       slot = px68k_zip_register_archive(tpath(name));
-      CHECK(slot >= 0 && slot != keep);
+      CHECK(slot >= 0 && slot != keep && slot != playlist_slot);
       if (i == 0)
          first = slot;
       if (i == 0 || i == 1)
@@ -336,6 +344,7 @@ static void test_slot_recycling(void)
    /* The drive's archive was never recycled. */
    CHECK(read_member(Config.FDDImage[0], x, 4096));
    CHECK(px68k_zip_register_archive(keep_path) == keep);
+   CHECK(px68k_zip_register_archive(tpath("playlist.zip")) == playlist_slot);
 
    /* other0.zip's slot was reused; registering it again serves it fresh. */
    slot = px68k_zip_register_archive(tpath("other0.zip"));
@@ -345,6 +354,11 @@ static void test_slot_recycling(void)
    (void)first;
 
    Config.FDDImage[0][0] = '\0';
+   /* A persisted archive#member path must survive clearing all session slots. */
+   px68k_zip_reset();
+   CHECK(px68k_zip_path_from_config(config_path, restored, sizeof(restored)) == 1);
+   CHECK(px68k_is_zip_virtual_path(restored));
+   CHECK(read_member(restored, x, 4096));
    free(x);
    free(y);
 }

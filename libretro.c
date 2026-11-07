@@ -1014,78 +1014,128 @@ static void parse_cmdline(const char *argv)
 }
 
 
+static const char *m3u_zip_separator(const char *path)
+{
+   const char *p;
+   for (p = path; *p; p++)
+      if (p[0] == '.' && p[1] && p[2] && p[3] && p[4] == '#'
+            && tolower((unsigned char)p[1]) == 'z'
+            && tolower((unsigned char)p[2]) == 'i'
+            && tolower((unsigned char)p[3]) == 'p')
+         return p + 4;
+   return NULL;
+}
+
 static bool read_m3u(const char *file)
 {
    unsigned index = 0;
-   char line[MAX_PATH];
-   char name[MAX_PATH];
-   char *carriage_return;
-   char *newline;
+   char line[4096];
    FILE *f = fopen(file, "r");
 
    if (!f)
       return false;
 
-   while (fgets(line, sizeof(line), f) && index < sizeof(disk.path) / sizeof(disk.path[0]))
+   while (fgets(line, sizeof(line), f)
+         && index < sizeof(disk.path) / sizeof(disk.path[0]))
    {
-      if (line[0] == '#')
+      char entry[2048];
+      char name[MAX_PATH];
+      char image_label[MAX_PATH];
+      char *label;
+      size_t len;
+      const char *zip_sep;
+
+      /* Trim line endings and surrounding whitespace before interpreting it. */
+      len = strlen(line);
+      while (len && (line[len - 1] == '\n' || line[len - 1] == '\r'
+               || isspace((unsigned char)line[len - 1])))
+         line[--len] = '\0';
+      while (line[0] && isspace((unsigned char)line[0]))
+         memmove(line, line + 1, strlen(line));
+      if (!line[0] || line[0] == '#')
          continue;
 
-      carriage_return = strchr(line, '\r');
-      if (carriage_return)
-         *carriage_return = '\0';
-
-      newline = strchr(line, '\n');
-      if (newline)
-         *newline = '\0';
-
-      /* Remove any beginning and ending quotes as these can cause issues when feeding the paths into command line later */
-      if (line[0] == '"')
-          memmove(line, line + 1, strlen(line));
-
-      if (line[strlen(line) - 1] == '"')
-          line[strlen(line) - 1]  = '\0';
-
-      if (line[0] != '\0')
+      /* Accept quoted entries as well as normal M3U paths. */
+      len = strlen(line);
+      if (len >= 2 && line[0] == '"' && line[len - 1] == '"')
       {
-         char image_label[4096];
-         char *custom_label;
-         size_t len = 0;
-
-         if (is_path_absolute(line))
-            strncpy(name, line, sizeof(name));
-         else
-            snprintf(name, sizeof(name), "%s%c%s", base_dir, SLASH, line);
-
-         custom_label = strchr(name, '|');
-         if (custom_label)
-         {
-            /* get disk path */
-            len = custom_label + 1 - name;
-            strncpy(disk.path[index], name, len - 1);
-
-            /* get custom label */
-            custom_label++;
-            strncpy(disk.label[index], custom_label, sizeof(disk.label[index]));
-         }
-         else
-         {
-            /* copy path */
-            strncpy(disk.path[index], name, sizeof(disk.path[index]));
-
-            /* extract base name from path for labels */
-            extract_basename(image_label, name, sizeof(image_label));
-            strncpy(disk.label[index], image_label, sizeof(disk.label[index]));
-         }
-
-         index++;
+         memmove(line, line + 1, len - 2);
+         line[len - 2] = '\0';
       }
+      if (!line[0])
+         continue;
+
+      /* RetroArch's optional |label suffix is not part of the path. */
+      label = strchr(line, '|');
+      if (label)
+      {
+         *label++ = '\0';
+         while (*label && isspace((unsigned char)*label))
+            label++;
+      }
+      len = strlen(line);
+      while (len && isspace((unsigned char)line[len - 1]))
+         line[--len] = '\0';
+      if (!len || len >= sizeof(entry))
+         continue;
+      strcpy(entry, line);
+
+      if (is_path_absolute(entry))
+      {
+         if (snprintf(name, sizeof(name), "%s", entry) >= (int)sizeof(name))
+            continue;
+      }
+      else if (base_dir[0])
+      {
+         if (snprintf(name, sizeof(name), "%s%c%s", base_dir, SLASH, entry)
+               >= (int)sizeof(name))
+            continue;
+      }
+      else if (snprintf(name, sizeof(name), "%s", entry) >= (int)sizeof(name))
+         continue;
+
+      zip_sep = m3u_zip_separator(name);
+      if (zip_sep)
+      {
+         char archive[MAX_PATH];
+         int slot;
+         size_t archive_len = (size_t)(zip_sep - name);
+         if (!archive_len || archive_len >= sizeof(archive) || !zip_sep[1])
+            continue;
+         memcpy(archive, name, archive_len);
+         archive[archive_len] = '\0';
+         slot = px68k_zip_register_archive(archive);
+         if (slot < 0
+               || !px68k_zip_make_virtual_path(slot, zip_sep + 1,
+                  disk.path[index], sizeof(disk.path[index]))
+               || !px68k_zip_preload(disk.path[index]))
+         {
+            disk.path[index][0] = '\0';
+            continue;
+         }
+         /* M3U entries can refer to several archives. Keep every archive
+          * referenced by the disk table alive for the whole playlist. */
+         px68k_zip_pin_playlist(slot);
+         extract_basename(image_label, zip_sep + 1, sizeof(image_label));
+      }
+      else
+      {
+         if (strlen(name) >= sizeof(disk.path[index]))
+            continue;
+         strcpy(disk.path[index], name);
+         extract_basename(image_label, name, sizeof(image_label));
+      }
+
+      if (label && *label)
+         snprintf(disk.label[index], sizeof(disk.label[index]), "%s", label);
+      else
+         snprintf(disk.label[index], sizeof(disk.label[index]), "%s", image_label);
+      index++;
    }
 
    disk.total_images = index;
    fclose(f);
-
-   return (disk.total_images != 0);
+   return disk.total_images != 0;
 }
 
 static void Add_Option(const char* option)
@@ -2381,6 +2431,7 @@ static int is_zip_path(const char *path)
 
 bool retro_load_game(const struct retro_game_info *info)
 {
+   ResetConfigSaveState();
    px68k_zip_reset();
    no_content = 1;
    RPATH[0] = '\0';
@@ -2425,6 +2476,11 @@ void retro_unload_game(void)
    int _d;
 
    RPATH[0]    = '\0';
+
+   /* Persist the mounted paths before cleanup clears the live drive state.
+    * retro_deinit() may run after this function, so SaveConfigBeforeUnload()
+    * also prevents that later save from replacing the paths with empty ones. */
+   SaveConfigBeforeUnload();
 
    /* Release the current content's floppy media before anything else.
     * retro_unload_game must return all 4 drives to the same clean state as

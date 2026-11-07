@@ -44,6 +44,8 @@ extern Win68Conf Config;
 
 void LoadConfig(void);
 void SaveConfig(void);
+void SaveConfigBeforeUnload(void);
+void ResetConfigSaveState(void);
 void PropPage_Init(void);
 
 #endif /* _WINX68K_CONFIG_H */

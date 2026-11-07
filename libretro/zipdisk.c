@@ -62,6 +62,7 @@ static char                    *zip_archives[ZIP_SLOTS];
 static unsigned                 zip_age[ZIP_SLOTS];
 static unsigned                 zip_clock;
 static int                      zip_pinned = -1;
+static unsigned char            zip_playlist_pinned[ZIP_SLOTS];
 static struct zip_open_archive  zo        = { NULL, NULL, { NULL, NULL }, { 0, 0 }, -1 };
 static struct zip_member        zip_members[ZIP_MEMBERS];
 static struct zip_handle        zip_handles[ZIP_HANDLES];
@@ -374,7 +375,7 @@ static int zip_open_slot(int slot)
 static int zip_slot_in_use(int slot)
 {
    int i;
-   if (slot == zip_pinned)
+   if (slot == zip_pinned || (slot >= 0 && slot < ZIP_SLOTS && zip_playlist_pinned[slot]))
       return 1;
    for (i = 0; i < 2; i++)
       if (px68k_zip_virtual_slot(Config.FDDImage[i]) == slot)
@@ -430,7 +431,13 @@ int px68k_zip_register_archive(const char *archive)
 
 void px68k_zip_pin(int slot)
 {
-   zip_pinned = slot;
+   zip_pinned = (slot >= 0 && slot < ZIP_SLOTS) ? slot : -1;
+}
+
+void px68k_zip_pin_playlist(int slot)
+{
+   if (slot >= 0 && slot < ZIP_SLOTS)
+      zip_playlist_pinned[slot] = 1;
 }
 
 void px68k_zip_reset(void)
@@ -451,6 +458,7 @@ void px68k_zip_reset(void)
    }
    zip_clock  = 0;
    zip_pinned = -1;
+   memset(zip_playlist_pinned, 0, sizeof(zip_playlist_pinned));
 }
 
 int px68k_zip_count(int slot, int hdd)
@@ -536,6 +544,60 @@ int px68k_zip_get_archive_path(int slot, char *out, size_t out_size)
       return 0;
    n = snprintf(out, out_size, "%s", zip_archives[slot]);
    return n >= 0 && (size_t)n < out_size;
+}
+
+int px68k_zip_path_to_config(const char *path, char *out, size_t out_size)
+{
+   const char *member;
+   char archive[MAX_PATH];
+   int slot, n;
+   if (!px68k_is_zip_virtual_path(path))
+      return 0;
+   if (!out || !out_size)
+      return -1;
+   slot = split_virtual(path, &member);
+   if (slot < 0 || !px68k_zip_get_archive_path(slot, archive, sizeof(archive)))
+      return -1;
+   n = snprintf(out, out_size, "%s#%s", archive, member);
+   return n >= 0 && (size_t)n < out_size ? 1 : -1;
+}
+
+static const char *zip_config_separator(const char *path)
+{
+   const char *p;
+   for (p = path; *p; p++)
+      if (p[0] == '.' && p[1] && p[2] && p[3] && p[4] == '#'
+            && tolower((unsigned char)p[1]) == 'z'
+            && tolower((unsigned char)p[2]) == 'i'
+            && tolower((unsigned char)p[3]) == 'p')
+         return p + 4;
+   return NULL;
+}
+
+int px68k_zip_path_from_config(const char *path, char *out, size_t out_size)
+{
+   const char *hash;
+   char archive[MAX_PATH];
+   size_t len;
+   int slot;
+   if (!path || !out || !out_size)
+      return -1;
+   hash = zip_config_separator(path);
+   if (!hash)
+      return 0;
+   len = (size_t)(hash - path);
+   if (!len || len >= sizeof(archive) || !hash[1])
+      return -1;
+   memcpy(archive, path, len);
+   archive[len] = '\0';
+   slot = px68k_zip_register_archive(archive);
+   if (slot < 0 || !px68k_zip_make_virtual_path(slot, hash + 1, out, out_size)
+         || !px68k_zip_preload(out))
+   {
+      out[0] = '\0';
+      return -1;
+   }
+   return 1;
 }
 
 static struct zip_member *zip_member_get(const char *virtual_path)

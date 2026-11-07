@@ -14,6 +14,7 @@ extern "C" {
 
 int px68k_zip_register_archive(const char *archive);
 void px68k_zip_pin(int slot);
+void px68k_zip_pin_playlist(int slot);
 void px68k_zip_set_save_directory(const char *path);
 void px68k_zip_reset(void);
 
@@ -28,6 +29,10 @@ int px68k_zip_make_virtual_path(int slot, const char *member, char *out, size_t 
 int px68k_zip_is_browse_path(const char *path);
 int px68k_zip_browse_slot(const char *path);
 int px68k_zip_get_archive_path(int slot, char *out, size_t out_size);
+/* Convert between session virtual paths and durable archive.zip#member paths.
+ * from_config: 1 converted, 0 ordinary path, -1 invalid ZIP reference. */
+int px68k_zip_path_to_config(const char *path, char *out, size_t out_size);
+int px68k_zip_path_from_config(const char *path, char *out, size_t out_size);
 
 /* Inflates a member into the session cache so later opens are free. */
 int px68k_zip_preload(const char *virtual_path);
