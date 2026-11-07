@@ -342,3 +342,21 @@ int DIM_Write(int drv, FDCID* id, uint8_t* buf, int del)
 	DIMCur[drv] = IncTrk(drv, id->r-1);
 	return 1;
 }
+
+
+/* Head position / rotational cursor, for savestates. */
+void DIM_GetCursor(int drv, int32_t *trk, int32_t *cur)
+{
+	*trk = DIMTrk[drv];
+	*cur = DIMCur[drv];
+}
+
+void DIM_SetCursor(int drv, int32_t trk, int32_t cur)
+{
+	if ( (drv<0)||(drv>3) ) return;
+	if ( !DIMImg[drv] ) return;
+	if ( (trk<0)||(trk>169) ) trk = 0;
+	if ( (cur<0)||(cur>17) ) cur = 0;	/* at most 18 sectors per track */
+	DIMTrk[drv] = trk;
+	DIMCur[drv] = cur;
+}

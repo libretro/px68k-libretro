@@ -24,5 +24,7 @@ int D88_Read(int drv, FDCID* id, uint8_t* buf);
 int D88_ReadDiag(int drv, FDCID* id, FDCID* retid, uint8_t* buf);
 int D88_Write(int drv, FDCID* id, uint8_t* buf, int del);
 int D88_GetCurrentID(int drv, FDCID* id);
+void D88_GetCursor(int drv, int32_t *trk, int32_t *idx);
+void D88_SetCursor(int drv, int32_t trk, int32_t idx);
 
 #endif /* WINX68K_D88_H */

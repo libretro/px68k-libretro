@@ -393,12 +393,21 @@ static void extract_directory(char *buf, const char *path, size_t size)
 
 /* BEGIN MIDI INTERFACE */
 #include "x68k/midi.h"
+#include "libretro/midi_shadow.h"
 #include "libretro/mmsystem.h"
 static int libretro_supports_midi_output = 0;
 static struct retro_midi_interface midi_cb = { 0 };
 static bool libretro_supports_option_categories = 0;
 
-void midi_out_short_msg(size_t msg)
+/* While a setup is being re-created on load, don't record it as new input. */
+static bool midi_replaying;
+
+/* 0 = off, 1 = re-create the synth setup, 2 = also switch back to the output
+ * (internal SC-55 or external MIDI) that was in use when the state was saved. */
+static int midi_restore_mode = 2;
+
+/* Raw output: straight to whichever destination is active. */
+static void midi_emit_short(size_t msg)
 {
    if (px68k_sc55_enabled())
    {
@@ -407,13 +416,20 @@ void midi_out_short_msg(size_t msg)
    }
    if (libretro_supports_midi_output && midi_cb.output_enabled())
    {
-      midi_cb.write(msg         & 0xFF, 0); /* status byte */
-      midi_cb.write((msg >> 8)  & 0xFF, 0); /* note no. */
-      midi_cb.write((msg >> 16) & 0xFF, 0); /* velocity */
+      uint8_t status = msg & 0xFF;
+
+      midi_cb.write(status, 0);
+      midi_cb.write((msg >> 8) & 0xFF, 0);
+      /* Program change and channel pressure have ONE data byte. Sending a
+       * third (the unused 0) made a following running-status reader treat it
+       * as a second message, e.g. a program change to program 0 right after
+       * every program change. */
+      if ((status & 0xF0) != 0xC0 && (status & 0xF0) != 0xD0)
+         midi_cb.write((msg >> 16) & 0xFF, 0);
    }
 }
 
-void midi_out_long_msg(uint8_t *s, size_t len)
+static void midi_emit_long(const uint8_t *s, size_t len)
 {
    if (px68k_sc55_enabled())
    {
@@ -422,11 +438,92 @@ void midi_out_long_msg(uint8_t *s, size_t len)
    }
    if (libretro_supports_midi_output && midi_cb.output_enabled())
    {
-      int i;
+      size_t i;
       for (i = 0; i < len; i++)
          midi_cb.write(s[i], 0);
    }
 }
+
+/* Called by the emulated MIDI board. */
+void midi_out_short_msg(size_t msg)
+{
+   if (!midi_replaying)
+      MIDIShadow_Short(msg);
+   midi_emit_short(msg);
+}
+
+void midi_out_long_msg(uint8_t *s, size_t len)
+{
+   if (!midi_replaying)
+      MIDIShadow_Long(s, len);
+   midi_emit_long(s, len);
+}
+
+/* 0 = nothing audible, 1 = external MIDI interface, 2 = internal SC-55. */
+static int midi_current_source(void)
+{
+   if (!Config.MIDI_SW)
+      return 0;
+   if (px68k_sc55_enabled())
+      return 2;
+   if (libretro_supports_midi_output && midi_cb.output_enabled())
+      return 1;
+   return 0;
+}
+
+/* Switch to the output that was in use when a state was saved, if it can be
+ * had. Returns 1 if the destination changed. Never turns MIDI itself on: the
+ * guest probes the board at startup, so that can't be changed mid-run. */
+static int midi_apply_saved_source(int saved)
+{
+   int now = midi_current_source();
+
+   if (!Config.MIDI_SW || saved == 0 || saved == now)
+      return 0;
+
+   if (saved == 2)
+   {
+      px68k_sc55_configure(1, retro_system_directory, retro_content_directory);
+      if (!px68k_sc55_enabled())
+         return 0; /* ROMs not available here: stay on what we have */
+   }
+   else if (saved == 1)
+   {
+      if (!(libretro_supports_midi_output && midi_cb.output_enabled()))
+         return 0;
+      px68k_sc55_configure(0, retro_system_directory, retro_content_directory);
+   }
+
+   MIDI_ReopenOutput();
+   return 1;
+}
+
+/* After loading a normal state: put the synth back into the sound setup the
+ * state was saved with (mode, programs, volumes, SysEx parameters), and
+ * optionally the output that was in use. */
+static void midi_restore_after_load(void)
+{
+   int saved = MIDIShadow_GetLoadedSource();
+   int source_changed;
+
+   /* -1: older state, it says nothing about the synth. */
+   if (!midi_restore_mode || saved < 0 || !Config.MIDI_SW)
+      return;
+
+   source_changed = (midi_restore_mode >= 2) ? midi_apply_saved_source(saved) : 0;
+
+   if (!source_changed && !MIDIShadow_NeedsReplay())
+      return;
+
+   midi_replaying = true;
+   MIDI_SendModuleReset();               /* the standard the state was using (LA/GM/GS/XG) */
+   MIDIShadow_Replay(midi_emit_short, midi_emit_long);
+   midi_replaying = false;
+
+   if (libretro_supports_midi_output && midi_cb.output_enabled())
+      midi_cb.flush();
+}
+
 
 /* A non-NULL handle is required by x68k/midi.c before it will dispatch
  * MIDI bytes. Use a private sentinel for the internal synthesizer: no
@@ -463,6 +560,19 @@ static void update_variable_midi_interface(int running)
          Config.MIDI_SW = 1;
    }
 
+   var.key = "px68k_midi_state_restore";
+   var.value = NULL;
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (!strcmp(var.value, "disabled"))
+         midi_restore_mode = 0;
+      else if (!strcmp(var.value, "setup"))
+         midi_restore_mode = 1;
+      else
+         midi_restore_mode = 2;
+   }
+
    var.key = "px68k_midi_output_type";
    var.value = NULL;
 
@@ -490,12 +600,14 @@ static void midi_output_panic(void)
    if (!Config.MIDI_SW)
       return;
 
+   /* Raw output: this is not something the game sent, so it must not be
+    * recorded as part of the synth's setup. */
    for (ch = 0; ch < 16; ch++)
    {
       /* Release sustain, then stop held notes and any remaining voices. */
-      midi_out_short_msg(((size_t)0 << 16) | ((size_t)64 << 8) | (0xB0 | ch));
-      midi_out_short_msg(((size_t)0 << 16) | ((size_t)123 << 8) | (0xB0 | ch));
-      midi_out_short_msg(((size_t)0 << 16) | ((size_t)120 << 8) | (0xB0 | ch));
+      midi_emit_short(((size_t)0 << 16) | ((size_t)64 << 8) | (0xB0 | ch));
+      midi_emit_short(((size_t)0 << 16) | ((size_t)123 << 8) | (0xB0 | ch));
+      midi_emit_short(((size_t)0 << 16) | ((size_t)120 << 8) | (0xB0 | ch));
    }
 
    if (libretro_supports_midi_output && midi_cb.output_enabled())
@@ -2032,12 +2144,51 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
    info->timing                      = timing;
 }
 
-/* TODO/FIXME - implement savestates */
+/* Length of main RAM up to and including its last non-zero 4 KiB page.
+ *
+ * Fast (Run-Ahead) savestates copy 12 MiB of RAM twice per frame, yet most
+ * of it is normally untouched zeros. Everything above this length is zero
+ * by construction (it is verified here, not assumed from the RAM size
+ * option or from which code paths write memory), so it can be skipped on
+ * save and cleared on load. Reading is cheaper than copying, and the load
+ * side is a plain memset. */
+#define RAM_SCAN_PAGE 4096u
+
+static uint32_t ram_used_length(const uint8_t *ram)
+{
+   uint32_t page = MEM_SIZE / RAM_SCAN_PAGE;
+
+   while (page)
+   {
+      const uint64_t *w = (const uint64_t*)(ram + (size_t)(page - 1) * RAM_SCAN_PAGE);
+      uint64_t acc      = 0;
+      unsigned i;
+
+      for (i = 0; i < RAM_SCAN_PAGE / sizeof(uint64_t); i++)
+         acc |= w[i];
+
+      if (acc)
+         break;
+      page--;
+   }
+
+   /* Never report 0: a zero-size entry is skipped by the writer, and a
+    * label-less (fast) reader would then expect it and read the next
+    * variable into RAM. One page keeps both sides in step. */
+   return page ? page * RAM_SCAN_PAGE : RAM_SCAN_PAGE;
+}
+
 int StateAction(StateMem *sm, int load, int data_only)
 {
+   /* Normal states always store the whole array (same layout as before,
+    * so they stay interchangeable with older builds). Fast states store
+    * only the used part; on load VARLEN accepts either. */
+   uint32_t ram_len = (!load && sm->fastsavestates && !sm->count_only)
+      ? ram_used_length(MEM) : MEM_SIZE;
+
    SFORMAT StateRegs[] =
    {
-      SFARRAYN(MEM, MEM_SIZE, "RAM"),
+      { MEM, load ? (uint32_t)MEM_SIZE : ram_len, PX68KSTATE_VARLEN, "RAM" },
       SFARRAYN(SRAM, 16384, "SRAM"),
       SFVAR(ICount),
       SFVAR(ClkUsed),
@@ -2077,59 +2228,71 @@ int StateAction(StateMem *sm, int load, int data_only)
    ret &= dswin_StateAction(sm, load, data_only);
    ret &= ADPCM_StateAction(sm, load, data_only);
    ret &= MIDI_StateAction(sm, load, data_only);
+
+   /* What the synth was told is not part of the machine, but a real load needs
+    * it to put the synth back (see midi_restore_after_load). Run-Ahead
+    * states don't carry it. */
+   if (!sm->fastsavestates)
+   {
+      if (!load)
+         MIDIShadow_SetSource(midi_current_source());
+      ret &= MIDIShadow_StateAction(sm, load, data_only);
+   }
    ret &= OPM_StateAction(sm, load, data_only);
 
    return ret;
 }
 
-static bool UsingFastSavestates(void)
+static int SavestateContext(void)
 {
-   int flags;
+   int flags = RETRO_SAVESTATE_CONTEXT_NORMAL;
    if (environ_cb(RETRO_ENVIRONMENT_GET_SAVESTATE_CONTEXT, &flags))
-      return ((flags == RETRO_SAVESTATE_CONTEXT_RUNAHEAD_SAME_INSTANCE) ||
-            ((flags == RETRO_SAVESTATE_CONTEXT_RUNAHEAD_SAME_BINARY)));
-   return false;
+      return flags;
+   return RETRO_SAVESTATE_CONTEXT_NORMAL;
 }
 
+static bool UsingFastSavestates(void)
+{
+   int flags = SavestateContext();
+   return ((flags == RETRO_SAVESTATE_CONTEXT_RUNAHEAD_SAME_INSTANCE) ||
+         ((flags == RETRO_SAVESTATE_CONTEXT_RUNAHEAD_SAME_BINARY)));
+}
+
+/* Sized in a dry run: no allocation and no copying. The result is the size
+ * of a normal (labelled, full-RAM) state, which is an upper bound for a fast
+ * state, so one buffer size serves every context. */
 size_t retro_serialize_size(void)
 {
    StateMem st;
 
-   st.data           = NULL;
-   st.loc            = 0;
-   st.len            = 0;
-   st.malloced       = 0;
-   st.initial_malloc = 0;
-   st.fastsavestates = 0;
+   PX68KSS_InitCount(&st);
 
    if (!PX68KSS_SaveSM(&st, 0, 0, NULL, NULL, NULL))
       return 0;
 
-   free(st.data);
-
    return st.len;
 }
 
+/* Writes straight into the frontend's buffer (it used to build the state in
+ * a temporary buffer and copy it over, i.e. an extra malloc plus a full
+ * memcpy of the whole state on every Run-Ahead frame). */
 bool retro_serialize(void *data, size_t size)
 {
    StateMem st;
-   bool ret          = false;
-   uint8_t *_dat     = (uint8_t*)malloc(size);
+   bool fast, ret;
 
-   if (!_dat)
+   if (!data || size > 0xffffffffU)
       return false;
 
-   st.data           = _dat;
-   st.loc            = 0;
-   st.len            = 0;
-   st.malloced       = size;
-   st.initial_malloc = 0;
-   st.fastsavestates = UsingFastSavestates();
+   fast = UsingFastSavestates();
+   PX68KSS_InitWrite(&st, data, (uint32_t)size, fast);
 
-   ret = PX68KSS_SaveSM(&st, 0, 0, NULL, NULL, NULL);
+   ret = PX68KSS_SaveSM(&st, 0, 0, NULL, NULL, NULL) != 0;
 
-   memcpy(data, st.data, size);
-   free(st.data);
+   /* Keep saved files deterministic. Fast states are never stored, so
+    * skip clearing what can be megabytes of unused tail. */
+   if (ret && !fast && st.len < size)
+      memset((uint8_t*)data + st.len, 0, size - st.len);
 
    return ret;
 }
@@ -2137,24 +2300,30 @@ bool retro_serialize(void *data, size_t size)
 bool retro_unserialize(const void *data, size_t size)
 {
    StateMem st;
-   bool ret = false;
+   bool fast;
 
-   /* RetroArch also calls retro_unserialize() repeatedly for Run-Ahead.
-    * Those restores are speculative frame rewinds, not user-requested loads;
-    * silencing MIDI here would cut off music during normal gameplay. */
-   if (!UsingFastSavestates())
+   if (!data || size > 0xffffffffU)
+      return false;
+
+   /* The state's own header says whether this is a Run-Ahead rewind (fast) or
+    * a state loaded for real. That is more reliable than the frontend's
+    * context flag at the moment of the call. */
+   fast = PX68KSS_IsFastState(data, size);
+
+   if (!fast)
       midi_output_panic();
 
-   st.data           = (uint8_t*)data;
-   st.loc            = 0;
-   st.len            = size;
-   st.malloced       = 0;
-   st.initial_malloc = 0;
-   st.fastsavestates = UsingFastSavestates();
+   PX68KSS_InitRead(&st, data, (uint32_t)size);
 
-   ret = PX68KSS_LoadSM(&st, 0, 0);
+   if (!PX68KSS_LoadSM(&st, 0, 0))
+      return false;
 
-   return ret;
+   /* A real load: the MIDI destination still holds whatever it was last told,
+    * so put it back to what the state was using. */
+   if (!fast)
+      midi_restore_after_load();
+
+   return true;
 }
 
 /* TODO/FIXME - implement cheats */
@@ -3061,6 +3230,7 @@ void retro_run(void)
    else
    {
       raudio_callback(soundbuf, NULL, soundbuf_size << 2);
+
       px68k_sc55_mix(soundbuf, (size_t)soundbuf_size);
    }
 
