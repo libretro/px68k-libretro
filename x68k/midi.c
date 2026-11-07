@@ -145,6 +145,81 @@ int MIDI_StateAction(StateMem *sm, int load, int data_only)
 
 	int ret = PX68KSS_StateAction(sm, load, data_only, StateRegs, "X68K_MIDI", false);
 
+	/* Bytes written by the guest that the UART has not transmitted yet.
+	 *
+	 * The legacy DelayBuf entry above is (4 + 1) bytes per slot, but a slot is
+	 * 8 bytes (padding), so only the first 2560 of the 4096 slots were ever
+	 * saved. The queue is a ring, so pending bytes in the other slots came back
+	 * stale after every restore, which Run-Ahead does every frame: lost or
+	 * repeated bytes mean broken messages and stuck or wrong notes.
+	 *
+	 * This stores exactly the pending bytes, oldest first, with their age
+	 * rather than the wall-clock stamp (which means nothing in another
+	 * session). Optional, so states from older builds still load, and left as
+	 * the legacy fields restored them in that case. */
+	{
+		static uint8_t dly_msg[MIDIDELAYBUF];
+		static uint8_t dly_age[4 * MIDIDELAYBUF];
+		uint32_t dly_magic = 0, dly_count = 0;
+		uint32_t now = (uint32_t)timeGetTime();
+		SFORMAT DlyRegs[] =
+		{
+			SFVARN(dly_magic, "MAGIC"),
+			SFVARN(dly_count, "COUNT"),
+			/* Fast (Run-Ahead) states store just the pending bytes. Normal states
+			 * always store the full capacity so their size never depends on what
+			 * is queued (a frontend may query the size once and reuse the buffer).
+			 * Never zero-sized: a label-less state must contain the same entries
+			 * on both sides. */
+			{ dly_msg, (load || !sm->fastsavestates) ? MIDIDELAYBUF : (dly_count ? dly_count : 1), PX68KSTATE_VARLEN, "MSG" },
+			{ dly_age, 4 * ((load || !sm->fastsavestates) ? MIDIDELAYBUF : (dly_count ? dly_count : 1)), PX68KSTATE_VARLEN, "AGE" },
+			SFEND
+		};
+
+		if (!load)
+		{
+			int r = DBufPtrR;
+			dly_magic = 0x31594C44; /* "DLY1" */
+			/* Normal states store the whole arrays: keep them deterministic.
+			 * Fast states only read the first dly_count entries. */
+			if (!sm->fastsavestates)
+			{
+				memset(dly_msg, 0, sizeof(dly_msg));
+				memset(dly_age, 0, sizeof(dly_age));
+			}
+			while (r != DBufPtrW && dly_count < MIDIDELAYBUF - 1)
+			{
+				uint32_t age = now - DelayBuf[r].time;
+				dly_msg[dly_count]         = DelayBuf[r].msg;
+				dly_age[dly_count * 4 + 0] = (uint8_t)(age);
+				dly_age[dly_count * 4 + 1] = (uint8_t)(age >> 8);
+				dly_age[dly_count * 4 + 2] = (uint8_t)(age >> 16);
+				dly_age[dly_count * 4 + 3] = (uint8_t)(age >> 24);
+				dly_count++;
+				r = (r + 1) % MIDIDELAYBUF;
+			}
+		}
+
+		ret &= PX68KSS_StateAction(sm, load, data_only, DlyRegs, "X68K_MIDIDLY", true);
+
+		if (load && dly_magic == 0x31594C44)
+		{
+			uint32_t i;
+			if (dly_count > MIDIDELAYBUF - 1)
+				dly_count = MIDIDELAYBUF - 1;
+			memset(DelayBuf, 0, sizeof(DelayBuf));
+			for (i = 0; i < dly_count; i++)
+			{
+				uint32_t age = (uint32_t)dly_age[i * 4] | ((uint32_t)dly_age[i * 4 + 1] << 8) |
+					((uint32_t)dly_age[i * 4 + 2] << 16) | ((uint32_t)dly_age[i * 4 + 3] << 24);
+				DelayBuf[i].msg  = dly_msg[i];
+				DelayBuf[i].time = now - age;
+			}
+			DBufPtrR = 0;
+			DBufPtrW = (int)dly_count;
+		}
+	}
+
 	return ret;
 }
 
@@ -227,11 +302,10 @@ static void MIDI_Sendexclusive(uint8_t *excv, size_t length)
 	midi_out_long_msg(MIDI_EXCVBUF, length);
 }
 
-void MIDI_Reset(void)
+/* Put the destination into the mode of the current module (LA/GM/GS/XG).
+ * Doesn't touch the queue of bytes still waiting to be transmitted. */
+void MIDI_SendModuleReset(void)
 {
-	memset(DelayBuf, 0, sizeof(DelayBuf));
-	DBufPtrW = DBufPtrR = 0;
-
 	if (hOut)
 	{
 		size_t msg;
@@ -259,6 +333,25 @@ void MIDI_Reset(void)
 		}
 		for (msg=0x7bb0; msg<0x7bc0; msg++)
 			midi_out_short_msg(msg);
+	}
+}
+
+void MIDI_Reset(void)
+{
+	memset(DelayBuf, 0, sizeof(DelayBuf));
+	DBufPtrW = DBufPtrR = 0;
+
+	MIDI_SendModuleReset();
+}
+
+/* The output destination changed (e.g. the internal SC-55 was switched on or
+ * off): make sure there is a handle so MIDI bytes are dispatched at all. */
+void MIDI_ReopenOutput(void)
+{
+	if (!hOut)
+	{
+		if (midi_out_open(&hOut) != 0)
+			hOut = NULL;
 	}
 }
 

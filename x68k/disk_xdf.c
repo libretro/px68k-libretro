@@ -192,3 +192,20 @@ int XDF_Write(int drv, FDCID* id, uint8_t *buf, int del)
 	XDFCur[drv] = (id->r)&7;
 	return 1;
 }
+
+
+/* Head position / rotational cursor, for savestates. */
+void XDF_GetCursor(int drv, int32_t *trk, int32_t *cur)
+{
+	*trk = XDFTrk[drv];
+	*cur = XDFCur[drv];
+}
+
+void XDF_SetCursor(int drv, int32_t trk, int32_t cur)
+{
+	if ( (drv<0)||(drv>3) ) return;
+	if ( !XDFImg[drv] ) return;
+	if ( (trk<0)||(trk>153) ) trk = 0;
+	XDFTrk[drv] = trk;
+	XDFCur[drv] = cur & 7;
+}

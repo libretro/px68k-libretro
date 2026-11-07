@@ -55,6 +55,47 @@ int FDD_StateAction(StateMem *sm, int load, int data_only)
 
 	int ret = PX68KSS_StateAction(sm, load, data_only, StateRegs, "X68K_FDD", false);
 
+	/* Per-drive head/sector cursors live in the image modules, not in 'fdd'.
+	 * Without them a restore (Run-Ahead rewinds one frame every frame) puts
+	 * the FDC back in the past while the drive keeps its future position, so
+	 * ReadID/Read return the wrong sector and the transfer fails.
+	 *
+	 * Optional section: states written before it existed load as they always
+	 * did, leaving the cursors untouched. Arrays start out holding the live
+	 * values, so an absent section is also a no-op below. */
+	{
+		int32_t xdf[8], dim[8], d88[8];
+		int i;
+		SFORMAT CursorRegs[] =
+		{
+			SFARRAY32N(xdf, 8, "XDF"),
+			SFARRAY32N(dim, 8, "DIM"),
+			SFARRAY32N(d88, 8, "D88"),
+			SFEND
+		};
+
+		for (i=0; i<4; i++) {
+			XDF_GetCursor(i, &xdf[i*2], &xdf[i*2+1]);
+			DIM_GetCursor(i, &dim[i*2], &dim[i*2+1]);
+			D88_GetCursor(i, &d88[i*2], &d88[i*2+1]);
+		}
+
+		ret &= PX68KSS_StateAction(sm, load, data_only, CursorRegs, "X68K_FDIMG", true);
+
+		if (load && ret) {
+			for (i=0; i<4; i++) {
+				/* fdd.Types was restored above; only touch the module that
+				 * actually holds this drive's image. */
+				switch (fdd.Types[i]) {
+				case FD_XDF: XDF_SetCursor(i, xdf[i*2], xdf[i*2+1]); break;
+				case FD_DIM: DIM_SetCursor(i, dim[i*2], dim[i*2+1]); break;
+				case FD_D88: D88_SetCursor(i, d88[i*2], d88[i*2+1]); break;
+				default: break;
+				}
+			}
+		}
+	}
+
 	return ret;
 }
 

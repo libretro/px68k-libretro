@@ -199,6 +199,9 @@ int D88_Eject(int drv)
    }
 	memset(&D88Head[drv], 0, sizeof(D88_HEADER));
 	memset(D88File[drv], 0, MAX_PATH);
+	/* The sector lists were just freed; Cur/Top must not keep pointing
+	 * into them (D88_GetCurrentID dereferences Cur without seeking). */
+	D88Cur[drv] = D88Top[drv] = 0;
 
 	return 1;
 }
@@ -254,9 +257,11 @@ int D88_ReadID(int drv, FDCID* id)
 int D88_WriteID(int drv, int trk, uint8_t* buf, int num)
 {
 	int i;
-	uint8_t c = buf[num<<2];
+	uint8_t c;
+	D88_SECTINFO *oldsi = NULL;	/* tail of the list being built (must outlive the loop body) */
 	if ( (drv<0)||(drv>3) ) return 0;
 	if ( (trk<0)||(trk>163) ) return 0;
+	c = buf[num<<2];
 	if ( D88Trks[drv][trk] ) {
 		D88_SECTINFO *si = D88Trks[drv][trk];
 		while ( si ) {
@@ -266,12 +271,18 @@ int D88_WriteID(int drv, int trk, uint8_t* buf, int num)
 		}
 		D88Trks[drv][trk] = 0;
 	}
+	/* The old list is gone; never leave the cursor pointing into it. */
+	D88Cur[drv] = D88Top[drv] = 0;
 	for (i=0; i<num; i++, buf+=4) {
 		int size = 128<<buf[3];
-		D88_SECTINFO *si = (D88_SECTINFO*)malloc(sizeof(D88_SECTINFO)+size), *oldsi = NULL;
+		D88_SECTINFO *si = (D88_SECTINFO*)malloc(sizeof(D88_SECTINFO)+size);
 		if ( !si ) goto d88_writeid_error;
-		if ( i ) {
-			if (oldsi) oldsi->next = si;
+		si->next = 0;
+		/* Chain onto the previous sector. (oldsi used to be declared inside
+		 * the loop, so it was always NULL: only the first sector stayed
+		 * reachable and the rest leaked.) */
+		if ( oldsi ) {
+			oldsi->next = si;
 		} else {
 			D88Trks[drv][trk] = si;
 		}
@@ -283,13 +294,14 @@ int D88_WriteID(int drv, int trk, uint8_t* buf, int num)
 		si->sect.sectors = num;
 		si->sect.size = size;
 		memset(((uint8_t*)si)+sizeof(D88_SECTINFO), c, size);
-		si->next = 0;
 		oldsi = si;
 	}
 	D88Cur[drv] = D88Top[drv] = D88Trks[drv][trk];
 	return 1;
 
 d88_writeid_error:
+	/* Keep whatever was built so far as a valid (shorter) track. */
+	D88Cur[drv] = D88Top[drv] = D88Trks[drv][trk];
 	return 0;
 }
 
@@ -363,4 +375,53 @@ int D88_Write(int drv, FDCID* id, uint8_t* buf, int del)
 	} while ( si );
 	D88Cur[drv] = D88Top[drv];
 	return 0;
+}
+
+
+/* Head position / sector cursor, for savestates.
+ *
+ * D88Top/D88Cur are pointers into malloc'd sector lists, which a savestate
+ * can't hold (and which formatting a track replaces). They are stored as
+ * the track number plus the sector's ordinal within that track instead, and
+ * resolved again against whatever lists exist at load time. */
+void D88_GetCursor(int drv, int32_t *trk, int32_t *idx)
+{
+	D88_SECTINFO *si;
+	int t, n = 0;
+
+	*trk = -1;
+	*idx = 0;
+	if ( (drv<0)||(drv>3) ) return;
+	if ( !D88Top[drv] ) return;
+	for (t=0; t<164; t++) {
+		if ( D88Trks[drv][t]==D88Top[drv] ) {
+			*trk = t;
+			break;
+		}
+	}
+	if ( *trk<0 ) return;
+	for (si=D88Top[drv]; si; si=si->next, n++) {
+		if ( si==D88Cur[drv] ) {
+			*idx = n;
+			return;
+		}
+	}
+}
+
+void D88_SetCursor(int drv, int32_t trk, int32_t idx)
+{
+	D88_SECTINFO *si;
+
+	if ( (drv<0)||(drv>3) ) return;
+	if ( (trk<0)||(trk>163)||(!D88Trks[drv][trk]) ) {
+		/* No usable position (never sought, or a different disk). */
+		D88Top[drv] = D88Cur[drv] = 0;
+		return;
+	}
+	si = D88Top[drv] = D88Trks[drv][trk];
+	while ( idx>0 && si->next ) {
+		si = si->next;
+		idx--;
+	}
+	D88Cur[drv] = si;
 }

@@ -1089,6 +1089,21 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "enabled"
    },
    {
+      "px68k_midi_state_restore",
+      "MIDI Restore On State Load",
+      NULL,
+      "When a state is loaded, the MIDI synthesizer still holds whatever it was last sent. Choose what to restore so the music sounds as it did when the state was saved. 'Synth Setup' re-sends the sound standard (LA/GM/GS/XG), SysEx parameters and each channel's bank, program, volume, pan, effects and pitch bend. 'Setup And Output' also switches back to the internal SC-55 or external MIDI output that was in use at the time, when available. Has no effect on Run-Ahead.",
+      NULL,
+      "audio",
+      {
+         { "disabled",     NULL },
+         { "setup",        "Synth Setup" },
+         { "setup_output", "Setup And Output" },
+         { NULL,           NULL },
+      },
+      "setup_output"
+   },
+   {
       "px68k_midi_output_type",
       "MIDI Output Type",
       NULL,

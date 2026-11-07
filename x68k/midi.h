@@ -7,6 +7,8 @@
 void MIDI_Init(void);
 void MIDI_Cleanup(void);
 void MIDI_Reset(void);
+void MIDI_SendModuleReset(void);
+void MIDI_ReopenOutput(void);
 uint8_t FASTCALL MIDI_Read(uint32_t adr);
 void FASTCALL MIDI_Write(uint32_t adr, uint8_t data);
 void FASTCALL MIDI_Timer(uint32_t clk);
