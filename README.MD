@@ -21,8 +21,8 @@ All credit goes to hissorii ( and kenyahiro for updating c68k core) .
 
 **How to use:**
 
-First create a 'keropi' folder in retroarch system directory.
-put the x68000 bios files in.
+First create a 'keropi' folder in retroarch system directory, put the x68000 bios files in.
+(iplrom.dat / cgrom.dat / iplrom30.dat)
 
 Then launch emulator with some content (dim|zip|img|d88|88d|hdm|dup|2hd|xdf|hdf)
 12 or joypad L2 to enter menu.
@@ -41,6 +41,20 @@ You can launch content with:
 - retroarch -L sdlpx68k_libretro.so "px68k /somewhere/software/x68000/content1.dim /somewhere/software/x68000/content2.dim"
 
 - load retroarch , then load core and content from RA menu.
+
+**M3U and paths support ZIP content exploration:**
+
+Example in system/keropi/config:
+```
+[WinX68k]
+FDD0=D:\Games\disk2.zip#disk1.dim
+FDD1=D:\Games\disk2.zip#disk2.dim
+```
+Example in a .m3u:
+```
+disk1.zip#disk1.dim
+disk2.zip#disk2.dim
+```
 
 **Internal Roland SC-55 emulation guide:**  
 
@@ -76,11 +90,11 @@ The integration checks these locations:
     For example, your System Directory could look like this:
     RetroArch/system/
     └── sc55/
-    ├── sc55_rom1.bin
-    ├── sc55_rom2.bin
-    ├── sc55_waverom1.bin
-    ├── sc55_waverom2.bin
-    └── sc55_waverom3.bin
+          ├── sc55_rom1.bin
+          ├── sc55_rom2.bin
+          ├── sc55_waverom1.bin
+          ├── sc55_waverom2.bin
+          └── sc55_waverom3.bin
 ```
 
 Important: The current PX68K version uses filename-based discovery. It doesn't yet have PrBoom's full SHA-256 ROM identification, so the expected filenames matter.
