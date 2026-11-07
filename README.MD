@@ -89,12 +89,12 @@ The integration checks these locations:
 
     For example, your System Directory could look like this:
     RetroArch/system/
-    └── sc55/
-          ├── sc55_rom1.bin
-          ├── sc55_rom2.bin
-          ├── sc55_waverom1.bin
-          ├── sc55_waverom2.bin
-          └── sc55_waverom3.bin
+                  └── sc55/
+                        ├── sc55_rom1.bin
+                        ├── sc55_rom2.bin
+                        ├── sc55_waverom1.bin
+                        ├── sc55_waverom2.bin
+                        └── sc55_waverom3.bin
 ```
 
 Important: The current PX68K version uses filename-based discovery. It doesn't yet have PrBoom's full SHA-256 ROM identification, so the expected filenames matter.
