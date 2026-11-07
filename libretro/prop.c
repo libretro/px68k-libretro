@@ -37,6 +37,7 @@
 #include "zipdisk.h"
 
 static uint8_t initialized = 0;
+static int media_paths_saved_before_unload = 0;
 
 Win68Conf Config;
 
@@ -102,6 +103,20 @@ void LoadConfig(void)
 		{
 			sprintf(buf, "FDD%d", i);
 			GetPrivateProfileString("WinX68k", buf, "", Config.FDDImage[i], MAX_PATH, winx68k_ini);
+			{
+				char stored[MAX_PATH];
+				int zip_result;
+				strncpy(stored, Config.FDDImage[i], sizeof(stored) - 1);
+				stored[sizeof(stored) - 1] = '\0';
+				zip_result = px68k_zip_path_from_config(stored, Config.FDDImage[i], sizeof(Config.FDDImage[i]));
+				if (zip_result < 0)
+					Config.FDDImage[i][0] = '\0';
+				else if (zip_result == 0)
+				{
+					strncpy(Config.FDDImage[i], stored, sizeof(Config.FDDImage[i]) - 1);
+					Config.FDDImage[i][sizeof(Config.FDDImage[i]) - 1] = '\0';
+				}
+			}
 		}
 
 	if (Config.save_hdd_path)
@@ -109,6 +124,20 @@ void LoadConfig(void)
 		{
 			sprintf(buf, "HDD%d", i);
 			GetPrivateProfileString("WinX68k", buf, "", Config.HDImage[i], MAX_PATH, winx68k_ini);
+			{
+				char stored[MAX_PATH];
+				int zip_result;
+				strncpy(stored, Config.HDImage[i], sizeof(stored) - 1);
+				stored[sizeof(stored) - 1] = '\0';
+				zip_result = px68k_zip_path_from_config(stored, Config.HDImage[i], sizeof(Config.HDImage[i]));
+				if (zip_result < 0)
+					Config.HDImage[i][0] = '\0';
+				else if (zip_result == 0)
+				{
+					strncpy(Config.HDImage[i], stored, sizeof(Config.HDImage[i]) - 1);
+					Config.HDImage[i][sizeof(Config.HDImage[i]) - 1] = '\0';
+				}
+			}
 		}
 }
 
@@ -120,22 +149,44 @@ void SaveConfig(void)
 
 	WritePrivateProfileString("WinX68k", "StartDir", filepath, winx68k_ini);
 
-	if (Config.save_fdd_path)
-		for (i = 0; i < 2; i++)
-		{
-			sprintf(buf, "FDD%d", i);
-			/* A ZIP member's slot means nothing to a later session. */
-			WritePrivateProfileString("WinX68k", buf,
-				px68k_is_zip_virtual_path(Config.FDDImage[i]) ? "" : Config.FDDImage[i],
-				winx68k_ini);
-		}
+	if (!media_paths_saved_before_unload)
+	{
+		if (Config.save_fdd_path)
+			for (i = 0; i < 2; i++)
+			{
+				char path[MAX_PATH];
+				sprintf(buf, "FDD%d", i);
+				if (px68k_zip_path_to_config(Config.FDDImage[i], path, sizeof(path)) < 0)
+					path[0] = '\0';
+				else if (!px68k_is_zip_virtual_path(Config.FDDImage[i]))
+					strncpy(path, Config.FDDImage[i], sizeof(path) - 1), path[sizeof(path) - 1] = '\0';
+				WritePrivateProfileString("WinX68k", buf, path, winx68k_ini);
+			}
 
-	if (Config.save_hdd_path)
-		for (i=0; i<16; i++)
-		{
-			sprintf(buf, "HDD%d", i);
-			WritePrivateProfileString("WinX68k", buf,
-				px68k_is_zip_virtual_path(Config.HDImage[i]) ? "" : Config.HDImage[i],
-				winx68k_ini);
-		}
+		if (Config.save_hdd_path)
+			for (i=0; i<16; i++)
+			{
+				char path[MAX_PATH];
+				sprintf(buf, "HDD%d", i);
+				if (px68k_zip_path_to_config(Config.HDImage[i], path, sizeof(path)) < 0)
+					path[0] = '\0';
+				else if (!px68k_is_zip_virtual_path(Config.HDImage[i]))
+					strncpy(path, Config.HDImage[i], sizeof(path) - 1), path[sizeof(path) - 1] = '\0';
+				WritePrivateProfileString("WinX68k", buf, path, winx68k_ini);
+			}
+	}
+}
+
+void SaveConfigBeforeUnload(void)
+{
+	if (!media_paths_saved_before_unload)
+	{
+		SaveConfig();
+		media_paths_saved_before_unload = 1;
+	}
+}
+
+void ResetConfigSaveState(void)
+{
+	media_paths_saved_before_unload = 0;
 }
