@@ -3024,8 +3024,16 @@ static void WinX68k_Exec(void)
             }
             else
             {
-               if ((long)vline == (VLINE_TOTAL-1))
-                  MFP_Int(9);		/* Is it Crazy Climber? */
+               /* V-DISP (GPIP4) falling edge = end of the display period.
+                * MFP_TimerA() (event-count mode) counts the very same edge
+                * at vline == CRTC_VEND, so the GPIP4 interrupt must fire there
+                * too.  Firing it at VLINE_TOTAL-1 delays it by the whole
+                * vertical blank and lets a game's main loop (which is woken
+                * by the Timer-A event) start modifying its sprite buffer/PCG
+                * before the V-DISP handler has copied the buffer to sprite
+                * RAM (The New Zealand Story). */
+               if ((long)vline == (long)CRTC_VEND)
+                  MFP_Int(9);
             }
          }
       }
