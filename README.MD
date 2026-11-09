@@ -14,7 +14,7 @@ All credit goes to hissorii ( and kenyahiro for updating c68k core) .
 - **Internal Roland SC-55 emulation:** Adds an internal SC-55 synthesizer option, with volume control and support for locating its ROM files in recognized system or content directories. MIDI output options also include LA, GM, GS, and XG modes.
 - **More flexible controller input:** Adds Joy2Mouse support, including analog and digital movement speed and analog deadzone settings, plus configurable Joy2Key mappings and Retroarch remapping system.
 - **Disk and archive conveniences:** Can remember floppy and hard-drive paths between sessions, swap the drive used for disk changes, and automatically insert floppy images from ZIP archives. Can directly explore a ZIP archive, select and load a disk without the need to extract. An option can also show MAME software-list names in the content browser.
-- **Saving options:** Save state support. For content in archives changes are stored separately in RetroArch's save directory. For HDD images, delta saving stores only modified disk data instead of creating a complete writable copy, reducing disk space usage. Run Ahead support in 2nd instance mode.
+- **Saving options:** Save state support. For content in archives changes are stored separately in RetroArch's save directory. Delta saving stores only modified disk data instead of creating a complete writable copy, reducing disk space usage. Run Ahead support in 2nd instance mode.
 - **Performance and display controls:** Adds CPU-emulation and CPU-speed choices, RAM-size configuration, frame skipping, frame-rate adjustment, and options to disable graphics or text layers.
 - **Rendering fixes:** Various fixes concerning game emulation.
 
