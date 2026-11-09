@@ -723,7 +723,19 @@ size_t px68k_zip_write(void *handle, const void *data, size_t len)
       size_t first=h->pos/ZIP_BLOCK_SIZE;
       size_t last=(h->pos+len-1)/ZIP_BLOCK_SIZE;
       size_t i;
-      for (i=first;i<=last;i++) h->m->dirty[i]=1;
+      /* Only blocks whose bytes really change are journaled. Ejecting a
+       * floppy rewrites the whole image, so without this check every
+       * eject would append the entire disk to the .pxo overlay. */
+      for (i=first;i<=last;i++)
+      {
+         size_t bs=i*ZIP_BLOCK_SIZE;
+         size_t be=bs+ZIP_BLOCK_SIZE;
+         size_t ws=(h->pos>bs)?h->pos:bs;
+         size_t we=(h->pos+len<be)?h->pos+len:be;
+         if (we>h->m->size) we=h->m->size;
+         if (we>ws && memcmp(h->m->data+ws,(const uint8_t*)data+(ws-h->pos),we-ws)!=0)
+            h->m->dirty[i]=1;
+      }
    }
    memcpy(h->m->data + h->pos, data, len);
    h->pos += len;

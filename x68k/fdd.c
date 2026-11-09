@@ -53,7 +53,15 @@ int FDD_StateAction(StateMem *sm, int load, int data_only)
 		SFEND
 	};
 
-	int ret = PX68KSS_StateAction(sm, load, data_only, StateRegs, "X68K_FDD", false);
+	int ret;
+	int live_ronly[4];
+
+	/* Write-protect belongs to the disk currently mounted, not to the saved
+	 * machine state (images are not stored in states). Keep the live value
+	 * so states made while a zip disk was forced read-only still load. */
+	memcpy(live_ronly, fdd.ROnly, sizeof(live_ronly));
+	ret = PX68KSS_StateAction(sm, load, data_only, StateRegs, "X68K_FDD", false);
+	if (load) memcpy(fdd.ROnly, live_ronly, sizeof(live_ronly));
 
 	/* Per-drive head/sector cursors live in the image modules, not in 'fdd'.
 	 * Without them a restore (Run-Ahead rewinds one frame every frame) puts
@@ -232,7 +240,11 @@ void FDD_SetFD(int drive, char* filename, int readonly)
 		if ( SetFD[type](drive, filename) ) {
 			fdd.Types[drive]  = type;
 			fdd.ROnly[drive] |= readonly;
-			if (px68k_is_zip_virtual_path(filename)) fdd.ROnly[drive] = 1;
+			/* Disks inside a ZIP must NOT be forced read-only: the member is
+			 * held in memory and writes land in the session copy (and the
+			 * .pxo overlay), so games that save to / write-test their disk
+			 * (e.g. Arcus Odyssey at the end of stage 1) behave exactly as
+			 * they do with an uncompressed image. */
 			fdd.SetDelay[drive] = 3;
 			fdd.EMask[drive] = 0;
 			fdd.Blink[drive] = 0;
