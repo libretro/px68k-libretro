@@ -455,5 +455,6 @@ endif
 
 clean:
 	rm -f $(TARGET) $(OBJECTS)
+	find . -type f \( -name '*.o' -o -name '*.d' -o -name '*.obj' -o -name '*.pdb' \) -exec rm -f {} +
 
 .PHONY: clean

@@ -1,11 +1,13 @@
-/* Libretro integration glue for the Nuked-SC55 emulator. */
+/* Common internal MIDI backend selection and audio mixing. */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
 #include <math.h>
+#include <libretro.h>
 #include "sc55.h"
-#include "sc55_libretro.h"
+#include "midiemu_libretro.h"
+#include "mt32emu_libretro.h"
 
 #ifndef PATH_MAX
 #define PATH_MAX 1024
@@ -18,6 +20,7 @@
 
 static sc55_t *unit;
 static int active_enabled;
+static int active_backend;
 static char saved_system[PATH_MAX];
 static char saved_content[PATH_MAX];
 static int32_t native_audio[4096 * 2];
@@ -25,6 +28,16 @@ static size_t native_count;
 static double native_phase;
 static unsigned native_rate = 66207;
 static int volume_percent = 100;
+static retro_log_printf_t midi_log_cb;
+static int attempted_emulation = -1;
+static char attempted_system[PATH_MAX];
+static char attempted_content[PATH_MAX];
+
+void px68k_midiemu_set_log_callback(retro_log_printf_t callback)
+{
+   midi_log_cb = callback;
+   px68k_mt32_set_log_callback(callback);
+}
 
 static void copy_path(char *out, size_t cap, const char *in)
 {
@@ -117,50 +130,90 @@ static int load_unit(void)
    return 0;
 }
 
-void px68k_sc55_shutdown(void)
+void px68k_midiemu_shutdown(void)
 {
    if (unit) sc55_free(unit);
    unit = NULL;
+   px68k_mt32_shutdown();
+   active_backend = PX68K_MIDIEMU_DISABLED;
    active_enabled = 0;
    native_count = 0;
    native_phase = 0.0;
+   attempted_emulation = -1;
+   attempted_system[0] = '\0';
+   attempted_content[0] = '\0';
 }
 
-void px68k_sc55_configure(int enabled, const char *system_dir, const char *content_dir)
+void px68k_midiemu_configure(int emulation, const char *system_dir, const char *content_dir)
 {
    char sys[PATH_MAX], content[PATH_MAX];
    copy_path(sys, sizeof(sys), system_dir);
    copy_path(content, sizeof(content), content_dir);
-   enabled = enabled != 0;
-   if (!enabled)
+   if (emulation < PX68K_MIDIEMU_DISABLED || emulation > PX68K_MIDIEMU_CM32L)
+      emulation = PX68K_MIDIEMU_DISABLED;
+   if (emulation == PX68K_MIDIEMU_DISABLED)
    {
-      if (unit || active_enabled) px68k_sc55_shutdown();
+      if (unit || active_enabled || active_backend != PX68K_MIDIEMU_DISABLED) px68k_midiemu_shutdown();
       saved_system[0] = saved_content[0] = '\0';
+      attempted_emulation = -1;
+      attempted_system[0] = attempted_content[0] = '\0';
       return;
    }
-   if (unit && active_enabled && !strcmp(saved_system, sys) && !strcmp(saved_content, content))
+   if (active_enabled && active_backend == emulation &&
+         !strcmp(saved_system, sys) && !strcmp(saved_content, content))
       return;
-   px68k_sc55_shutdown();
+   if (attempted_emulation == emulation &&
+         !strcmp(attempted_system, sys) && !strcmp(attempted_content, content))
+      return;
+   px68k_midiemu_shutdown();
    copy_path(saved_system, sizeof(saved_system), sys);
    copy_path(saved_content, sizeof(saved_content), content);
-   if (load_unit()) active_enabled = 1;
-   else fprintf(stderr, "PX68K SC-55: ROM set not found. Expected PrBoom-compatible filenames in the System Directory, System/prboom, or SC-55 subfolders.\n");
+   attempted_emulation = emulation;
+   copy_path(attempted_system, sizeof(attempted_system), sys);
+   copy_path(attempted_content, sizeof(attempted_content), content);
+   if (emulation == PX68K_MIDIEMU_SC55)
+   {
+      if (load_unit())
+      {
+         active_enabled = 1;
+         active_backend = emulation;
+         if (midi_log_cb)
+            midi_log_cb(RETRO_LOG_INFO, "[PX68K MIDI] SC-55 ROM set loaded.\n");
+      }
+      else if (midi_log_cb)
+         midi_log_cb(RETRO_LOG_WARN, "[PX68K MIDI] SC-55 ROM set not found. Check the System Directory and content directory for the documented ROM filenames.\n");
+   }
+   else if (px68k_mt32_configure(emulation, sys, content))
+   {
+      active_enabled = 1;
+      active_backend = emulation;
+   }
 }
 
-int px68k_sc55_enabled(void) { return active_enabled && unit != NULL; }
+int px68k_midiemu_enabled(void)
+{
+   if (!active_enabled) return 0;
+   if (active_backend == PX68K_MIDIEMU_SC55) return unit != NULL;
+   return px68k_mt32_enabled();
+}
 
-void px68k_sc55_set_volume(int value)
+void px68k_midiemu_set_volume(int value)
 {
    if (value < 0) value = 0;
    if (value > 200) value = 200;
    volume_percent = value;
 }
 
-void px68k_sc55_midi_short(size_t msg)
+void px68k_midiemu_midi_short(size_t msg)
 {
    uint8_t bytes[3];
    size_t len = 3;
-   if (!px68k_sc55_enabled()) return;
+   if (!px68k_midiemu_enabled()) return;
+   if (active_backend != PX68K_MIDIEMU_SC55)
+   {
+      px68k_mt32_midi_short(msg);
+      return;
+   }
    bytes[0] = (uint8_t)(msg & 0xff);
    bytes[1] = (uint8_t)((msg >> 8) & 0xff);
    bytes[2] = (uint8_t)((msg >> 16) & 0xff);
@@ -168,9 +221,11 @@ void px68k_sc55_midi_short(size_t msg)
    sc55_midi(unit, bytes, len);
 }
 
-void px68k_sc55_midi_long(const uint8_t *data, size_t len)
+void px68k_midiemu_midi_long(const uint8_t *data, size_t len)
 {
-   if (px68k_sc55_enabled() && data && len) sc55_midi(unit, data, len);
+   if (!px68k_midiemu_enabled() || !data || !len) return;
+   if (active_backend == PX68K_MIDIEMU_SC55) sc55_midi(unit, data, len);
+   else px68k_mt32_midi_long(data, len);
 }
 
 static int16_t clamp16(int32_t x)
@@ -180,11 +235,16 @@ static int16_t clamp16(int32_t x)
    return (int16_t)x;
 }
 
-void px68k_sc55_mix(int16_t *stereo, size_t frames)
+void px68k_midiemu_mix(int16_t *stereo, size_t frames)
 {
    size_t i;
    double ratio;
-   if (!px68k_sc55_enabled() || !stereo || !frames) return;
+   if (!px68k_midiemu_enabled() || !stereo || !frames) return;
+   if (active_backend != PX68K_MIDIEMU_SC55)
+   {
+      px68k_mt32_mix(stereo, frames, volume_percent);
+      return;
+   }
    ratio = (double)native_rate / 44100.0;
    if (ratio <= 0.0) return;
    /* Keep one native sample on the left of the interpolation point. */
