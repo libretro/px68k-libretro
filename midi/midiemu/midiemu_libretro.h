@@ -3,7 +3,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <libretro.h>
-enum { PX68K_MIDIEMU_DISABLED = 0, PX68K_MIDIEMU_SC55, PX68K_MIDIEMU_MT32, PX68K_MIDIEMU_CM32L, PX68K_MIDIEMU_CM64 };
+enum { PX68K_MIDIEMU_DISABLED = 0, PX68K_MIDIEMU_SC55, PX68K_MIDIEMU_MT32, PX68K_MIDIEMU_CM32L };
 void px68k_midiemu_set_log_callback(retro_log_printf_t callback);
 void px68k_midiemu_configure(int emulation, const char *system_dir, const char *content_dir);
 int px68k_midiemu_enabled(void);

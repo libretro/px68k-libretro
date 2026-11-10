@@ -149,7 +149,7 @@ void px68k_midiemu_configure(int emulation, const char *system_dir, const char *
    char sys[PATH_MAX], content[PATH_MAX];
    copy_path(sys, sizeof(sys), system_dir);
    copy_path(content, sizeof(content), content_dir);
-   if (emulation < PX68K_MIDIEMU_DISABLED || emulation > PX68K_MIDIEMU_CM64)
+   if (emulation < PX68K_MIDIEMU_DISABLED || emulation > PX68K_MIDIEMU_CM32L)
       emulation = PX68K_MIDIEMU_DISABLED;
    if (emulation == PX68K_MIDIEMU_DISABLED)
    {

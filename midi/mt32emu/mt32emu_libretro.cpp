@@ -127,7 +127,6 @@ static int px_munt_load_roms(int emulation, const char *system_dir,
    }
    else
    {
-      /* CM-64 uses the CM-32L-compatible LA sound module. */
       machines = cm32l_machines;
       control_names = cm32l_control;
       pcm_names = cm32l_pcm;
@@ -174,8 +173,7 @@ int px68k_mt32_configure(int emulation, const char *system_dir, const char *cont
 {
    px68k_mt32_shutdown();
    if (emulation != PX68K_MIDIEMU_MT32 &&
-       emulation != PX68K_MIDIEMU_CM32L &&
-       emulation != PX68K_MIDIEMU_CM64)
+       emulation != PX68K_MIDIEMU_CM32L)
       return 0;
 
    if (px_munt_load_roms(emulation, system_dir, content_dir))

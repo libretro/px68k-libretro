@@ -460,7 +460,7 @@ void midi_out_long_msg(uint8_t *s, size_t len)
    midi_emit_long(s, len);
 }
 
-/* 0 = none, 1 = external MIDI, 2..5 = SC-55 / MT-32 / CM-32L / CM-64. */
+/* 0 = none, 1 = external MIDI, 2..4 = SC-55 / MT-32 / CM-32L. */
 static int midi_current_source(void)
 {
    if (!Config.MIDI_SW)
@@ -482,7 +482,12 @@ static int midi_apply_saved_source(int saved)
    if (!Config.MIDI_SW || saved == 0 || saved == now)
       return 0;
 
-   if (saved >= PX68K_MIDIEMU_SC55 + 1 && saved <= PX68K_MIDIEMU_CM64 + 1)
+   /* Older states used source 5 for CM-64. Restore that selection as CM-32L,
+    * since Munt's CM-64 option used the same LA module and ROMs. */
+   if (saved == 5)
+      saved = PX68K_MIDIEMU_CM32L + 1;
+
+   if (saved >= PX68K_MIDIEMU_SC55 + 1 && saved <= PX68K_MIDIEMU_CM32L + 1)
    {
       int emulation = saved - 1;
       px68k_midiemu_configure(emulation, retro_system_directory, retro_content_directory);
@@ -1836,7 +1841,6 @@ static void update_variables(int running)
          if (!strcmp(emulation_var.value, "sc55")) emulation = PX68K_MIDIEMU_SC55;
          else if (!strcmp(emulation_var.value, "mt32")) emulation = PX68K_MIDIEMU_MT32;
          else if (!strcmp(emulation_var.value, "cm32l")) emulation = PX68K_MIDIEMU_CM32L;
-         else if (!strcmp(emulation_var.value, "cm64")) emulation = PX68K_MIDIEMU_CM64;
       }
       volume_var.key = "px68k_midiemu_volume";
       volume_var.value = NULL;

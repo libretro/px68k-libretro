@@ -29,7 +29,8 @@ void MIDIShadow_Short(size_t packed_msg);
 void MIDIShadow_Long(const uint8_t *data, size_t len);
 
 /* Output source at save time, stored in the state: 0 = none, 1 = external
- * MIDI interface, 2 = SC-55, 3 = MT-32, 4 = CM-32L, 5 = CM-64. */
+ * MIDI interface, 2 = SC-55, 3 = MT-32, 4 = CM-32L. Legacy saved source 5
+ * (the former CM-64 option) is restored as CM-32L. */
 void MIDIShadow_SetSource(int source);
 
 /* Source recorded in the state that was just loaded, or -1 if that state

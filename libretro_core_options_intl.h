@@ -547,7 +547,7 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
       "px68k_midi_emulation",
       "Internal MIDI Synthesizer",
       NULL,
-      "Select the internal MIDI synthesizer instead of RetroArch MIDI output. SC-55 uses Nuked-SC55 ROMs; MT-32, CM-32L and CM-64 use compatible Munt ROMs in the System Directory or recognized subfolders.",
+      "Select the internal MIDI synthesizer instead of RetroArch MIDI output. SC-55 uses Nuked-SC55 ROMs; MT-32 and CM-32L use compatible Munt ROMs in the System Directory or recognized subfolders.",
       NULL,
       "audio",
       {
@@ -555,7 +555,6 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
          { "sc55",     "Roland SC-55" },
          { "mt32",     "Roland MT-32" },
          { "cm32l",    "Roland CM-32L" },
-         { "cm64",     "Roland CM-64 (CM-32L sound module)" },
          { NULL,       NULL },
       },
       "disabled"
