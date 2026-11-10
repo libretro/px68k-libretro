@@ -119,8 +119,10 @@ FloatSampleProvider &ResamplerModel::createResamplerModel(FloatSampleProvider &s
 void ResamplerModel::freeResamplerModel(FloatSampleProvider &model, FloatSampleProvider &source) {
 	FloatSampleProvider *currentStage = &model;
 	while (currentStage != &source) {
-		CascadeStage *cascadeStage = dynamic_cast<CascadeStage *>(currentStage);
-		if (cascadeStage == NULL) return;
+		/* Every stage between model and source is created by this module's
+		 * createResamplerModel() functions, so it is always a CascadeStage.
+		 * Use a static cast to avoid requiring C++ RTTI in the core build. */
+		CascadeStage *cascadeStage = static_cast<CascadeStage *>(currentStage);
 		FloatSampleProvider &prevStage = cascadeStage->source;
 		delete currentStage;
 		currentStage = &prevStage;
