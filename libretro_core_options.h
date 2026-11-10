@@ -1008,24 +1008,27 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "shift"
    },
    {
-      "px68k_sc55_emulation",
-      "Roland SC-55 Emulation",
+      "px68k_midi_emulation",
+      "Internal MIDI Synthesizer",
       NULL,
-      "Use the internal Roland SC-55 synthesizer instead of RetroArch MIDI output. Requires compatible SC-55 ROM files in the System Directory or PrBoom-compatible subfolders.",
+      "Select the internal MIDI synthesizer instead of RetroArch MIDI output. SC-55 uses Nuked-SC55 ROMs; MT-32, CM-32L and CM-64 use compatible Munt ROMs in the System Directory or recognized subfolders.",
       NULL,
       "audio",
       {
          { "disabled", NULL },
-         { "enabled",  NULL },
+         { "sc55",     "Roland SC-55" },
+         { "mt32",     "Roland MT-32" },
+         { "cm32l",    "Roland CM-32L" },
+         { "cm64",     "Roland CM-64 (CM-32L sound module)" },
          { NULL,       NULL },
       },
       "disabled"
    },
    {
-      "px68k_sc55_volume",
-      "SC-55 Emulation Volume",
+      "px68k_midiemu_volume",
+      "MIDI Emulation Volume",
       NULL,
-      "Adjust the volume of the internal Roland SC-55 synthesizer relative to the PX68K audio. 100% is the default level.",
+      "Adjust the volume of the active internal MIDI synthesizer relative to PX68K audio. 100% is the default level.",
       NULL,
       "audio",
       {
@@ -1092,7 +1095,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "px68k_midi_state_restore",
       "MIDI Restore On State Load",
       NULL,
-      "When a state is loaded, the MIDI synthesizer still holds whatever it was last sent. Choose what to restore so the music sounds as it did when the state was saved. 'Synth Setup' re-sends the sound standard (LA/GM/GS/XG), SysEx parameters and each channel's bank, program, volume, pan, effects and pitch bend. 'Setup And Output' also switches back to the internal SC-55 or external MIDI output that was in use at the time, when available. Has no effect on Run-Ahead.",
+      "When a state is loaded, the MIDI synthesizer still holds whatever it was last sent. Choose what to restore so the music sounds as it did when the state was saved. 'Synth Setup' re-sends the sound standard (LA/GM/GS/XG), SysEx parameters and each channel's bank, program, volume, pan, effects and pitch bend. 'Setup And Output' also switches back to the selected internal synthesizer or external MIDI output that was in use at the time, when available. Has no effect on Run-Ahead.",
       NULL,
       "audio",
       {

@@ -18,7 +18,7 @@
 #include "libretro/winx68k.h"
 #include "libretro/dosio.h"
 #include "libretro/zipdisk.h"
-#include "sc55_libretro.h"
+#include "midi/midiemu/midiemu_libretro.h"
 #include "libretro/dswin.h"
 #include "libretro/windraw.h"
 #include "libretro/joystick.h"
@@ -393,7 +393,7 @@ static void extract_directory(char *buf, const char *path, size_t size)
 
 /* BEGIN MIDI INTERFACE */
 #include "x68k/midi.h"
-#include "libretro/midi_shadow.h"
+#include "midi/midi_shadow.h"
 #include "libretro/mmsystem.h"
 static int libretro_supports_midi_output = 0;
 static struct retro_midi_interface midi_cb = { 0 };
@@ -403,15 +403,16 @@ static bool libretro_supports_option_categories = 0;
 static bool midi_replaying;
 
 /* 0 = off, 1 = re-create the synth setup, 2 = also switch back to the output
- * (internal SC-55 or external MIDI) that was in use when the state was saved. */
+ * (internal MIDI synthesizer or external MIDI) that was in use when the state was saved. */
 static int midi_restore_mode = 2;
+static int midi_emulation_selected = PX68K_MIDIEMU_DISABLED;
 
 /* Raw output: straight to whichever destination is active. */
 static void midi_emit_short(size_t msg)
 {
-   if (px68k_sc55_enabled())
+   if (px68k_midiemu_enabled())
    {
-      px68k_sc55_midi_short(msg);
+      px68k_midiemu_midi_short(msg);
       return;
    }
    if (libretro_supports_midi_output && midi_cb.output_enabled())
@@ -431,9 +432,9 @@ static void midi_emit_short(size_t msg)
 
 static void midi_emit_long(const uint8_t *s, size_t len)
 {
-   if (px68k_sc55_enabled())
+   if (px68k_midiemu_enabled())
    {
-      px68k_sc55_midi_long(s, len);
+      px68k_midiemu_midi_long(s, len);
       return;
    }
    if (libretro_supports_midi_output && midi_cb.output_enabled())
@@ -459,13 +460,13 @@ void midi_out_long_msg(uint8_t *s, size_t len)
    midi_emit_long(s, len);
 }
 
-/* 0 = nothing audible, 1 = external MIDI interface, 2 = internal SC-55. */
+/* 0 = none, 1 = external MIDI, 2..5 = SC-55 / MT-32 / CM-32L / CM-64. */
 static int midi_current_source(void)
 {
    if (!Config.MIDI_SW)
       return 0;
-   if (px68k_sc55_enabled())
-      return 2;
+   if (px68k_midiemu_enabled())
+      return midi_emulation_selected + 1;
    if (libretro_supports_midi_output && midi_cb.output_enabled())
       return 1;
    return 0;
@@ -481,18 +482,22 @@ static int midi_apply_saved_source(int saved)
    if (!Config.MIDI_SW || saved == 0 || saved == now)
       return 0;
 
-   if (saved == 2)
+   if (saved >= PX68K_MIDIEMU_SC55 + 1 && saved <= PX68K_MIDIEMU_CM64 + 1)
    {
-      px68k_sc55_configure(1, retro_system_directory, retro_content_directory);
-      if (!px68k_sc55_enabled())
-         return 0; /* ROMs not available here: stay on what we have */
+      int emulation = saved - 1;
+      px68k_midiemu_configure(emulation, retro_system_directory, retro_content_directory);
+      if (!px68k_midiemu_enabled())
+         return 0; /* Required ROMs are unavailable: stay on what we have. */
+      midi_emulation_selected = emulation;
    }
    else if (saved == 1)
    {
       if (!(libretro_supports_midi_output && midi_cb.output_enabled()))
          return 0;
-      px68k_sc55_configure(0, retro_system_directory, retro_content_directory);
+      px68k_midiemu_configure(PX68K_MIDIEMU_DISABLED, retro_system_directory, retro_content_directory);
    }
+   else
+      return 0;
 
    MIDI_ReopenOutput();
    return 1;
@@ -528,13 +533,13 @@ static void midi_restore_after_load(void)
 /* A non-NULL handle is required by x68k/midi.c before it will dispatch
  * MIDI bytes. Use a private sentinel for the internal synthesizer: no
  * external MIDI handle is involved in this case. */
-static int px68k_sc55_midi_handle;
+static int px68k_midiemu_midi_handle;
 
 int midi_out_open(void **phmo)
 {
-   if (px68k_sc55_enabled())
+   if (px68k_midiemu_enabled())
    {
-      if (phmo) *phmo = &px68k_sc55_midi_handle;
+      if (phmo) *phmo = &px68k_midiemu_midi_handle;
       return 0;
    }
    if (libretro_supports_midi_output && midi_cb.output_enabled())
@@ -1817,26 +1822,30 @@ static void update_variables(int running)
    }
 #endif
 
-   /* The internal SC-55 is an alternative MIDI destination, independent of
-    * RetroArch's external MIDI interface. Search the same roots as PrBoom and
-    * apply the SC-55-only gain independently of the PX68K audio volume. */
+   /* Internal MIDI emulation is an alternative MIDI destination, independent
+    * of RetroArch's external MIDI interface. */
    {
-      struct retro_variable sc55_var;
-      struct retro_variable sc55_volume_var;
-      int sc55_enabled = 0;
-      int sc55_volume = 100;
-      sc55_var.key = "px68k_sc55_emulation";
-      sc55_var.value = NULL;
-      if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &sc55_var) && sc55_var.value &&
-            !strcmp(sc55_var.value, "enabled"))
-         sc55_enabled = 1;
-      sc55_volume_var.key = "px68k_sc55_volume";
-      sc55_volume_var.value = NULL;
-      if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &sc55_volume_var) && sc55_volume_var.value)
-         sc55_volume = atoi(sc55_volume_var.value);
-      px68k_sc55_set_volume(sc55_volume);
-      px68k_sc55_configure(sc55_enabled, retro_system_directory, retro_content_directory);
-      if (sc55_enabled && px68k_sc55_enabled())
+      struct retro_variable emulation_var;
+      struct retro_variable volume_var;
+      int emulation = PX68K_MIDIEMU_DISABLED;
+      int volume = 100;
+      emulation_var.key = "px68k_midi_emulation";
+      emulation_var.value = NULL;
+      if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &emulation_var) && emulation_var.value)
+      {
+         if (!strcmp(emulation_var.value, "sc55")) emulation = PX68K_MIDIEMU_SC55;
+         else if (!strcmp(emulation_var.value, "mt32")) emulation = PX68K_MIDIEMU_MT32;
+         else if (!strcmp(emulation_var.value, "cm32l")) emulation = PX68K_MIDIEMU_CM32L;
+         else if (!strcmp(emulation_var.value, "cm64")) emulation = PX68K_MIDIEMU_CM64;
+      }
+      volume_var.key = "px68k_midiemu_volume";
+      volume_var.value = NULL;
+      if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &volume_var) && volume_var.value)
+         volume = atoi(volume_var.value);
+      midi_emulation_selected = emulation;
+      px68k_midiemu_set_volume(volume);
+      px68k_midiemu_configure(emulation, retro_system_directory, retro_content_directory);
+      if (emulation != PX68K_MIDIEMU_DISABLED && px68k_midiemu_enabled())
          Config.MIDI_SW = 1;
    }
 
@@ -2567,6 +2576,7 @@ void retro_init(void)
       log_cb = log.log;
    else
       log_cb = NULL;
+   px68k_midiemu_set_log_callback(log_cb);
 
    /* if defined, use the system directory */
    if (environ_cb(RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY, &system_dir) && system_dir)
@@ -2658,7 +2668,7 @@ void retro_deinit(void)
    CDROM_Cleanup();
 #endif
    MIDI_Cleanup();
-   px68k_sc55_shutdown();
+   px68k_midiemu_shutdown();
    WinX68k_Cleanup();
    WinDraw_Cleanup();
 
@@ -3295,7 +3305,7 @@ void retro_run(void)
    {
       raudio_callback(soundbuf, NULL, soundbuf_size << 2);
 
-      px68k_sc55_mix(soundbuf, (size_t)soundbuf_size);
+      px68k_midiemu_mix(soundbuf, (size_t)soundbuf_size);
    }
 
    if (libretro_supports_midi_output && midi_cb.output_enabled())

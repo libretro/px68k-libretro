@@ -344,7 +344,7 @@ void MIDI_Reset(void)
 	MIDI_SendModuleReset();
 }
 
-/* The output destination changed (e.g. the internal SC-55 was switched on or
+/* The output destination changed (e.g. an internal MIDI synthesizer was switched on or
  * off): make sure there is a handle so MIDI bytes are dispatched at all. */
 void MIDI_ReopenOutput(void)
 {

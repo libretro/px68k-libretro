@@ -6,7 +6,7 @@
 
 #include "state.h"
 
-/* Tracks what the MIDI destination (external synth or the internal SC-55)
+/* Tracks what the MIDI destination (external synth or the selected internal MIDI synthesizer)
  * has been told, so that the same "sound setup" can be re-created after a
  * state is loaded.
  *
@@ -29,7 +29,7 @@ void MIDIShadow_Short(size_t packed_msg);
 void MIDIShadow_Long(const uint8_t *data, size_t len);
 
 /* Output source at save time, stored in the state: 0 = none, 1 = external
- * MIDI interface, 2 = internal SC-55. */
+ * MIDI interface, 2 = SC-55, 3 = MT-32, 4 = CM-32L, 5 = CM-64. */
 void MIDIShadow_SetSource(int source);
 
 /* Source recorded in the state that was just loaded, or -1 if that state
