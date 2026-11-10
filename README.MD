@@ -89,7 +89,7 @@ The SC-55 integration checks the RetroArch System Directory root, `System/prboom
 | MT-32 | `MT32_CONTROL.ROM` | `MT32_PCM.ROM` |
 | CM-32L | `CM32L_CONTROL.ROM` | `CM32L_PCM.ROM` |
 
-Munt identifies ROMs by their contents. The core tries the conventional filenames in the System Directory root, `mt32/`, `cm32l/`, `cm64/` (legacy folder alias), `roland/`, `munt/`, `prboom/`, and the game/content directory (including `content/mt32/`, `content/cm32l/`, `content/cm64/` (legacy folder alias) and `content/roland/`). ROM search results and initialization status are sent to RetroArch's core log.
+Munt identifies ROMs by their contents. The core tries the conventional filenames in the System Directory root, `mt32/`, `cm32l/`, `roland/`, `munt/`, `prboom/`, and the game/content directory (including `content/mt32/`, `content/cm32l/` and `content/roland/`). ROM search results and initialization status are sent to RetroArch's core log.
 
 List of MT-32-compatible games: https://www.vogonswiki.com/index.php/List_of_MT-32-compatible_computer_games#Sharp_X68000
 
@@ -110,6 +110,14 @@ SC-55 emulation:
 Copyright (C) 2021, 2024 nukeykt
 Copyright (C) 2024-2026 J.C. Moyer
 
-MT-32 / CM-32L emulation:
-Munt project — LGPL-2.1-or-later (https://github.com/munt/munt)
+**Munt – MT-32/CM-32L emulation**
+
+PX68K includes the Munt `mt32emu` library (version 2.8.6) for Roland MT-32 and CM-32L sound emulation.
+
+- Upstream project: https://github.com/munt/munt
+- Licence: GNU Lesser General Public License, version 2.1 or later (LGPL-2.1-or-later).
+- The bundled source code and complete licence texts are available in `midi/mt32emu/munt/mt32emu/`.
+- The PX68K integration is maintained separately from the upstream Munt source.
+
+The Munt library retains its original copyright notices and authorship information. Its source code may be modified and redistributed under the terms of its licence.
 ```
