@@ -323,6 +323,20 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "10Mhz"
    },
    {
+      "px68k_bg_wait",
+      "BG/Sprite RAM Wait States",
+      NULL,
+      "Emulate the slow CPU access to the sprite RAM without changing the CPU speed. Sprite table changes made in the middle of the screen (raster sprite multiplexing) are shown a few lines later, as one block, like on real hardware. Fixes sprites that are cut off in Puyo Puyo.",
+      NULL,
+      "system",
+      {
+         { "enabled",  NULL },
+         { "disabled", NULL },
+         { NULL,       NULL },
+      },
+      "enabled"
+   },
+   {
       "px68k_ramsize",
       "RAM Size (Restart)",
       NULL,
