@@ -1893,6 +1893,14 @@ static void update_variables(int running)
          Config.clockmhz = 100;
    }
 
+   var.key = "px68k_bg_wait";
+   var.value = NULL;
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+      BG_SpriteDefer = (strcmp(var.value, "disabled") != 0);
+   else
+      BG_SpriteDefer = 1;
+
    var.key = "px68k_ramsize";
    var.value = NULL;
 
@@ -3022,6 +3030,7 @@ static void WinX68k_Exec(void)
             VLINE = ((vline - CRTC_VSTART) * CRTC_VStep) / 2;
          else
             VLINE = (uint32_t)-1;
+         BG_SpriteDeferTick();	/* show queued sprite RAM writes when due */
          if ((!(MFP[MFP_AER] & 0x40)) && (vline == CRTC_IntLine))
             MFP_Int(1);
          if (MFP[MFP_AER] & 0x10)
@@ -3121,6 +3130,8 @@ static void WinX68k_Exec(void)
          hsync     = 1;
       }
    } while (vline < VLINE_TOTAL);
+
+   BG_SpriteDeferFlush();	/* never carry queued sprite writes into the next frame */
 
    if (CRTC_Mode & 2)
    {

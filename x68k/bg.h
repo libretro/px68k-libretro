@@ -16,6 +16,13 @@ extern	uint16_t BG_LineBuf[1600];
 
 void BG_Init(void);
 
+/* Sprite RAM "slow access" emulation (see bg.c).  BG_SpriteDefer is the user
+ * option; BG_SpriteDeferTick() must be called at the start of every raster
+ * line, BG_SpriteDeferFlush() applies everything that is still queued. */
+extern int BG_SpriteDefer;
+void BG_SpriteDeferTick(void);
+void BG_SpriteDeferFlush(void);
+
 uint8_t FASTCALL BG_Read(uint32_t adr);
 void FASTCALL BG_Write(uint32_t adr, uint8_t data);
 

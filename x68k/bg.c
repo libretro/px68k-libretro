@@ -17,6 +17,17 @@
 
 uint8_t	BG[0x8000];
 uint8_t	Sprite_Regs[0x800];
+
+/* Sprite RAM slow access emulation, see below */
+#define SPDEF_MAX	4096
+#define SPDEF_SMALL	32	/* fewer queued bytes than this = not a block copy */
+#define SPDEF_LINES	7	/* lines between start of a burst and its display */
+
+int BG_SpriteDefer = 0;
+static uint8_t Sprite_RegsCPU[0x400];
+static struct { uint16_t adr; uint8_t data; } spdef[SPDEF_MAX];
+static int spdef_n = 0;
+static int spdef_first = 0;
 uint8_t	BG_Regs[0x12];
 static uint16_t BG_CHREND = 0;
 static uint16_t	BG_BG0TOP = 0;
@@ -71,7 +82,16 @@ int BG_StateAction(StateMem *sm, int load, int data_only)
 		SFEND
 	};
 
-	int ret = PX68KSS_StateAction(sm, load, data_only, StateRegs, "X68K_BG", false);
+	int ret;
+
+	if (!load)
+		BG_SpriteDeferFlush();	/* the saved sprite table must be complete */
+	ret = PX68KSS_StateAction(sm, load, data_only, StateRegs, "X68K_BG", false);
+	if (load)
+	{
+		memcpy(Sprite_RegsCPU, Sprite_Regs, sizeof(Sprite_RegsCPU));
+		spdef_n = 0;
+	}
 
 	return ret;
 }
@@ -82,6 +102,8 @@ void BG_Init(void)
 	uint32_t i;
 	memset(Sprite_Regs, 0, 0x800);
 	memset(BG, 0, 0x8000);
+	memset(Sprite_RegsCPU, 0, sizeof(Sprite_RegsCPU));
+	spdef_n = 0;
 	memset(BGCHR8, 0, 8*8*256);
 	memset(BGCHR16, 0, 16*16*256);
 	memset(BG_LineBuf, 0, 1600*2);
@@ -98,7 +120,7 @@ uint8_t FASTCALL BG_Read(uint32_t adr)
 #ifndef MSB_FIRST
 		adr ^= 1;
 #endif
-		return Sprite_Regs[adr];
+		return Sprite_RegsCPU[adr];
 	}
 	else if ((adr>=0xeb0800)&&(adr<0xeb0812))
 		return BG_Regs[adr-0xeb0800];
@@ -107,27 +129,34 @@ uint8_t FASTCALL BG_Read(uint32_t adr)
 	return 0xff;
 }
 
-void FASTCALL BG_Write(uint32_t adr, uint8_t data)
+/* ---- Sprite RAM slow access ---------------------------------------------
+ * On a real X68000 the CPU is slowed down a lot when it writes the sprite
+ * attribute RAM, so a block copy of 50-60 sprites made by a raster interrupt
+ * in the middle of the screen takes several scanlines.  Games that multiplex
+ * sprites that way (e.g. Puyo Puyo swaps sprites 1-63 once or twice per frame)
+ * rely on this: the old sprites that straddle the split line must stay
+ * visible until their last lines have been drawn.  Emulated at full speed the
+ * copy is over in 2-3 lines and the old sprites are cut off.
+ *
+ * Without touching the CPU timing, writes made while the picture is being
+ * drawn are kept in a queue.  The CPU sees them immediately (BG_Read uses
+ * Sprite_RegsCPU), the renderer (Sprite_Regs) gets the whole burst at once,
+ * SPDEF_LINES lines after the burst started.  Single or tiny writes (raster
+ * tricks that move one sprite) are only delayed to the next line. */
+
+static void Sprite_Regs_Apply(uint32_t adr, uint8_t data)
 {
-	uint32_t bg16chr;
 	int v  = 0;
 	int s1 = (((BG_Regs[0x11]  &4)?2:1)-((BG_Regs[0x11]  &16)?1:0));
 	int s2 = (((CRTC_Regs[0x29]&4)?2:1)-((CRTC_Regs[0x29]&16)?1:0));
 	if ( !(BG_Regs[0x11]&16) ) v = ((BG_Regs[0x0f]>>s1)-(CRTC_Regs[0x0d]>>s2));
-	if ((adr>=0xeb0000)&&(adr<0xeb0400))
+	if (Sprite_Regs[adr] != data)
 	{
-		adr &= 0x3ff;
-#ifndef MSB_FIRST
-		adr ^= 1;
-#endif
-		if (Sprite_Regs[adr] != data)
-		{
+		uint16_t t0, t, *pw;
 
-			uint16_t t0, t, *pw;
-
-			v = BG_VLINE - 16 - v;
-			/* get YPOS pointer (Sprite_Regs[] is little endian) */
-			pw = (uint16_t *)(Sprite_Regs + (adr & 0x3f8) + 2);
+		v = BG_VLINE - 16 - v;
+		/* get YPOS pointer (Sprite_Regs[] is little endian) */
+		pw = (uint16_t *)(Sprite_Regs + (adr & 0x3f8) + 2);
 
 #define UPDATE_TDL(t)				\
 {						\
@@ -138,17 +167,76 @@ void FASTCALL BG_Write(uint32_t adr, uint8_t data)
 	}					\
 }
 
-			t = t0 = (*pw + v) & 0x3ff;
+		t = t0 = (*pw + v) & 0x3ff;
+		UPDATE_TDL(t);
+
+		Sprite_Regs[adr] = data;
+
+		t = (*pw + v) & 0x3ff;
+		if (t != t0) {
 			UPDATE_TDL(t);
-
-			Sprite_Regs[adr] = data;
-
-			t = (*pw + v) & 0x3ff;
-			if (t != t0) {
-				UPDATE_TDL(t);
-			}
-
 		}
+	}
+}
+
+void BG_SpriteDeferFlush(void)
+{
+	int i;
+	for (i = 0; i < spdef_n; i++)
+		Sprite_Regs_Apply(spdef[i].adr, spdef[i].data);
+	spdef_n = 0;
+}
+
+void BG_SpriteDeferTick(void)
+{
+	int line;
+
+	if (!spdef_n)
+		return;
+	line = (int)vline;
+	if (line < (int)CRTC_VSTART || line >= (int)CRTC_VEND)
+	{
+		BG_SpriteDeferFlush();		/* blanking: show everything */
+		return;
+	}
+	if (spdef_n < SPDEF_SMALL)
+	{
+		if (line > spdef_first)		/* tiny change: next line */
+			BG_SpriteDeferFlush();
+	}
+	else if (line - spdef_first >= SPDEF_LINES)
+		BG_SpriteDeferFlush();
+}
+
+static void Sprite_Regs_Write(uint32_t adr, uint8_t data)
+{
+	Sprite_RegsCPU[adr] = data;
+	if (BG_SpriteDefer && (int)vline >= (int)CRTC_VSTART && (int)vline < (int)CRTC_VEND)
+	{
+		if (spdef_n >= SPDEF_MAX)
+			BG_SpriteDeferFlush();
+		if (!spdef_n)
+			spdef_first = (int)vline;
+		spdef[spdef_n].adr  = (uint16_t)adr;
+		spdef[spdef_n].data = data;
+		spdef_n++;
+		return;
+	}
+	if (spdef_n)
+		BG_SpriteDeferFlush();		/* keep the order of writes */
+	Sprite_Regs_Apply(adr, data);
+}
+
+void FASTCALL BG_Write(uint32_t adr, uint8_t data)
+{
+	uint32_t bg16chr;
+	if ((adr>=0xeb0000)&&(adr<0xeb0400))
+	{
+		adr &= 0x3ff;
+#ifndef MSB_FIRST
+		adr ^= 1;
+#endif
+		Sprite_Regs_Write(adr, data);
 	}
 	else if ((adr>=0xeb0800)&&(adr<0xeb0812))
 	{
