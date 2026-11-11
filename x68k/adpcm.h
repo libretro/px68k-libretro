@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 void FASTCALL ADPCM_PreUpdate(uint32_t clock);
-void ADPCM_Update(int16_t *buffer, size_t length, uint8_t *pbsp, uint8_t *pbep);
+void ADPCM_Update(int32_t *buffer, size_t length, uint8_t *pbsp, uint8_t *pbep);
 
 void FASTCALL ADPCM_Write(uint32_t adr, uint8_t data);
 uint8_t FASTCALL ADPCM_Read(uint32_t adr);

@@ -20,7 +20,7 @@
 	+ 3 * (y[0]-2*y[1]+y[2])) * x + FM_IPSCALE/2) / FM_IPSCALE \
 	- 2*y[0]-3*y[1]+6*y[2]-y[3]) * x + 3*FM_IPSCALE) / (6*FM_IPSCALE) + y[1])
 
-static int ADPCM_VolumeShift = 65536;
+static int ADPCM_VolumeShift = 16;
 static const int32_t index_shift[8] = {
 	-1, -1, -1, -1, 2, 4, 6, 8
 };
@@ -94,6 +94,11 @@ int ADPCM_StateAction(StateMem *sm, int load, int data_only)
 
 	int ret = PX68KSS_StateAction(sm, load, data_only, StateRegs, "X68K_ADPC", false);
 
+	/* Volume is a frontend setting, not emulated state. Reapply it after
+	 * loading so the saved value cannot override the current core option. */
+	if (load && ret)
+		ADPCM_SetVolume((uint8_t)Config.PCM_VOL);
+
 	return ret;
 }
 
@@ -138,7 +143,7 @@ void FASTCALL ADPCM_PreUpdate(uint32_t clock)
 	}
 }
 
-void ADPCM_Update(int16_t *buffer, size_t length, uint8_t *pbsp, uint8_t *pbep)
+void ADPCM_Update(int32_t *buffer, size_t length, uint8_t *pbsp, uint8_t *pbep)
 {
 	int outs;
 	int32_t outl, outr;
@@ -149,9 +154,9 @@ void ADPCM_Update(int16_t *buffer, size_t length, uint8_t *pbsp, uint8_t *pbep)
    {
       while ( length )
       {
-         int tmpl, tmpr;
-         if (buffer >= (int16_t *)pbep)
-            buffer = (int16_t*)pbsp;
+         int32_t tmpl, tmpr;
+         if ((uint8_t *)buffer >= pbep)
+            buffer = (int32_t *)pbsp;
 
          if ( (ADPCM_WrPtr==ADPCM_RdPtr)&&(!(DMA[3].CCR&0x40)) )
             DMA_Exec(3);
@@ -169,8 +174,9 @@ void ADPCM_Update(int16_t *buffer, size_t length, uint8_t *pbsp, uint8_t *pbep)
             outl = OldL;
          }
 
-         outr       = (int)(outr*40*ADPCM_VolumeShift);
-         outs       = (outr + Outs[3]*2 + Outs[2] + Outs[1]*157 - Outs[0]*61) >> 8;
+         outr       = (int32_t)((int64_t)outr * 40 * ADPCM_VolumeShift);
+         outs       = (int32_t)(((int64_t)outr + Outs[3]*2LL + Outs[2] +
+                                  Outs[1]*157LL - Outs[0]*61LL) >> 8);
          Outs[2]    = Outs[3];
          Outs[3]    = outr;
          Outs[0]    = Outs[1];
@@ -181,8 +187,9 @@ void ADPCM_Update(int16_t *buffer, size_t length, uint8_t *pbsp, uint8_t *pbep)
          OutsIpR[2] = OutsIpR[3];
          OutsIpR[3] = outs;
 
-         outl       = (int)(outl*40*ADPCM_VolumeShift);
-         outs       = (outl + Outs[7]*2 + Outs[6] + Outs[5]*157 - Outs[4]*61) >> 8;
+         outl       = (int32_t)((int64_t)outl * 40 * ADPCM_VolumeShift);
+         outs       = (int32_t)(((int64_t)outl + Outs[7]*2LL + Outs[6] +
+                                  Outs[5]*157LL - Outs[4]*61LL) >> 8);
          Outs[6]    = Outs[7];
          Outs[7]    = outl;
          Outs[4]    = Outs[5];
@@ -194,17 +201,9 @@ void ADPCM_Update(int16_t *buffer, size_t length, uint8_t *pbsp, uint8_t *pbep)
          OutsIpL[3] = outs;
 
          tmpr = INTERPOLATE(OutsIpR, 0);
-         if ( tmpr>32767 )
-            tmpr = 32767;
-         else if ( tmpr<(-32768) )
-            tmpr = -32768;
-         *(buffer++) = (int16_t)tmpr;
+         *(buffer++) = (int32_t)tmpr;
          tmpl = INTERPOLATE(OutsIpL, 0);
-         if ( tmpl>32767 )
-            tmpl = 32767;
-         else if ( tmpl<(-32768) )
-            tmpl = -32768;
-         *(buffer++) = (int16_t)tmpl;
+         *(buffer++) = (int32_t)tmpl;
          length--;
       }
    }
@@ -212,9 +211,9 @@ void ADPCM_Update(int16_t *buffer, size_t length, uint8_t *pbsp, uint8_t *pbep)
    {
       while ( length )
       {
-         int tmpl, tmpr;
-         if (buffer >= (int16_t *)pbep)
-            buffer = (int16_t*)pbsp;
+         int32_t tmpl, tmpr;
+         if ((uint8_t *)buffer >= pbep)
+            buffer = (int32_t *)pbsp;
 
          if ( (ADPCM_WrPtr==ADPCM_RdPtr)&&(!(DMA[3].CCR&0x40)) )
             DMA_Exec(3);
@@ -247,17 +246,9 @@ void ADPCM_Update(int16_t *buffer, size_t length, uint8_t *pbsp, uint8_t *pbep)
          OutsIpL[3] = outs;
 
          tmpr = INTERPOLATE(OutsIpR, 0);
-         if ( tmpr>32767 )
-            tmpr = 32767;
-         else if ( tmpr<(-32768) )
-            tmpr = -32768;
-         *(buffer++) = (int16_t)tmpr;
+         *(buffer++) = (int32_t)tmpr;
          tmpl = INTERPOLATE(OutsIpL, 0);
-         if ( tmpl>32767 )
-            tmpl = 32767;
-         else if ( tmpl<(-32768) )
-            tmpl = -32768;
-         *(buffer++) = (int16_t)tmpl;
+         *(buffer++) = (int32_t)tmpl;
          length--;
       }
    }

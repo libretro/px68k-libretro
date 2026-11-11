@@ -128,9 +128,9 @@ void FASTCALL OPM_Write(uint32_t adr, uint8_t data)
 }
 
 
-void OPM_Update(int16_t *buffer, int length, uint8_t *pbsp, uint8_t *pbep)
+void OPM_Update(int32_t *buffer, int length, uint8_t *pbsp, uint8_t *pbep)
 {
-	if ( opm ) opm->Mix((int16_t*)buffer, length, pbsp, pbep);
+	if ( opm ) opm->Mix((int32_t*)buffer, length, pbsp, pbep);
 }
 
 
