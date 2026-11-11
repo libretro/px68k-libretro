@@ -36,8 +36,28 @@
 static uint8_t pcmbuffer[PCMBUF_SIZE];
 /* Stereo signed 16-bit PCM; occupancy is counted in frames. */
 #define PCM_CAPACITY (PCMBUF_SIZE / 4)
+/* ADPCM and OPM accumulate here before a single 16-bit conversion. */
+static int32_t mixbuffer[PCM_CAPACITY * 2];
 static int pcm_read = 0, pcm_write = 0, pcm_count = 0;
 static int32_t snd_precounter = 0;
+
+/* Smoothly compress peaks from the combined ADPCM + OPM signal. The two
+ * generators retain their own gain; only their combined peak is limited. */
+static int16_t audio_soft_limit(int32_t sample)
+{
+   const int64_t threshold = 30000;
+   const int64_t knee = 2767;
+   int64_t magnitude = (sample < 0) ? -(int64_t)sample : (int64_t)sample;
+   int sign = (sample < 0) ? -1 : 1;
+
+   if (magnitude > threshold)
+   {
+      int64_t excess = magnitude - threshold;
+      magnitude = threshold + (excess * knee) / (knee + excess);
+   }
+   if (magnitude > 32767) magnitude = 32767;
+   return (int16_t)(sign * magnitude);
+}
 
 uint8_t *pbsp = pcmbuffer;
 uint8_t *pbrp = pcmbuffer, *pbwp = pcmbuffer;
@@ -100,8 +120,19 @@ static void sound_send(int length)
          pbrp = pbsp + pcm_read * 4;
          continue;
       }
-      ADPCM_Update((int16_t *)(pbsp + pcm_write * 4), n, pbsp, pbep);
-      OPM_Update((int16_t *)(pbsp + pcm_write * 4), n, pbsp, pbep);
+      {
+         int i;
+         int16_t *out = (int16_t *)(pbsp + pcm_write * 4);
+         uint8_t *mix_start = (uint8_t *)mixbuffer;
+         uint8_t *mix_end = (uint8_t *)(mixbuffer + PCM_CAPACITY * 2);
+         memset(mixbuffer, 0, (size_t)n * 2 * sizeof(mixbuffer[0]));
+         ADPCM_Update(mixbuffer, (size_t)n, mix_start, mix_end);
+         OPM_Update(mixbuffer, n, mix_start, mix_end);
+         for (i = 0; i < n * 2; i++)
+         {
+            out[i] = audio_soft_limit(mixbuffer[i]);
+         }
+      }
       pcm_write = (pcm_write + n) % PCM_CAPACITY;
       pcm_count += n;
       pbwp = pbsp + pcm_write * 4;

@@ -504,10 +504,10 @@ inline void OPM::MixSubL(int activech, ISample** idest)
 // ---------------------------------------------------------------------------
 //	πÁ¿Æ (stereo)
 //
-void OPM::Mix(int16_t* buffer, int nsamples, uint8_t* pbsp, uint8_t* pbep)
+void OPM::Mix(int32_t* buffer, int nsamples, uint8_t* pbsp, uint8_t* pbep)
 {
 	int i;
-	int16_t* dest;
+	int32_t* dest;
 	
 	// odd bits - active, even bits - lfo
 	uint32_t activech=0;
@@ -535,15 +535,15 @@ void OPM::Mix(int16_t* buffer, int nsamples, uint8_t* pbsp, uint8_t* pbep)
 		for (i = 0, dest = buffer; i < nsamples; i++)
 		{
 			if ((uint8_t*)dest >= pbep)
-				dest = (int16_t *)pbsp;
+				dest = (int32_t *)pbsp;
 			ibuf[1] = ibuf[2] = ibuf[3] = 0;
 			if (activech & 0xaaaa)
 				LFO(), MixSubL(activech, idest);
 			else
 				LFO(), MixSub(activech, idest);
 
-			StoreSample(dest[0], IStoSample(ibuf[1] + ibuf[3]));
-			StoreSample(dest[1], IStoSample(ibuf[2] + ibuf[3]));
+			dest[0] += IStoSample(ibuf[1] + ibuf[3]);
+			dest[1] += IStoSample(ibuf[2] + ibuf[3]);
 
 			dest += 2;
 		}
