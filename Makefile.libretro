@@ -180,6 +180,7 @@ else ifeq ($(platform), vita)
 # Nintendo Switch (libnx)
 else ifeq ($(platform), libnx)
 	include $(DEVKITPRO)/libnx/switch_rules
+	FLAGS += -I$(DEVKITPRO)/libnx/include
 	FLAGS += -D__SWITCH__
 	TARGET := $(TARGET_NAME)_libretro_libnx.a
 	CPU_FLAGS += -march=armv8-a -mtune=cortex-a57 -mtp=soft
