@@ -11,5 +11,10 @@ void px68k_midiemu_midi_short(size_t packed_msg);
 void px68k_midiemu_midi_long(const uint8_t *data, size_t len);
 void px68k_midiemu_mix(int16_t *stereo, size_t frames);
 void px68k_midiemu_set_volume(int volume_percent);
+void px68k_midiemu_state_load_begin(void);
+void px68k_midiemu_runahead_begin(void);
+void px68k_midiemu_runahead_end(void);
+void px68k_midiemu_runahead_suppress(void);
+void px68k_midiemu_runahead_reset(void);
 void px68k_midiemu_shutdown(void);
 #endif

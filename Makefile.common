@@ -83,6 +83,7 @@ SOURCES_C 		+= \
 				$(CORE_DIR)/midi/midi_shadow.c \
 				$(CORE_DIR)/midi/sc55/sc55.c \
 				$(CORE_DIR)/midi/midiemu/midiemu_libretro.c \
+				$(CORE_DIR)/libretro-common/rthreads/rthreads.c \
 				$(CORE_DIR)/libretro.c
 
 SOURCES_CXX 	+= \
