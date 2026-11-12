@@ -401,6 +401,10 @@ static bool libretro_supports_option_categories = 0;
 
 /* While a setup is being re-created on load, don't record it as new input. */
 static bool midi_replaying;
+/* Run-Ahead must not send speculative MIDI to either internal or external
+ * destinations. The secondary instance remains suppressed after its restore. */
+static bool midi_runahead_active;
+static bool midi_runahead_secondary;
 
 /* 0 = off, 1 = re-create the synth setup, 2 = also switch back to the output
  * (internal MIDI synthesizer or external MIDI) that was in use when the state was saved. */
@@ -410,6 +414,8 @@ static int midi_emulation_selected = PX68K_MIDIEMU_DISABLED;
 /* Raw output: straight to whichever destination is active. */
 static void midi_emit_short(size_t msg)
 {
+   if (midi_runahead_active || midi_runahead_secondary)
+      return;
    if (px68k_midiemu_enabled())
    {
       px68k_midiemu_midi_short(msg);
@@ -432,6 +438,8 @@ static void midi_emit_short(size_t msg)
 
 static void midi_emit_long(const uint8_t *s, size_t len)
 {
+   if (midi_runahead_active || midi_runahead_secondary)
+      return;
    if (px68k_midiemu_enabled())
    {
       px68k_midiemu_midi_long(s, len);
@@ -448,6 +456,8 @@ static void midi_emit_long(const uint8_t *s, size_t len)
 /* Called by the emulated MIDI board. */
 void midi_out_short_msg(size_t msg)
 {
+   if (midi_runahead_active || midi_runahead_secondary)
+      return;
    if (!midi_replaying)
       MIDIShadow_Short(msg);
    midi_emit_short(msg);
@@ -455,6 +465,8 @@ void midi_out_short_msg(size_t msg)
 
 void midi_out_long_msg(uint8_t *s, size_t len)
 {
+   if (midi_runahead_active || midi_runahead_secondary)
+      return;
    if (!midi_replaying)
       MIDIShadow_Long(s, len);
    midi_emit_long(s, len);
@@ -2322,13 +2334,6 @@ static int SavestateContext(void)
    return RETRO_SAVESTATE_CONTEXT_NORMAL;
 }
 
-static bool UsingFastSavestates(void)
-{
-   int flags = SavestateContext();
-   return ((flags == RETRO_SAVESTATE_CONTEXT_RUNAHEAD_SAME_INSTANCE) ||
-         ((flags == RETRO_SAVESTATE_CONTEXT_RUNAHEAD_SAME_BINARY)));
-}
-
 /* Sized in a dry run: no allocation and no copying. The result is the size
  * of a normal (labelled, full-RAM) state, which is an upper bound for a fast
  * state, so one buffer size serves every context. */
@@ -2351,14 +2356,29 @@ bool retro_serialize(void *data, size_t size)
 {
    StateMem st;
    bool fast, ret;
+   int context;
 
    if (!data || size > 0xffffffffU)
       return false;
 
-   fast = UsingFastSavestates();
+   context = SavestateContext();
+   fast = (context == RETRO_SAVESTATE_CONTEXT_RUNAHEAD_SAME_INSTANCE ||
+         context == RETRO_SAVESTATE_CONTEXT_RUNAHEAD_SAME_BINARY);
+   /* Only same-instance run-ahead restores this core's worker. A second
+    * instance has its own worker and must not pause the primary instance. */
+   if (context == RETRO_SAVESTATE_CONTEXT_RUNAHEAD_SAME_INSTANCE)
+   {
+      midi_runahead_active = true;
+      px68k_midiemu_runahead_begin();
+   }
    PX68KSS_InitWrite(&st, data, (uint32_t)size, fast);
 
    ret = PX68KSS_SaveSM(&st, 0, 0, NULL, NULL, NULL) != 0;
+   if (!ret && context == RETRO_SAVESTATE_CONTEXT_RUNAHEAD_SAME_INSTANCE)
+   {
+      px68k_midiemu_runahead_end();
+      midi_runahead_active = false;
+   }
 
    /* Keep saved files deterministic. Fast states are never stored, so
     * skip clearing what can be megabytes of unused tail. */
@@ -2372,6 +2392,7 @@ bool retro_unserialize(const void *data, size_t size)
 {
    StateMem st;
    bool fast;
+   int context = RETRO_SAVESTATE_CONTEXT_NORMAL;
 
    if (!data || size > 0xffffffffU)
       return false;
@@ -2380,14 +2401,40 @@ bool retro_unserialize(const void *data, size_t size)
     * a state loaded for real. That is more reliable than the frontend's
     * context flag at the moment of the call. */
    fast = PX68KSS_IsFastState(data, size);
+   if (fast)
+      context = SavestateContext();
 
    if (!fast)
+   {
+      px68k_midiemu_state_load_begin();
       midi_output_panic();
+   }
 
    PX68KSS_InitRead(&st, data, (uint32_t)size);
 
    if (!PX68KSS_LoadSM(&st, 0, 0))
+   {
+      if (fast && context == RETRO_SAVESTATE_CONTEXT_RUNAHEAD_SAME_INSTANCE)
+      {
+         px68k_midiemu_runahead_end();
+         midi_runahead_active = false;
+      }
       return false;
+   }
+
+   if (fast)
+   {
+      if (context == RETRO_SAVESTATE_CONTEXT_RUNAHEAD_SAME_INSTANCE)
+      {
+         px68k_midiemu_runahead_end();
+         midi_runahead_active = false;
+      }
+      else if (context == RETRO_SAVESTATE_CONTEXT_RUNAHEAD_SAME_BINARY)
+      {
+         midi_runahead_secondary = true;
+         px68k_midiemu_runahead_suppress();
+      }
+   }
 
    /* A real load: the MIDI destination still holds whatever it was last told,
     * so put it back to what the state was using. */
@@ -2581,6 +2628,9 @@ void retro_init(void)
    const char *save_dir        = NULL;
    const char *browse_dir      = NULL;
 
+   px68k_midiemu_runahead_reset();
+   midi_runahead_active = false;
+   midi_runahead_secondary = false;
    retro_system_conf[0] = 0;
    retro_browse_conf[0] = 0;
 
