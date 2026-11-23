@@ -323,20 +323,6 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "10Mhz"
    },
    {
-      "px68k_bg_wait",
-      "BG/Sprite RAM Wait States",
-      NULL,
-      "Emulate the slow CPU access to the sprite RAM without changing the CPU speed. Sprite table changes made in the middle of the screen (raster sprite multiplexing) are shown a few lines later, as one block, like on real hardware. Fixes sprites that are cut off in Puyo Puyo.",
-      NULL,
-      "system",
-      {
-         { "enabled",  NULL },
-         { "disabled", NULL },
-         { NULL,       NULL },
-      },
-      "enabled"
-   },
-   {
       "px68k_ramsize",
       "RAM Size (Restart)",
       NULL,
@@ -1353,6 +1339,34 @@ struct retro_core_option_v2_definition option_defs_us[] = {
          { "50", NULL }, { NULL, NULL },
       },
       "10"
+   },
+      {
+      "px68k_bg_wait",
+      "BG/Sprite RAM Wait States",
+      NULL,
+      "Emulate the slow CPU access to the sprite RAM without changing the CPU speed. Sprite table changes made in the middle of the screen (raster sprite multiplexing) are shown a few lines later, as one block, like on real hardware. Fixes sprites that are cut off in Puyo Puyo.",
+      NULL,
+      "advanced",
+      {
+         { "enabled",  NULL },
+         { "disabled", NULL },
+         { NULL,       NULL },
+      },
+      "enabled"
+   },
+   {
+      "px68k_black_transparent",
+      "Transparent Black Sprite Pixels",
+      NULL,
+      "Treat sprite pixels whose palette colour is black as transparent, not only palette index 0, as the video controller does. Removes black shapes, digits and letters drawn around sprites in games ported from 8-bit systems (e.g. Macross).",
+      NULL,
+      "advanced",
+      {
+         { "enabled",  NULL },
+         { "disabled", NULL },
+         { NULL,       NULL },
+      },
+      "enabled"
    },
    {
       "px68k_text_off",

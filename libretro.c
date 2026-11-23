@@ -1913,6 +1913,14 @@ static void update_variables(int running)
    else
       BG_SpriteDefer = 1;
 
+   var.key = "px68k_black_transparent";
+   var.value = NULL;
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+      BG_BlackTransparent = (strcmp(var.value, "disabled") != 0);
+   else
+      BG_BlackTransparent = 1;
+
    var.key = "px68k_ramsize";
    var.value = NULL;
 

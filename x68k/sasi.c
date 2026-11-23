@@ -293,6 +293,9 @@ static void SASI_CheckCmd(void)
          }
          break;
       default:
+         /* Unsupported commands must report CHECK CONDITION, not success. */
+         SASI_Stat = 0x02;
+         SASI_Error = 0x20;
          SASI_Phase += 2;
    }
 }

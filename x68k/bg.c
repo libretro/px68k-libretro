@@ -24,6 +24,7 @@ uint8_t	Sprite_Regs[0x800];
 #define SPDEF_LINES	7	/* lines between start of a burst and its display */
 
 int BG_SpriteDefer = 0;
+int BG_BlackTransparent = 1;
 static uint8_t Sprite_RegsCPU[0x400];
 static struct { uint16_t adr; uint8_t data; } spdef[SPDEF_MAX];
 static int spdef_n = 0;
@@ -458,6 +459,11 @@ static INLINE void Sprite_DrawLineMcr(int pri)
 					pal = *p & 0xf;
 					if (pal) {
 						pal |= (sctp->sprite_ctrl >> 4) & 0xf0;
+						/* A black pixel (palette colour 0) is transparent on the X68000
+						 * video controller even if its palette index is not 0: many
+						 * ports of 8-bit games (e.g. Macross) draw their sprites that way. */
+						if (BG_BlackTransparent && !TextPal[pal])
+							continue;
 						if (BG_PriBuf[t] >= n * 8) {
 							BG_LineBuf[t] = TextPal[pal];
 							Text_TrFlag[t] |= 2;

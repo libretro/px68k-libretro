@@ -296,7 +296,7 @@ void FASTCALL DMA_Write(uint32_t adr, uint8_t data)
                 */
                DMA[ch].CSR &= 0x0f; /* Clear completion/error status flags. */
                DMA[ch].CSR |= 0x08;
-               if ((DMA[ch].OCR & 8) /*&&(!DMA[ch].MTC)*/)
+               if ((DMA[ch].OCR & 8) &&(!DMA[ch].MTC))
                {
                   /* Array/Link Array Chain */
                   DMA[ch].MAR = dma_readmem24_dword(DMA[ch].BAR) & 0xffffff;
