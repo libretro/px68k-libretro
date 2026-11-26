@@ -20,6 +20,10 @@ void BG_Init(void);
  * option; BG_SpriteDeferTick() must be called at the start of every raster
  * line, BG_SpriteDeferFlush() applies everything that is still queued. */
 extern int BG_SpriteDefer;
+
+/* When non-zero, sprite pixels whose palette colour is black are transparent
+ * (as the video controller does), not only palette index 0. */
+extern int BG_BlackTransparent;
 void BG_SpriteDeferTick(void);
 void BG_SpriteDeferFlush(void);
 

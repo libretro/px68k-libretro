@@ -323,20 +323,6 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "10Mhz"
    },
    {
-      "px68k_bg_wait",
-      "BG/Sprite RAM Wait States",
-      NULL,
-      "Emulate the slow CPU access to the sprite RAM without changing the CPU speed. Sprite table changes made in the middle of the screen (raster sprite multiplexing) are shown a few lines later, as one block, like on real hardware. Fixes sprites that are cut off in Puyo Puyo.",
-      NULL,
-      "system",
-      {
-         { "enabled",  NULL },
-         { "disabled", NULL },
-         { NULL,       NULL },
-      },
-      "enabled"
-   },
-   {
       "px68k_ramsize",
       "RAM Size (Restart)",
       NULL,
@@ -1353,6 +1339,35 @@ struct retro_core_option_v2_definition option_defs_us[] = {
          { "50", NULL }, { NULL, NULL },
       },
       "10"
+   },
+      {
+      "px68k_bg_wait",
+      "BG/Sprite RAM Wait States",
+      NULL,
+      "Emulate the slow CPU access to the sprite RAM without changing the CPU speed. Sprite table changes made in the middle of the screen (raster sprite multiplexing) are shown a few lines later, as one block, like on real hardware. Fixes sprites that are cut off in Puyo Puyo.",
+      NULL,
+      "advanced",
+      {
+         { "enabled",  NULL },
+         { "disabled", NULL },
+         { NULL,       NULL },
+      },
+      "enabled"
+   },
+   {
+      "px68k_hack_famicom",
+      "Hack: Famicom Doujin ports",
+      NULL,
+      "Workarounds for the Famicom games ported to the X68000 by the same author (e.g. City Connection, Bomber Man, Macross). 'Auto' recognises the common port engine in memory, and some games by the CRC32 of their disk, and applies the matching hacks. 'Forced On' applies the engine hacks even without detection. See the notes in libretro.c.",
+      NULL,
+      "advanced",
+      {
+         { "auto",      "Auto (default)" },
+         { "disabled",  "Off" },
+         { "forced_on", "Forced On" },
+         { NULL,        NULL },
+      },
+      "auto"
    },
    {
       "px68k_text_off",
