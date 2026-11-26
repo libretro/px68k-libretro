@@ -11,6 +11,7 @@
 #include <libretro.h>
 #include <libretro_core_options.h>
 #include <string/stdstring.h>
+#include <encodings/crc32.h>
 #ifdef USE_LIBRETRO_VFS
 #include <streams/file_stream_transforms.h>
 #endif
@@ -1818,6 +1819,354 @@ void retro_set_environment(retro_environment_t cb)
 #endif
 }
 
+/* ==========================================================================
+ * Hack: Famicom Doujin ports
+ * ==========================================================================
+ *
+ * A group of Famicom games were ported to the X68000 by the same author.
+ * They all run on one common engine that emulates the NES PPU with the
+ * X68000 sprite/BG hardware, and they rely on video controller behaviour that
+ * the generic renderer does not reproduce.  This hack recognises those games
+ * and adjusts the colours (the converted text/sprite palette, TextPal[]) just
+ * before every scanline is drawn, so the renderer itself is left untouched.
+ *
+ * Core option "Hack: Famicom Doujin ports":
+ *   Auto       engine hacks when the engine is detected (or the disk is a
+ *              known game), plus the game specific hacks of a known game.
+ *   Off        nothing is changed.
+ *   Forced On  engine hacks always, even without detection.  The game
+ *              specific hacks still need the game to be identified.
+ *
+ * --- How the engine is detected -------------------------------------------
+ * The engine copies the NES sprite list to the X68000 sprite registers with a
+ * routine that starts with
+ *    movea.l #$eb0000,A1 / moveq #$3f,D7 / moveq #$11,D0 / add.b (A0)+,D0
+ * (words 227c 00eb 0000 7e3f 7011 d018).  It was found, unchanged, in Macross
+ * ($035D08), City Connection ($035CD6) and Bomber Man ($035D16), always in the
+ * $030000-$040000 area, so main RAM is scanned for it.  The same engine also
+ * builds the sprite patterns, packing TWO NES tiles into one 4-bit X68000
+ * pattern: the low 2 bits of each pixel are one tile, the high 2 bits another
+ * (move.l ($20,A0),D0 / lsl.l #2,D0 / or.l (A0)+,D0).  The palette block then
+ * decides which of the two images is visible: the palette repeats its 4
+ * colours (entries 4, 8 and 12 of a block repeat entry 0, or entries 0-3
+ * repeat, ...), so the pixels of the other image get the "colour 0" of the
+ * block.  Those pixels must not be visible.
+ *
+ * --- How a game is identified ----------------------------------------------
+ * The CRC32 of the disk image in drive 0 is computed when the image changes
+ * (plain files and images inside a ZIP are both supported) and compared with
+ * fam_games[].  Only games that need a game specific hack must be listed;
+ * every other port is handled by the engine detection alone.  Another dump of
+ * the same game has another CRC and needs its own line.
+ *
+ * --- Engine hacks (all engine games) ---------------------------------------
+ * 1. Screen backdrop colour: entry 0 of sprite palette block 15 is used as
+ *    the colour of text palette 0, which is what the screen shows where no
+ *    layer draws anything.  These games store the NES universal backdrop
+ *    colour in entry 0 of the sprite palettes (City Connection: blue sky)
+ *    and expect it to be the screen background.
+ * 2. Sprite pixels that are not index 0 but have the same colour as entry 0
+ *    of their palette block (blocks 8-15) are made transparent (colour 0,
+ *    which "Transparent Black Sprite Pixels" then hides; this is switched on
+ *    while the hack is active).  They are the other image of the packed
+ *    pattern (see above): coloured blocks around sprites in City Connection,
+ *    black borders and numbers around sprites in Macross.
+ *
+ * --- Games -----------------------------------------------------------------
+ * City Connection (CRC32 36e0e014)
+ *    The game writes 0000 into entry 0 of the BG palette blocks 4-7, so BG
+ *    pixels of index 0 (sky, inside of the rails) have to be transparent and
+ *    show the backdrop (blue).  They are drawn with the backdrop colour here.
+ *
+ * Macross (CRC32 f3c08cb6)
+ *    The spark shown when the ship is hit is created with the attribute
+ *    ((random & $0c) | 3).  On a Famicom the bits 2-3 are ignored, but the
+ *    sprite converter adds the whole attribute to the sprite palette number,
+ *    so the spark randomly uses palette B (orange ball), F (red block with
+ *    stripes), 3 (invisible) or 7 (small blue/white ball).  The hack always
+ *    uses 3 by clearing the mask: and.b #$0c,D4 -> and.b #$00,D4 (immediate
+ *    at $0368DC in this dump, found by its code).  Whether the real machine
+ *    also draws the red block is not confirmed (the blue spark seen on the
+ *    real machine can only come from palette 7).
+ *
+ * Bomber Man (CRC32 4cf35b6c, engine hacks only)
+ *    Stores the backdrop colour in entry 0 of the BG palettes too (green on
+ *    the field, black on the title), so it does not need a game hack.  Note
+ *    that on a real X68000 the pixels hidden by hack 2 are visible (green
+ *    blocks around the sprites), so hack 2 is not accurate for this game.
+ */
+
+#define FAM_OPT_AUTO      0
+#define FAM_OPT_OFF       1
+#define FAM_OPT_FORCED    2
+
+#define FAM_GAME_NONE     0
+#define FAM_GAME_CITY     1
+#define FAM_GAME_MACROSS  2
+#define FAM_GAME_DOOR     3
+
+#define FAM_SCAN_LO       0x030000
+#define FAM_SCAN_HI       0x040000
+
+/* The main RAM is stored with the two bytes of every word swapped. */
+#define FAM_BYTE(a)       (MEM[(a) ^ 1])
+#define FAM_WORD(a)       ((FAM_BYTE(a) << 8) | FAM_BYTE((a) + 1))
+
+struct fam_game_entry
+{
+   uint32_t crc;
+   int id;
+};
+
+static const struct fam_game_entry fam_games[] = {
+   { 0xf3c08cb6, FAM_GAME_MACROSS },
+   { 0x36e0e014, FAM_GAME_CITY },
+   { 0x7d910d08, FAM_GAME_DOOR },
+   { 0,          FAM_GAME_NONE }
+};
+
+static const uint16_t fam_sig_engine[6] = {
+   0x227c, 0x00eb, 0x0000, 0x7e3f, 0x7011, 0xd018
+};
+
+/* Macross: and.b #$03,D4 / move.b D4,D6 / bsr / and.b #$0c,D4 / or.b #3,D4 ...
+ * The immediate of the second and.b is the 7th word (offset 12). */
+static const uint16_t fam_sig_macross[16] = {
+   0xc83c, 0x0003, 0x1c04, 0x6100, 0x3840, 0xc83c, 0x000c, 0x883c,
+   0x0003, 0x41ed, 0x069a, 0x1184, 0x5000, 0x183c, 0x0096, 0x41ed
+};
+
+static int      fam_opt = FAM_OPT_AUTO;
+static int      fam_black_option = 1;    /* "Transparent Black Sprite Pixels" */
+static uint32_t fam_engine_addr = 0;     /* where the engine was found */
+static uint32_t fam_macross_addr = 0;    /* where the Macross code was found */
+static int      fam_game = FAM_GAME_NONE;
+static char     fam_path[MAX_PATH];      /* disk image the CRC was computed for */
+static int      fam_active = 0;          /* engine hacks currently applied */
+static int      fam_city = 0;            /* City Connection hack applied */
+static unsigned fam_timer = 0;
+
+static int fam_sig_at(uint32_t addr, const uint16_t *sig, int count)
+{
+   int i;
+
+   for (i = 0; i < count; i++)
+   {
+      if (FAM_WORD(addr + i * 2) != sig[i])
+         return 0;
+   }
+   return 1;
+}
+
+static uint32_t fam_find(const uint16_t *sig, int count)
+{
+   uint32_t addr;
+
+   for (addr = FAM_SCAN_LO; addr < FAM_SCAN_HI; addr += 2)
+   {
+      if (FAM_WORD(addr) == sig[0] && fam_sig_at(addr, sig, count))
+         return addr;
+   }
+   return 0;
+}
+
+/* The Macross code; the immediate (word 6) is also accepted once patched. */
+static int fam_macross_ok(uint32_t addr)
+{
+   int i;
+   unsigned w;
+
+   for (i = 0; i < 16; i++)
+   {
+      w = FAM_WORD(addr + i * 2);
+      if (i == 6)
+      {
+         if (w != 0x000c && w != 0x0000)
+            return 0;
+      }
+      else if (w != fam_sig_macross[i])
+         return 0;
+   }
+   return 1;
+}
+
+static uint32_t fam_find_macross(void)
+{
+   uint32_t addr;
+
+   for (addr = FAM_SCAN_LO; addr < FAM_SCAN_HI; addr += 2)
+   {
+      if (FAM_WORD(addr) == fam_sig_macross[0] && fam_macross_ok(addr))
+         return addr;
+   }
+   return 0;
+}
+
+/* CRC32 of a disk image, as it is when it is inserted. */
+static int fam_image_crc(const char *path, uint32_t *out)
+{
+   uint8_t buf[4096];
+   uint32_t crc = 0;
+   size_t n;
+
+   if (px68k_zip_virtual_slot(path) >= 0)
+   {
+      void *h = px68k_zip_open(path);
+
+      if (!h)
+         return 0;
+      while ((n = px68k_zip_read(h, buf, sizeof(buf))) > 0)
+         crc = encoding_crc32(crc, buf, n);
+      px68k_zip_close(h);
+   }
+   else
+   {
+      FILE *fp = fopen(path, "rb");
+
+      if (!fp)
+         return 0;
+      while ((n = fread(buf, 1, sizeof(buf), fp)) > 0)
+         crc = encoding_crc32(crc, buf, n);
+      fclose(fp);
+   }
+   *out = crc;
+   return 1;
+}
+
+static void fam_identify_disk(void)
+{
+   uint32_t crc;
+   int i;
+
+   if (strcmp(fam_path, Config.FDDImage[0]) == 0)
+      return;
+
+   strncpy(fam_path, Config.FDDImage[0], sizeof(fam_path) - 1);
+   fam_path[sizeof(fam_path) - 1] = '\0';
+   fam_game = FAM_GAME_NONE;
+   fam_engine_addr = 0;
+   fam_macross_addr = 0;
+
+   if (fam_path[0] && fam_image_crc(fam_path, &crc))
+   {
+      for (i = 0; fam_games[i].id != FAM_GAME_NONE; i++)
+      {
+         if (fam_games[i].crc == crc)
+            fam_game = fam_games[i].id;
+      }
+   }
+}
+
+/* Rebuild the converted palette from the palette registers (what Pal_Write()
+ * does for every entry). */
+static void fam_palette_restore(void)
+{
+   int i;
+
+   for (i = 0; i < 256; i++)
+      TextPal[i] = Pal16[(Pal_Regs[0x200 + i * 2] << 8) | Pal_Regs[0x201 + i * 2]];
+}
+
+/* Called before every scanline is drawn while the engine hacks are active. */
+static void famicom_hack_line(void)
+{
+   int b, e;
+   uint16_t back, first;
+
+   if (!fam_active)
+      return;
+
+   fam_palette_restore();
+
+   /* Engine hack 1: backdrop colour = entry 0 of sprite palette block 15 */
+   back = TextPal[0xf0];
+   TextPal[0] = back;
+
+   /* Engine hack 2: pixels of the other packed image are transparent */
+   for (b = 8; b < 16; b++)
+   {
+      first = TextPal[b * 16];
+      for (e = 1; e < 16; e++)
+      {
+         if (TextPal[b * 16 + e] == first)
+            TextPal[b * 16 + e] = 0;
+      }
+   }
+
+   /* City Connection: BG pixels of index 0 show the backdrop */
+   if (fam_city)
+   {
+      for (b = 1; b < 8; b++)
+      {
+         if (!TextPal[b * 16])
+            TextPal[b * 16] = back;
+      }
+   }
+}
+
+/* Called once per frame, after the frame has been emulated. */
+static void famicom_hack_frame(void)
+{
+   int active, city;
+
+   if (!MEM)
+      return;
+
+   fam_timer++;
+   fam_identify_disk();
+
+   if (fam_opt == FAM_OPT_OFF)
+   {
+      active = 0;
+      city = 0;
+   }
+   else
+   {
+      /* engine: scan until found, then only check that it is still there */
+      if (!fam_engine_addr)
+      {
+         if ((fam_timer % 60) == 0)
+            fam_engine_addr = fam_find(fam_sig_engine, 6);
+      }
+      else if ((fam_timer % 120) == 0 &&
+            !fam_sig_at(fam_engine_addr, fam_sig_engine, 6))
+         fam_engine_addr = 0;
+
+      /* Macross: Hit Spark */
+      if (fam_game == FAM_GAME_MACROSS)
+      {
+         if (!fam_macross_addr)
+         {
+            if ((fam_timer % 60) == 0)
+               fam_macross_addr = fam_find_macross();
+         }
+         if (fam_macross_addr)
+         {
+            if (fam_macross_ok(fam_macross_addr))
+               FAM_BYTE(fam_macross_addr + 13) = 0x00;   /* and.b #$0c -> #$00 */
+            else
+               fam_macross_addr = 0;
+         }
+      }
+
+      active = (fam_opt == FAM_OPT_FORCED) || fam_engine_addr ||
+            (fam_game != FAM_GAME_NONE);
+      city = (fam_game == FAM_GAME_CITY);
+   }
+
+   if (active != fam_active || city != fam_city)
+   {
+      fam_active = active;
+      fam_city = city;
+      if (!active)
+         fam_palette_restore();
+      TVRAM_SetAllDirty();
+   }
+
+   /* the hidden sprite pixels become colour 0, which this option hides */
+   BG_BlackTransparent = fam_active;
+}
+
 static void update_variables(int running)
 {
    int i = 0, snd_opt = 0;
@@ -1913,13 +2262,17 @@ static void update_variables(int running)
    else
       BG_SpriteDefer = 1;
 
-   var.key = "px68k_black_transparent";
+   var.key = "px68k_hack_famicom";
    var.value = NULL;
 
+   fam_opt = FAM_OPT_AUTO;
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-      BG_BlackTransparent = (strcmp(var.value, "disabled") != 0);
-   else
-      BG_BlackTransparent = 1;
+   {
+      if (strcmp(var.value, "disabled") == 0)
+         fam_opt = FAM_OPT_OFF;
+      else if (strcmp(var.value, "forced_on") == 0)
+         fam_opt = FAM_OPT_FORCED;
+   }
 
    var.key = "px68k_ramsize";
    var.value = NULL;
@@ -3144,6 +3497,7 @@ static void WinX68k_Exec(void)
             MFP_Int(1);
          if ( (!DispFrame) && (vline >= CRTC_VSTART) && (vline < CRTC_VEND))
          {
+            famicom_hack_line();
             if ( CRTC_VStep==1 )
             {
                /* HighReso 256dot (read twice) */
@@ -3190,6 +3544,7 @@ static void WinX68k_Exec(void)
    } while (vline < VLINE_TOTAL);
 
    BG_SpriteDeferFlush();	/* never carry queued sprite writes into the next frame */
+   famicom_hack_frame();
 
    if (CRTC_Mode & 2)
    {

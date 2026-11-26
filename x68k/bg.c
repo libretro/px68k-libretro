@@ -24,7 +24,7 @@ uint8_t	Sprite_Regs[0x800];
 #define SPDEF_LINES	7	/* lines between start of a burst and its display */
 
 int BG_SpriteDefer = 0;
-int BG_BlackTransparent = 1;
+int BG_BlackTransparent = 0;
 static uint8_t Sprite_RegsCPU[0x400];
 static struct { uint16_t adr; uint8_t data; } spdef[SPDEF_MAX];
 static int spdef_n = 0;

@@ -1355,18 +1355,19 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "enabled"
    },
    {
-      "px68k_black_transparent",
-      "Transparent Black Sprite Pixels",
+      "px68k_hack_famicom",
+      "Hack: Famicom Doujin ports",
       NULL,
-      "Treat sprite pixels whose palette colour is black as transparent, not only palette index 0, as the video controller does. Removes black shapes, digits and letters drawn around sprites in games ported from 8-bit systems (e.g. Macross).",
+      "Workarounds for the Famicom games ported to the X68000 by the same author (e.g. City Connection, Bomber Man, Macross). 'Auto' recognises the common port engine in memory, and some games by the CRC32 of their disk, and applies the matching hacks. 'Forced On' applies the engine hacks even without detection. See the notes in libretro.c.",
       NULL,
       "advanced",
       {
-         { "enabled",  NULL },
-         { "disabled", NULL },
-         { NULL,       NULL },
+         { "auto",      "Auto (default)" },
+         { "disabled",  "Off" },
+         { "forced_on", "Forced On" },
+         { NULL,        NULL },
       },
-      "enabled"
+      "auto"
    },
    {
       "px68k_text_off",
