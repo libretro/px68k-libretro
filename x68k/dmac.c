@@ -115,7 +115,7 @@ int DMAC_StateAction(StateMem *sm, int load, int data_only)
 	return ret;
 }
 
-static int ADPCM_IsReady(void)    { return 1; }
+static int ADPCM_IsReady(void)    { return ADPCM_IsPlaying(); }
 static int DMA_DummyIsReady(void) { return 0; }
 
 static void DMA_SetReadyCB(int ch, int (*func)(void))

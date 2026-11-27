@@ -304,6 +304,13 @@ static INLINE void ADPCM_WriteOne(uint8_t val)
 	ADPCM_Count -= ADPCM_SampleRate;
 }
 
+/* True while the ADPCM chip is running. The chip only raises its DMA request
+ * (DRQ) while playing, so DMAC channel 3 must not transfer before that. */
+int ADPCM_IsPlaying(void)
+{
+	return ADPCM_Playing ? 1 : 0;
+}
+
 void FASTCALL ADPCM_Write(uint32_t adr, uint8_t data)
 {
 	if ( adr==0xe92001 )

@@ -12,6 +12,7 @@ uint8_t FASTCALL ADPCM_Read(uint32_t adr);
 void ADPCM_SetVolume(uint8_t vol);
 void ADPCM_SetPan(int n);
 void ADPCM_SetClock(int n);
+int ADPCM_IsPlaying(void);
 
 void ADPCM_Init(void);
 int ADPCM_StateAction(StateMem *sm, int load, int data_only);
