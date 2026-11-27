@@ -516,7 +516,7 @@ void FASTCALL Grp_DrawLine8(int page, int opaq)
 				v = GET_WORD_W8(srcp);
 				srcp++;
 				v = (GVRAM[off] & 0xf0) | (v & 0x0f);
-				if (v != 0x00)
+				if (v != 0x00 && GrphPal[v] != 0)
 					*destp = GrphPal[v];
 				destp++;
 
@@ -531,7 +531,7 @@ void FASTCALL Grp_DrawLine8(int page, int opaq)
 			v = GET_WORD_W8(srcp);
 			srcp++;
 			v = (GVRAM[off] & 0xf0) | (v & 0x0f);
-			if (v != 0x00)
+			if (v != 0x00 && GrphPal[v] != 0)
 				*destp = GrphPal[v];
 			destp++;
 
