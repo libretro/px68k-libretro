@@ -63,11 +63,10 @@ uint8_t *pbsp = pcmbuffer;
 uint8_t *pbrp = pcmbuffer, *pbwp = pcmbuffer;
 uint8_t *pbep = &pcmbuffer[PCMBUF_SIZE];
 
-/* Audio is produced from emulated time and consumed once per frame, so the
- * two rates are equal and a rounding step can leave a frame one sample short,
- * which is played as silence (a click).  Start with a few frames of silence
- * already queued so that jitter has somewhere to go (~0.7 ms of latency). */
-#define AUDIO_CUSHION_FRAMES 32
+/* Audio is produced from emulated time and handed to the frontend once per
+ * frame, in exactly the amount that frame produced (see retro_run), so no
+ * cushion of pre-queued silence is needed. */
+#define AUDIO_CUSHION_FRAMES 0
 
 void audio_buffer_reset(void)
 {

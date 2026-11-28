@@ -39,6 +39,7 @@ static const int ADPCM_Clocks[8] = {
 static int dif_table[49*16];
 static int16_t ADPCM_BufR[ADPCM_BufSize];
 static int16_t ADPCM_BufL[ADPCM_BufSize];
+static uint8_t ADPCM_BufG[ADPCM_BufSize]; /* pan bits in effect when the entry was written */
 
 static int32_t  ADPCM_WrPtr = 0;
 static int32_t  ADPCM_RdPtr = 0;
@@ -54,6 +55,20 @@ static int ADPCM_DifBuf = 0;
 
 static int ADPCM_Pan = 0x00;
 static int OldR = 0, OldL = 0;
+
+/* The DAC output is AC coupled on the real machine.  The decoder level can sit
+ * far from zero (a game that never stops the chip, e.g. Exciting Hour, leaves
+ * it at about -23% of full scale between voices), and the pan register then
+ * switches the channel on and off.  Without the coupling that level is cut in
+ * one sample when the channel is muted, and jumps in again when it is
+ * unmuted, which is heard as a click.  The coupling is applied to the DAC
+ * value before the pan gate, as the capacitor is on the DAC side of it.
+ * These values are derived from the decoded stream and are not saved. */
+#define ADPCM_DC_SHIFT 10    /* ~23 ms time constant at 44.1 kHz (~7 Hz corner) */
+static int32_t DacLast = 0;  /* last DAC value, held while no data arrives */
+static uint8_t GateLast = 0;
+static int32_t DcQ = 0;      /* Q16 estimate of the DAC's constant level */
+static int DcRebase = 0;     /* set when the decoder is restarted from zero */
 static int Outs[8];
 static int OutsIp[4];
 static int OutsIpR[4];
@@ -97,7 +112,14 @@ int ADPCM_StateAction(StateMem *sm, int load, int data_only)
 	/* Volume is a frontend setting, not emulated state. Reapply it after
 	 * loading so the saved value cannot override the current core option. */
 	if (load && ret)
+	{
 		ADPCM_SetVolume((uint8_t)Config.PCM_VOL);
+		/* Resume with the coupling settled on the saved decoder level. */
+		DacLast = (int32_t)ADPCM_Out;
+		GateLast = (uint8_t)(ADPCM_Pan & 3);
+		DcQ = DacLast << 16;
+		DcRebase = 0;
+	}
 
 	return ret;
 }
@@ -143,6 +165,43 @@ void FASTCALL ADPCM_PreUpdate(uint32_t clock)
 	}
 }
 
+/* Next stereo output sample: the AC coupled DAC level, then the pan gate. */
+static INLINE void ADPCM_Fetch(int32_t *outl, int32_t *outr)
+{
+   int32_t dac, ac;
+   uint8_t gate;
+
+   if ( ADPCM_WrPtr!=ADPCM_RdPtr )
+   {
+      dac  = ADPCM_BufR[ADPCM_RdPtr];
+      gate = ADPCM_BufG[ADPCM_RdPtr];
+      ADPCM_RdPtr++;
+      if ( ADPCM_RdPtr>=ADPCM_BufSize )
+         ADPCM_RdPtr = 0;
+      if ( DcRebase )
+      {
+         /* The decoder restarted from zero: that jump is not part of the
+          * signal, so do not let it through the coupling. */
+         DcQ = dac << 16;
+         DcRebase = 0;
+      }
+      DacLast  = dac;
+      GateLast = gate;
+   }
+   else
+   {
+      /* Nothing queued: the DAC holds its level, the pan switch acts at once. */
+      dac  = DacLast;
+      gate = (uint8_t)(ADPCM_Pan & 3);
+   }
+   DcQ += ((dac << 16) - DcQ) >> ADPCM_DC_SHIFT;
+   ac   = (((dac << 16) - DcQ) + 0x8000) >> 16;
+   *outl = (gate & 1) ? 0 : ac;
+   *outr = (gate & 2) ? 0 : ac;
+   OldL = (int)*outl;
+   OldR = (int)*outr;
+}
+
 void ADPCM_Update(int32_t *buffer, size_t length, uint8_t *pbsp, uint8_t *pbep)
 {
 	int outs;
@@ -160,19 +219,7 @@ void ADPCM_Update(int32_t *buffer, size_t length, uint8_t *pbsp, uint8_t *pbep)
 
          if ( (ADPCM_WrPtr==ADPCM_RdPtr)&&(!(DMA[3].CCR&0x40)) )
             DMA_Exec(3);
-         if ( ADPCM_WrPtr!=ADPCM_RdPtr )
-         {
-            OldR = outr = ADPCM_BufL[ADPCM_RdPtr];
-            OldL = outl = ADPCM_BufR[ADPCM_RdPtr];
-            ADPCM_RdPtr++;
-            if ( ADPCM_RdPtr>=ADPCM_BufSize )
-               ADPCM_RdPtr = 0;
-         }
-         else
-         {
-            outr = OldR;
-            outl = OldL;
-         }
+         ADPCM_Fetch(&outl, &outr);
 
          outr       = (int32_t)((int64_t)outr * 40 * ADPCM_VolumeShift);
          outs       = (int32_t)(((int64_t)outr + Outs[3]*2LL + Outs[2] +
@@ -217,19 +264,7 @@ void ADPCM_Update(int32_t *buffer, size_t length, uint8_t *pbsp, uint8_t *pbep)
 
          if ( (ADPCM_WrPtr==ADPCM_RdPtr)&&(!(DMA[3].CCR&0x40)) )
             DMA_Exec(3);
-         if ( ADPCM_WrPtr!=ADPCM_RdPtr )
-         {
-            OldR = outr = ADPCM_BufL[ADPCM_RdPtr];
-            OldL = outl = ADPCM_BufR[ADPCM_RdPtr];
-            ADPCM_RdPtr++;
-            if ( ADPCM_RdPtr>=ADPCM_BufSize )
-               ADPCM_RdPtr = 0;
-         }
-         else
-         {
-            outr = OldR;
-            outl = OldL;
-         }
+         ADPCM_Fetch(&outl, &outr);
 
          outs       = (int)(outr*ADPCM_VolumeShift);
 
@@ -289,14 +324,9 @@ static INLINE void ADPCM_WriteOne(uint8_t val)
 			int ratio = (((ADPCM_Count/100)*FM_IPSCALE)/(ADPCM_SampleRate/100));
 			int tmp = INTERPOLATE(OutsIp, ratio);
 			if ( tmp>ADPCMMAX ) tmp = ADPCMMAX; else if ( tmp<ADPCMMIN ) tmp = ADPCMMIN;
-			if ( !(ADPCM_Pan&1) )
-				ADPCM_BufR[ADPCM_WrPtr] = (int16_t)tmp;
-			else
-				ADPCM_BufR[ADPCM_WrPtr] = 0;
-			if ( !(ADPCM_Pan&2) )
-				ADPCM_BufL[ADPCM_WrPtr++] = (int16_t)tmp;
-			else
-				ADPCM_BufL[ADPCM_WrPtr++] = 0;
+			ADPCM_BufR[ADPCM_WrPtr] = (int16_t)tmp;
+			ADPCM_BufL[ADPCM_WrPtr] = (int16_t)tmp;
+			ADPCM_BufG[ADPCM_WrPtr++] = (uint8_t)(ADPCM_Pan & 3);
 			if ( ADPCM_WrPtr>=ADPCM_BufSize ) ADPCM_WrPtr = 0;
 		}
 		ADPCM_Count += ADPCM_ClockRate;
@@ -323,7 +353,7 @@ void FASTCALL ADPCM_Write(uint32_t adr, uint8_t data)
          {
             ADPCM_Step    = 0;
             ADPCM_Out     = 0;
-            OldL = OldR   = -2;
+            DcRebase      = 1;
             ADPCM_Playing = 1;
          }
          OutsIp[0] = OutsIp[1] = OutsIp[2] = OutsIp[3] = -1;
@@ -391,6 +421,10 @@ void ADPCM_Init(void)
 	OutsIpR[0] = OutsIpR[1] = OutsIpR[2] = OutsIpR[3] = 0;
 	OutsIpL[0] = OutsIpL[1] = OutsIpL[2] = OutsIpL[3] = 0;
 	OldL = OldR = 0;
+	DacLast = 0;
+	GateLast = 0;
+	DcQ = 0;
+	DcRebase = 0;
 
 	ADPCM_SetPan(0x0b);
 	ADPCM_InitTable();

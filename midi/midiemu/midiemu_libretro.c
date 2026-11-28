@@ -27,6 +27,13 @@ static char saved_content[PATH_MAX];
 static int32_t native_audio[4096 * 2];
 static size_t native_count;
 static double native_phase;
+/* The SC-55 output sits on a constant offset; see px68k_midiemu_render_sc55. */
+static double sc55_dc_l, sc55_dc_r;
+static int sc55_dc_primed;
+static int32_t sc55_prev_l;
+static int sc55_const_run;  /* consecutive samples with the same value */
+static int sc55_settle;     /* samples left in which the offset is re-based */
+#define SC55_DC_ALPHA 0.0005 /* ~3.5 Hz corner at 44.1 kHz */
 static unsigned native_rate = 66207;
 static int volume_percent = 100;
 static retro_log_printf_t midi_log_cb;
@@ -72,7 +79,7 @@ static int midi_worker_stop;
 static int midi_worker_paused;
 static int midi_runahead_active;
 static int midi_runahead_suppressed;
-static int midi_render_pending;
+static int midi_render_pending; /* frames requested from the worker, not yet in the PCM ring */
 static int midi_worker_volume = 100;
 static void px68k_midiemu_render_sc55(int16_t *stereo, size_t frames, int volume);
 
@@ -171,7 +178,8 @@ static void midi_worker_main(void *userdata)
             }
             midi_pcm_count += frames;
          }
-         midi_render_pending = 0;
+         midi_render_pending -= (int)frames;
+         if (midi_render_pending < 0) midi_render_pending = 0;
          slock_unlock(midi_worker_lock);
       }
    }
@@ -392,6 +400,7 @@ static int try_named_set(int model, const char *const names[SC55_ROM_COUNT],
    native_rate = sc55_rate(unit);
    native_count = 0;
    native_phase = 0.0;
+   sc55_dc_primed = 0;
    return 1;
 }
 
@@ -443,6 +452,7 @@ void px68k_midiemu_shutdown(void)
    active_enabled = 0;
    native_count = 0;
    native_phase = 0.0;
+   sc55_dc_primed = 0;
    attempted_emulation = -1;
    attempted_system[0] = '\0';
    attempted_content[0] = '\0';
@@ -617,6 +627,37 @@ static void px68k_midiemu_render_sc55(int16_t *stereo, size_t frames, int volume
       /* Scale after converting to the 16-bit mixer domain to avoid overflow. */
       l = (int32_t)(((int64_t)(l >> 14) * volume) / 100);
       r = (int32_t)(((int64_t)(r >> 14) * volume) / 100);
+      /* The emulated SC-55 idles at a constant non-zero level.  Mixed as is,
+       * that level appears and disappears (a click) whenever the stream
+       * starts, stops or has a hole.  Track and remove it; the tracker is
+       * primed with the first sample so that start-up does not step. */
+      if (!sc55_dc_primed)
+      {
+         sc55_dc_l = (double)l;
+         sc55_dc_r = (double)r;
+         sc55_prev_l = l;
+         sc55_const_run = 0;
+         sc55_settle = 0;
+         sc55_dc_primed = 1;
+      }
+      /* The synth boots silent (0) and then moves to its idle offset in a
+       * couple of samples.  When the output leaves a long constant stretch,
+       * adopt the new level at once so that this one-off step is removed
+       * rather than decaying slowly through the tracker. */
+      if (l != sc55_prev_l && sc55_const_run >= 256)
+         sc55_settle = 8;
+      if (sc55_settle > 0)
+      {
+         sc55_dc_l = (double)l;
+         sc55_dc_r = (double)r;
+         sc55_settle--;
+      }
+      sc55_const_run = (l == sc55_prev_l) ? (sc55_const_run < 1000000 ? sc55_const_run + 1 : sc55_const_run) : 0;
+      sc55_prev_l = l;
+      sc55_dc_l += ((double)l - sc55_dc_l) * SC55_DC_ALPHA;
+      sc55_dc_r += ((double)r - sc55_dc_r) * SC55_DC_ALPHA;
+      l -= (int32_t)(sc55_dc_l + (sc55_dc_l >= 0.0 ? 0.5 : -0.5));
+      r -= (int32_t)(sc55_dc_r + (sc55_dc_r >= 0.0 ? 0.5 : -0.5));
       stereo[i * 2] = clamp16((int32_t)stereo[i * 2] + l);
       stereo[i * 2 + 1] = clamp16((int32_t)stereo[i * 2 + 1] + r);
       native_phase += ratio;
@@ -635,6 +676,43 @@ static void px68k_midiemu_render_sc55(int16_t *stereo, size_t frames, int volume
 }
 
 
+/* Dropout concealment.  The worker thread may not have rendered enough PCM
+ * when the frame needs it (fast-forward, a descheduled thread).  Leaving the
+ * missing part as silence cuts the waveform from its current level to zero in
+ * one sample, which is heard as a click.  Instead the last value is held and
+ * faded out over MIDI_DECLICK_RAMP samples, and faded back in when PCM is
+ * available again. */
+#define MIDI_DECLICK_RAMP 64
+/* Frames of PCM kept rendered ahead of playback, in units of one output frame. */
+#define MIDI_LOOKAHEAD_FRAMES 2
+static int32_t midi_hold_l, midi_hold_r;
+static int midi_gain;
+
+static void midi_mix_block(int16_t *stereo, size_t frames, const int16_t *src, size_t count)
+{
+   size_t i;
+   for (i = 0; i < frames; i++)
+   {
+      int32_t l, r;
+      if (i < count)
+      {
+         midi_hold_l = l = src[i * 2];
+         midi_hold_r = r = src[i * 2 + 1];
+         if (midi_gain < MIDI_DECLICK_RAMP) midi_gain++;
+      }
+      else
+      {
+         l = midi_hold_l;
+         r = midi_hold_r;
+         if (midi_gain > 0) midi_gain--;
+      }
+      l = (l * midi_gain) / MIDI_DECLICK_RAMP;
+      r = (r * midi_gain) / MIDI_DECLICK_RAMP;
+      stereo[i * 2] = clamp16((int32_t)stereo[i * 2] + l);
+      stereo[i * 2 + 1] = clamp16((int32_t)stereo[i * 2 + 1] + r);
+   }
+}
+
 void px68k_midiemu_mix(int16_t *stereo, size_t frames)
 {
    size_t i;
@@ -643,37 +721,44 @@ void px68k_midiemu_mix(int16_t *stereo, size_t frames)
    {
       struct midi_command command;
       size_t count;
+      int target, deficit;
+      static int16_t block[MIDI_RENDER_MAX * 2];
       slock_lock(midi_worker_lock);
       if (midi_runahead_active)
       {
          slock_unlock(midi_worker_lock);
          return;
       }
+      if (frames > MIDI_RENDER_MAX) frames = MIDI_RENDER_MAX;
       count = frames < midi_pcm_count ? frames : midi_pcm_count;
       for (i = 0; i < count; i++)
       {
-         int32_t left = (int32_t)stereo[i * 2] + midi_pcm[midi_pcm_read * 2];
-         int32_t right = (int32_t)stereo[i * 2 + 1] + midi_pcm[midi_pcm_read * 2 + 1];
-         stereo[i * 2] = clamp16(left);
-         stereo[i * 2 + 1] = clamp16(right);
+         block[i * 2] = midi_pcm[midi_pcm_read * 2];
+         block[i * 2 + 1] = midi_pcm[midi_pcm_read * 2 + 1];
          midi_pcm_read = (midi_pcm_read + 1) % MIDI_PCM_CAPACITY;
       }
       midi_pcm_count -= count;
 
-      /* At most one render block may be queued or executing. Without this
-       * limit, fast-forward can fill the command queue with stale render
-       * requests until MIDI event submission blocks the emulation thread. */
-      if (!midi_render_pending && midi_command_count < MIDI_COMMAND_CAPACITY &&
+      /* Keep a few frames rendered ahead so that a late worker wake-up does
+       * not leave a hole.  The amount requested is bounded by the target, so
+       * fast-forward cannot fill the command queue with stale render requests
+       * and block MIDI event submission on the emulation thread. */
+      target = (int)(frames * MIDI_LOOKAHEAD_FRAMES);
+      deficit = target - (int)midi_pcm_count - midi_render_pending;
+      while (deficit > 0 && midi_command_count < MIDI_COMMAND_CAPACITY &&
             !midi_worker_stop)
       {
+         int n = deficit > MIDI_RENDER_MAX ? MIDI_RENDER_MAX : deficit;
          memset(&command, 0, sizeof(command));
          command.type = MIDI_COMMAND_RENDER;
-         command.frames = frames > MIDI_RENDER_MAX ? MIDI_RENDER_MAX : frames;
-         midi_render_pending = 1;
+         command.frames = (size_t)n;
          if (!midi_queue_push_locked(&command))
-            midi_render_pending = 0;
+            break;
+         midi_render_pending += n;
+         deficit -= n;
       }
       slock_unlock(midi_worker_lock);
+      midi_mix_block(stereo, frames, block, count);
       return;
    }
    if (midi_runahead_active) return;
