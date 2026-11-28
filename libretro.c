@@ -3724,13 +3724,23 @@ void retro_run(void)
    }
 
    /* The paused internal menu must not advance any synthesizer. */
-   if (soundbuf_size < 0) soundbuf_size = 0;
-   if (soundbuf_size > (int)(sizeof(soundbuf) / (2 * sizeof(soundbuf[0]))))
-      soundbuf_size = (int)(sizeof(soundbuf) / (2 * sizeof(soundbuf[0])));
    if (menu_mode != menu_out)
+   {
+      /* No emulated time passes: keep the frontend fed with nominal silence. */
+      soundbuf_size = next_audio_frame_size();
+      if (soundbuf_size > (int)(sizeof(soundbuf) / (2 * sizeof(soundbuf[0]))))
+         soundbuf_size = (int)(sizeof(soundbuf) / (2 * sizeof(soundbuf[0])));
       memset(soundbuf, 0, (size_t)soundbuf_size * 4);
+   }
    else
    {
+      /* Hand over exactly what emulated time produced during this frame.
+       * The frame length changes with the CRTC mode, while the frame rate
+       * told to the frontend lags behind it; a count derived from that
+       * rate would zero-fill (click) or build up latency at every change. */
+      soundbuf_size = audio_samples_avail();
+      if (soundbuf_size > (int)(sizeof(soundbuf) / (2 * sizeof(soundbuf[0]))))
+         soundbuf_size = (int)(sizeof(soundbuf) / (2 * sizeof(soundbuf[0])));
       raudio_callback(soundbuf, NULL, soundbuf_size << 2);
 
       px68k_midiemu_mix(soundbuf, (size_t)soundbuf_size);
@@ -3794,7 +3804,6 @@ void retro_run(void)
          CHANGEAV = 0;
       }
    }
-   soundbuf_size = next_audio_frame_size();
    {
       bool osd_visible = (menu_mode == menu_out) && Keyboard_IsSwKeyboard();
       if (osd_visible)
